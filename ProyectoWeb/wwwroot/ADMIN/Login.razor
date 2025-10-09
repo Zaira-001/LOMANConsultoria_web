@@ -1,0 +1,176 @@
+﻿@page "/login"
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment Env
+
+<link href="css/login.css" rel="stylesheet" />
+
+<div class="login-container">
+    <!-- Modal de Llave Maestra (mismo contenido que antes) -->
+    <div class="modal-overlay" id="masterKeyModal" style="display: none;">
+        <div class="modal security-modal">
+            <div class="modal-header">
+                <h2>Acceso de Seguridad</h2>
+                <div class="security-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <p>Dispositivo no reconocido detectado</p>
+                </div>
+            </div>
+
+            <div class="security-explanation">
+                <h4>Verificación de Seguridad Requerida</h4>
+                <p>Para proteger el sistema, se requiere una llave maestra para acceder desde dispositivos no confiables.</p>
+                <p>Esta medida adicional garantiza que solo personal autorizado pueda administrar el sistema.</p>
+            </div>
+
+            <form id="masterKeyForm">
+                <div class="form-group">
+                    <label for="masterKey">Llave Maestra *</label>
+                    <div class="password-input">
+                        <input type="password" id="masterKey" required
+                               placeholder="Ingrese la llave maestra del sistema">
+                        <button type="button" class="toggle-password" onclick="toggleMasterKeyVisibility()">
+                            <span id="masterKeyToggleIcon">👁️</span>
+                        </button>
+                    </div>
+                    <small class="form-help">Esta llave fue configurada durante la instalación inicial del sistema.</small>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-verify" id="verifyMasterKeyBtn">
+                        Verificar Acceso
+                    </button>
+                </div>
+            </form>
+
+            <div class="security-footer">
+                <p><strong>Nota:</strong> Si no tienes la llave maestra, contacta al administrador principal del sistema.</p>
+                <p>Los intentos de acceso no autorizados son registrados y monitoreados.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-card">
+        <div class="login-header">
+            <h1>Panel de Administración</h1>
+            <p>Consultoría Integral SC</p>
+        </div>
+
+        <!-- Loading indicator -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>Verificando acceso...</p>
+        </div>
+
+        <!-- Error message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <p id="errorText"></p>
+        </div>
+
+        <!-- Success message -->
+        <div class="success-message" id="successMessage" style="display: none;">
+            <p id="successText"></p>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" required placeholder="Ingresa tu nombre de usuario" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="password-input">
+                    <input type="password" id="password" required placeholder="Ingresa tu contraseña" autocomplete="current-password">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                        <span id="passwordToggleIcon">👁️</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe">
+                    <span class="checkmark"></span>
+                    Recordar dispositivo como confiable
+                </label>
+                <small class="form-help">Al marcar esta opción, no se solicitará la llave maestra en futuros accesos desde este dispositivo.</small>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginButton">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p>¿Problemas para acceder? Contacta al administrador del sistema.</p>
+        </div>
+
+        <!-- Info panel -->
+        <div class="info-panel">
+            <h3>Información de Acceso</h3>
+            <ul>
+                <li>Solo personal autorizado puede acceder</li>
+                <li>Las sesiones se cierran automáticamente por inactividad</li>
+                <li>Los intentos de acceso son monitoreados</li>
+                <li>Se requiere llave maestra para dispositivos no confiables</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Background decoration -->
+    <div class="background-decoration">
+        <div class="decoration-element"></div>
+        <div class="decoration-element"></div>
+        <div class="decoration-element"></div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Login component initialized - Loading FIXED script...");
+
+                // *** CAMBIO AQUÍ: Usar login-fixed.js ***
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (!window.loginScriptLoaded) {
+                        window.loginScriptLoaded = true;
+                        console.log('Loading login-fixed.js (version sin bucles)...');
+
+                        const script = document.createElement('script');
+                        script.src = 'JS/login-new.js';  // ← CAMBIO AQUÍ
+                        script.onload = function() {
+                            console.log('✅ login-fixed.js loaded successfully');
+                        };
+                        script.onerror = function() {
+                            console.error('❌ Error loading login-fixed script');
+                        };
+                        document.body.appendChild(script);
+                    }
+                ");
+
+                // Script de diagnóstico solo en desarrollo
+                if (Env.IsDevelopment())
+                {
+                    await JSRuntime.InvokeVoidAsync("eval", @"
+                        if (!window.diagnosticLoaded) {
+                            window.diagnosticLoaded = true;
+                            const script = document.createElement('script');
+                            script.src = 'JS/diagnostic.js';
+                            document.body.appendChild(script);
+                        }
+                    ");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading login scripts: {ex.Message}");
+            }
+        }
+    }
+}

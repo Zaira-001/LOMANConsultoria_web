@@ -1,0 +1,140 @@
+﻿<div class="top-row">
+    <div class="container-fluid d-flex align-items-center justify-content-between h-100">
+        <!-- Logo y nombre -->
+        <a class="navbar-brand" href="">
+            <div class="logo-container">
+                <img src="iconos/logo.png" alt="Logo" class="navbar-logo" />
+            </div>
+            <span class="brand-text">Consultoría Integral SC</span>
+        </a>
+
+        <!-- Botón hamburguesa para móvil -->
+        <button class="navbar-toggler d-lg-none" type="button" onclick="toggleMobileMenu()">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navegación principal -->
+        <nav class="navbar-nav-horizontal d-none d-lg-flex">
+            <NavLink class="nav-link-horizontal" href="" Match="NavLinkMatch.All">
+                <i class="nav-icon fas fa-home"></i>
+                <span class="nav-text">Inicio</span>
+            </NavLink>
+            <NavLink class="nav-link-horizontal" href="nosotros">
+                <i class="nav-icon fas fa-users"></i>
+                <span class="nav-text">Nosotros</span>
+            </NavLink>
+            <NavLink class="nav-link-horizontal" href="servicios">
+                <i class="nav-icon fas fa-cogs"></i>
+                <span class="nav-text">Servicios</span>
+            </NavLink>
+            <NavLink class="nav-link-horizontal" href="contacto">
+                <i class="nav-icon fas fa-envelope"></i>
+                <span class="nav-text">Contacto</span>
+            </NavLink>
+
+            <!-- Línea divisoria -->
+            <div class="nav-divider"></div>
+
+            <!-- Redes sociales -->
+            <div class="social-links">
+                <a href="https://www.facebook.com/profile.php?id=61578821236039" class="social-link facebook" title="Facebook">
+                    <img src="iconos/facebook.png" alt="Facebook" class="social-icon" />
+                </a>
+                <a href="https://www.instagram.com/lomanconsultoria2025/profilecard/?igsh=aGhrbnN3MGY1bnNh" class="social-link instagram" title="Instagram">
+                    <img src="iconos/instagram.png" alt="Instagram" class="social-icon" />
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Menú móvil desplegable -->
+    <div class="mobile-menu d-lg-none" id="mobileMenu">
+        <nav class="mobile-nav">
+            <NavLink class="mobile-nav-link" href="" Match="NavLinkMatch.All" onclick="closeMobileMenu()">
+                <i class="nav-icon fas fa-home"></i>
+                <span class="nav-text">Inicio</span>
+            </NavLink>
+            <NavLink class="mobile-nav-link" href="nosotros" onclick="closeMobileMenu()">
+                <i class="nav-icon fas fa-users"></i>
+                <span class="nav-text">Nosotros</span>
+            </NavLink>
+            <NavLink class="mobile-nav-link" href="servicios" onclick="closeMobileMenu()">
+                <i class="nav-icon fas fa-cogs"></i>
+                <span class="nav-text">Servicios</span>
+            </NavLink>
+            <NavLink class="mobile-nav-link" href="contacto" onclick="closeMobileMenu()">
+                <i class="nav-icon fas fa-envelope"></i>
+                <span class="nav-text">Contacto</span>
+            </NavLink>
+
+            <div class="mobile-social-section">
+                <div class="mobile-divider"></div>
+                <div class="mobile-social-links">
+                    <a href="https://www.facebook.com/profile.php?id=61578821236039" class="mobile-social-link facebook" title="Facebook">
+                        <img src="iconos/facebook.png" alt="Facebook" class="social-icon" />
+                        <span>Facebook</span>
+                    </a>
+                    <a href="https://www.instagram.com/lomanconsultoria2025/profilecard/?igsh=aGhrbnN3MGY1bnNh" class="mobile-social-link instagram" title="Instagram">
+                        <img src="iconos/instagram.png" alt="Instagram" class="social-icon" />
+                        <span>Instagram</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const body = document.body;
+        const toggler = document.getElementById('navToggler');
+
+        if (mobileMenu.classList.contains('show')) {
+            mobileMenu.classList.remove('show');
+            body.classList.remove('mobile-menu-open');
+            toggler.classList.remove('active');
+        } else {
+            mobileMenu.classList.add('show');
+            body.classList.add('mobile-menu-open');
+            toggler.classList.add('active');
+        }
+    }
+
+    function closeMobileMenu() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const body = document.body;
+        const toggler = document.getElementById('navToggler');
+
+        mobileMenu.classList.remove('show');
+        body.classList.remove('mobile-menu-open');
+        toggler.classList.remove('active');
+    }
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const toggleBtn = document.getElementById('navToggler');
+
+        if (mobileMenu && mobileMenu.classList.contains('show')) {
+            if (!mobileMenu.contains(event.target) && !toggleBtn.contains(event.target)) {
+                closeMobileMenu();
+            }
+        }
+    });
+
+    // Cerrar menú al cambiar tamaño de ventana
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) {
+            closeMobileMenu();
+        }
+    });
+
+    // Prevenir scroll horizontal en móvil
+    document.addEventListener('touchstart', {});
+    document.addEventListener('touchmove', function(e) {
+        if (document.body.classList.contains('mobile-menu-open')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+</script>

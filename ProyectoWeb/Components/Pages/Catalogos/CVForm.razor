@@ -1,0 +1,177 @@
+﻿
+<h3>CVForm</h3>
+<!-- Demo button -->
+    <div class="demo-container">
+        <h1>Modal de Formulario CV - Demo</h1>
+        <button class="open-modal-btn" onclick="openCVModal()">📩 Envía tu CV</button>
+    </div>
+
+    <!-- MODAL DE CV -->
+    <div class="cv-modal-overlay" id="cvModal">
+        <div class="cv-modal-content">
+            <!-- Header del Modal -->
+            <div class="modal-header">
+                <button class="close-modal-btn" onclick="closeCVModal()">&times;</button>
+                <h2 class="modal-title">Únete a Nuestro Equipo</h2>
+                <p class="modal-subtitle">Envía tu CV y forma parte de Consultoría Integral SC</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab-button active" onclick="switchTab('residencia')">
+                    🎓 Residencias Profesionales
+                </button>
+                <button class="tab-button" onclick="switchTab('trabajo')">
+                    💼 Oportunidades Laborales
+                </button>
+            </div>
+
+            <!-- Contenido Tab Residencias -->
+            <div class="tab-content active" id="residencia-tab">
+                <form id="cvResidenciaForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="nombreCompletoRes">Nombre Completo <span class="required">*</span></label>
+                        <input type="text" id="nombreCompletoRes" name="nombreCompleto" required>
+                        <div class="error-message" id="nombreCompletoResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailRes">Email <span class="required">*</span></label>
+                        <input type="email" id="emailRes" name="email" required>
+                        <div class="error-message" id="emailResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoRes">Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="telefonoRes" name="telefono" required>
+                        <div class="error-message" id="telefonoResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="carreraRes">Carrera <span class="required">*</span></label>
+                        <select id="carreraRes" name="carrera" required>
+                            <option value="">Selecciona tu carrera</option>
+                            <option value="Administración Empresarial">Lic. Administración Empresarial</option>
+                            <option value="Diseño Gráfico">Lic. Diseño Gráfico</option>
+                            <option value="Contabilidad y Finanzas">Lic. Contabilidad y Finanzas</option>
+                            <option value="Ciencias y Técnica de la Comunicación">Lic. Ciencias y Técnica de la Comunicación</option>
+                            <option value="Sistemas Computacionales">Ing. Sistemas Computacionales</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                        <div class="error-message" id="carreraResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="universidadRes">Universidad <span class="required">*</span></label>
+                        <select id="universidadRes" name="universidad" required>
+                            <option value="">Selecciona tu universidad</option>
+                            <option value="Universidad Tecnológica de Nezahualcóyotl (UTN)">Universidad Tecnológica de Nezahualcóyotl (UTN)</option>
+                            <option value="Universidad Tecmilenio">Universidad Tecmilenio en el Estado de México</option>
+                            <option value="Instituto Tecnológico y de Estudios Superiores de Monterrey (ITESM)">Instituto Tecnológico y de Estudios Superiores de Monterrey (ITESM)</option>
+                            <option value="Universidad del Valle de México (UVM)">Universidad del Valle de México (UVM)</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                        <div class="error-message" id="universidadResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensajeRes">Mensaje (Opcional)</label>
+                        <textarea id="mensajeRes" name="mensaje" placeholder="Cuéntanos por qué te interesa hacer tu residencia con nosotros..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CV (Opcional)</label>
+                        <div class="file-upload" onclick="document.getElementById('archivoCVRes').click()">
+                            <input type="file" id="archivoCVRes" name="archivoCV" accept=".pdf,.doc,.docx">
+                            <div class="file-upload-text">
+                                <p>📄 Haz clic para seleccionar tu CV</p>
+                                <small>PDF, DOC, DOCX - Máximo 10MB</small>
+                            </div>
+                            <div class="file-info" id="fileInfoRes"></div>
+                        </div>
+                        <div class="error-message" id="archivoCVResError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit residencia">
+                        Enviar Solicitud de Residencia
+                    </button>
+                </form>
+            </div>
+
+            <!-- Contenido Tab Trabajo -->
+            <div class="tab-content" id="trabajo-tab">
+                <form id="cvTrabajoForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="nombreCompletoTrab">Nombre Completo <span class="required">*</span></label>
+                        <input type="text" id="nombreCompletoTrab" name="nombreCompleto" required>
+                        <div class="error-message" id="nombreCompletoTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailTrab">Email <span class="required">*</span></label>
+                        <input type="email" id="emailTrab" name="email" required>
+                        <div class="error-message" id="emailTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoTrab">Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="telefonoTrab" name="telefono" required>
+                        <div class="error-message" id="telefonoTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="experienciaTrab">Experiencia Profesional <span class="required">*</span></label>
+                        <select id="experienciaTrab" name="experiencia" required>
+                            <option value="">Selecciona tu experiencia</option>
+                            <option value="0-1 años">0-1 años</option>
+                            <option value="2-3 años">2-3 años</option>
+                            <option value="4+ años">4+ años</option>
+                        </select>
+                        <div class="error-message" id="experienciaTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="posicionInteresTrab">Posición de Interés <span class="required">*</span></label>
+                        <select id="posicionInteresTrab" name="posicionInteres" required>
+                            <option value="">Selecciona la posición</option>
+                            <option value="Consultor Senior">Consultor Senior</option>
+                            <option value="Contador Público">Contador Público</option>
+                            <option value="Analista Financiero">Analista Financiero</option>
+                            <option value="Abogado Corporativo">Abogado Corporativo</option>
+                            <option value="Otra">Otra posición</option>
+                        </select>
+                        <div class="error-message" id="posicionInteresTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensajeTrab">Mensaje (Opcional)</label>
+                        <textarea id="mensajeTrab" name="mensaje" placeholder="Cuéntanos sobre tu experiencia y por qué te interesa trabajar con nosotros..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CV <span class="required">*</span></label>
+                        <div class="file-upload" onclick="document.getElementById('archivoCVTrab').click()">
+                            <input type="file" id="archivoCVTrab" name="archivoCV" accept=".pdf,.doc,.docx" required>
+                            <div class="file-upload-text">
+                                <p>📄 Haz clic para seleccionar tu CV</p>
+                                <small>PDF, DOC, DOCX - Máximo 10MB</small>
+                            </div>
+                            <div class="file-info" id="fileInfoTrab"></div>
+                        </div>
+                        <div class="error-message" id="archivoCVTrabError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit trabajo">
+                        Enviar CV para Trabajo
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+
+
+@code {
+
+}

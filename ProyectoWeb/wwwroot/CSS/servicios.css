@@ -1,0 +1,1158 @@
+﻿body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hero-section {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.main-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.description {
+    font-size: 1.4rem;
+    color: #666;
+    line-height: 1.6;
+    margin: 0 auto 40px;
+    max-width: 600px;
+}
+
+/* Nueva sección de estadísticas */
+.stats-section {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+    min-width: 120px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+    .stat-item:hover {
+        transform: translateY(-5px);
+    }
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Botones de servicios */
+.servicios-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 20px;
+}
+
+.service-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    margin: 0 5px;
+    min-width: 120px;
+    position: relative;
+}
+
+    .service-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+        .service-card:hover .icon-img {
+            transform: rotate(10deg) scale(1.1);
+        }
+
+    .service-card.active {
+        transform: translateY(-5px);
+        box-shadow: 0 9px 27px rgba(0, 0, 0, 0.3);
+        border: 3px solid black;
+    }
+
+/* Badges para servicios */
+.service-badge {
+    position: absolute;
+    top: -8px;
+    right: -5px;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+    .service-badge.popular {
+        background: #ff4757;
+        color: white;
+    }
+
+    .service-badge.recommended {
+        background: #2ed573;
+        color: white;
+    }
+
+    .service-badge.new {
+        background: #ffa502;
+        color: white;
+    }
+
+.service-icon {
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+    .service-icon img.icon-img {
+        width: 24px;
+        height: 24px;
+        transition: all 0.3s ease;
+    }
+
+.service-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Colores específicos */
+.service-card:nth-child(1) {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.service-card:nth-child(2) {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.service-card:nth-child(3) {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.service-card:nth-child(4) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.service-card:nth-child(5) {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.service-card:nth-child(6) {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.service-card:nth-child(7) {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+/* Estado inicial */
+.initial-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 20px;
+    margin-top: 40px;
+}
+
+    .initial-state h3 {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+
+    .initial-state p {
+        color: #888;
+        font-size: 1rem;
+    }
+
+/* Sección de información del servicio */
+.service-info-container {
+    margin-top: 40px;
+    padding: 40px; /* más relleno */
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.5s ease-out;
+    min-height: 500px; /* controla altura mínima */
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.service-detail {
+    max-width: 1400px; /* ensanchar el ancho máximo */
+    width: 100%; /* que ocupe todo el ancho disponible */
+    margin: 0 auto;
+    font-size: 1rem;
+}
+
+/* Nuevo header con meta información */
+.service-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.service-title {
+    font-size: 2.2rem;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.service-meta {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+    .service-meta span {
+        background: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: #666;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+.service-content {
+    display: block;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.service-description {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+    .service-description p {
+        font-size: 1.1rem;
+        color: #666;
+        line-height: 1.7;
+    }
+
+.service-details-grid {
+    display: grid;
+    grid-template-areas:
+        "features features"
+        "benefits requirements";
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 40px 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* FORZAR COLUMNA ÚNICA PARA DISPOSITIVOS PEQUEÑOS */
+@media (max-width: 1024px) {
+    .service-details-grid {
+        grid-template-areas:
+            "features"
+            "benefits"
+            "requirements";
+        grid-template-columns: 1fr !important;
+        gap: 25px;
+        margin: 30px 0;
+        width: 100%;
+    }
+}
+
+.service-features, .service-benefits, .service-requirements {
+    background: white;
+    padding: 30px 25px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+    font-size: 0.1rem;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+/* Delay escalonado para animación de entrada */
+.service-features {
+    animation-delay: 0.1s;
+    grid-area: features;
+}
+
+.service-benefits {
+    animation-delay: 0.2s;
+    grid-area: benefits;
+}
+
+.service-requirements {
+    animation-delay: 0.3s;
+    grid-area: requirements;
+}
+
+/* Barra superior colorida como en ¿Por qué elegirnos? */
+.service-features::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4A90E2, #3498db);
+    transition: all 0.3s ease;
+}
+
+.service-benefits::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #2ECC71, #27AE60);
+    transition: all 0.3s ease;
+}
+
+.service-requirements::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #F39C12, #E67E22);
+    transition: all 0.3s ease;
+}
+
+/* Efectos hover similares a ¿Por qué elegirnos? */
+.service-features:hover, .service-benefits:hover, .service-requirements:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    border-color: #4A90E2;
+}
+
+    .service-features:hover::before, .service-benefits:hover::before, .service-requirements:hover::before {
+        height: 100%;
+        opacity: 0.05;
+    }
+
+
+/* Títulos con mejor styling */
+.service-features h3, .service-benefits h3, .service-requirements h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+    .service-features h3::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #4A90E2, #3498db);
+        border-radius: 2px;
+    }
+
+    .service-benefits h3::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #2ECC71, #27AE60);
+        border-radius: 2px;
+    }
+
+    .service-requirements h3::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #F39C12, #E67E22);
+        border-radius: 2px;
+    }
+
+.service-features ul, .service-benefits ul, .service-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    columns: 2;
+    column-gap: 20px;
+    column-fill: balance
+}
+
+.service-features li, .service-benefits li, .service-requirements li {
+    padding: 12px 0;
+    color: #555;
+    position: relative;
+    padding-left: 30px;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    transition: all 0.3s ease;
+    break-inside: avoid;
+    margin-bottom: 8px;
+}
+
+    .service-features li:hover, .service-benefits li:hover, .service-requirements li:hover {
+        color: #333;
+        padding-left: 35px;
+    }
+
+    .service-features li:before, .service-benefits li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        top: 12px;
+        color: #28a745;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .service-requirements li:before {
+        content: "📄";
+        position: absolute;
+        left: 0;
+        top: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .service-features li:hover:before, .service-benefits li:hover:before {
+        transform: scale(1.2);
+        color: #20c997;
+    }
+
+    .service-requirements li:hover:before {
+        transform: scale(1.2);
+    }
+
+/* Animación fadeInUp */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* FAQ Section */
+.faq-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+    .faq-section h3 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+.faq-item {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+
+.faq-question {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 15px 0;
+    font-size: 1rem;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+}
+
+    .faq-question:hover {
+        color: #667eea;
+    }
+
+.faq-arrow {
+    transition: transform 0.3s ease;
+}
+
+.faq-answer {
+    padding: 0 0 15px 0;
+    color: #666;
+    line-height: 1.6;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Sección de confianza */
+.trust-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.guarantee, .testimonial {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+    .guarantee h4, .testimonial h4 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+
+    .guarantee p, .testimonial p {
+        color: #666;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+blockquote {
+    margin: 0;
+    font-style: italic;
+}
+
+cite {
+    font-weight: bold;
+    color: #333;
+    font-style: normal;
+}
+
+/* Acciones mejoradas */
+.service-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn-contact, .btn-quote, .btn-whatsapp, .btn-download {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 160px;
+}
+
+.btn-contact {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-quote {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+    color: white;
+}
+
+.btn-download {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: white;
+}
+
+    .btn-contact:hover, .btn-quote:hover, .btn-whatsapp:hover, .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 20px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .modal-header h3 {
+        color: #333;
+        margin: 0;
+    }
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+}
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+.modal-body {
+    padding: 20px;
+}
+
+    .modal-body p {
+        margin-bottom: 10px;
+        color: #666;
+    }
+
+.modal-footer {
+    padding: 0 20px 20px;
+    text-align: right;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+
+/* FOOTER - PEGADO COMPLETAMENTE AL FONDO */
+.footer {
+    background-color: #1E3A5F;
+    color: white;
+    width: 100vw;
+    margin-top: 80px;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    margin-bottom: -50px !important; /* Margen negativo para eliminar espacio */
+    padding: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-bottom {
+    padding: 30px 20px 30px 20px; /* Padding específico */
+    margin: 0 !important;
+    text-align: center;
+    color: #b8c8d8;
+    font-size: 0.9rem;
+    background-color: #1E3A5F;
+    width: 100%;
+    display: block;
+}
+
+/* =================================== */
+/* MEDIA QUERIES PARA RESPONSIVIDAD */
+/* =================================== */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1199px) {
+    .service-info-container {
+        padding: 30px 15px;
+        min-height: 400px;
+    }
+
+    .service-details-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+
+    .service-meta {
+        gap: 15px;
+    }
+
+    .servicios-buttons {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .service-card {
+        min-width: 140px;
+        margin: 5px;
+    }
+
+    .stats-section {
+        gap: 30px;
+    }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+    .main-title {
+        font-size: 2rem;
+    }
+
+    .description {
+        font-size: 1rem;
+        padding: 0 15px;
+    }
+
+    .hero-section {
+        margin-bottom: 40px;
+        padding: 0 15px;
+    }
+
+    .stats-section {
+        gap: 20px;
+        padding: 0 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-item {
+        min-width: 100px;
+        padding: 15px;
+    }
+
+    .stat-number {
+        font-size: 1.8rem;
+    }
+
+    .servicios-buttons {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .service-card {
+        min-width: 100%;
+        margin: 0;
+        padding: 15px;
+        justify-content: flex-start;
+    }
+
+    .service-name {
+        font-size: 1rem;
+    }
+
+    .service-icon img.icon-img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .service-info-container {
+        margin-top: 30px;
+        padding: 20px 15px;
+        min-height: 300px;
+    }
+
+    .service-title {
+        font-size: 1.8rem;
+    }
+
+    .service-meta {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+
+        .service-meta span {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+    .service-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin: 25px 0;
+    }
+
+    .service-features, .service-benefits, .service-requirements {
+        padding: 25px 20px;
+    }
+
+        .service-features h3, .service-benefits h3, .service-requirements h3 {
+            font-size: 1.2rem;
+        }
+
+        .service-features ul, .service-benefits ul, .service-requirements ul {
+            columns: 1;
+        }
+
+        .service-features li, .service-benefits li, .service-requirements li {
+            font-size: 0.9rem;
+            padding: 10px 0;
+            padding-left: 25px;
+        }
+
+    .trust-section {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .faq-section {
+        padding: 20px;
+    }
+
+    .service-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-contact, .btn-quote, .btn-whatsapp, .btn-download {
+        width: 100%;
+        max-width: 250px;
+        min-width: auto;
+    }
+
+    .initial-state {
+        padding: 40px 15px;
+    }
+
+        .initial-state h3 {
+            font-size: 1.3rem;
+        }
+
+    .modal-content {
+        width: 95%;
+        margin: 0 10px;
+    }
+
+    .footer {
+        margin-top: 50px;
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 575px) {
+    .main-title {
+        font-size: 1.8rem;
+    }
+
+    .description {
+        font-size: 0.95rem;
+    }
+
+    .hero-section {
+        margin-bottom: 30px;
+    }
+
+    .stats-section {
+        gap: 15px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-item {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .servicios-buttons {
+        padding: 10px;
+    }
+
+    .service-card {
+        padding: 12px;
+    }
+
+    .service-name {
+        font-size: 0.9rem;
+    }
+
+    .service-icon img.icon-img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .service-info-container {
+        padding: 15px 10px;
+    }
+
+    .service-title {
+        font-size: 1.5rem;
+    }
+
+    .service-details-grid {
+        margin: 20px 0;
+        gap: 15px;
+    }
+
+    .service-features, .service-benefits, .service-requirements {
+        padding: 20px 15px;
+    }
+
+        .service-features h3, .service-benefits h3, .service-requirements h3 {
+            font-size: 1.1rem;
+        }
+
+        .service-features li, .service-benefits li, .service-requirements li {
+            font-size: 0.85rem;
+            padding: 8px 0;
+            padding-left: 22px;
+        }
+
+    .faq-section {
+        padding: 15px;
+    }
+
+    .faq-question {
+        font-size: 0.9rem;
+    }
+
+    .guarantee, .testimonial {
+        padding: 15px;
+    }
+
+        .guarantee h4, .testimonial h4 {
+            font-size: 1rem;
+        }
+
+        .guarantee p, .testimonial p {
+            font-size: 0.9rem;
+        }
+
+    .btn-contact, .btn-quote, .btn-whatsapp, .btn-download {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
+
+    .initial-state {
+        padding: 30px 10px;
+    }
+
+        .initial-state h3 {
+            font-size: 1.2rem;
+        }
+
+        .initial-state p {
+            font-size: 0.9rem;
+        }
+
+    .footer-bottom {
+        padding: 20px 15px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Pantallas muy pequeñas (menor a 400px) */
+@media (max-width: 399px) {
+    .main-title {
+        font-size: 1.6rem;
+    }
+
+    .service-card {
+        padding: 10px;
+        min-height: 60px;
+    }
+
+    .service-name {
+        font-size: 0.8rem;
+    }
+
+    .service-icon img.icon-img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .service-title {
+        font-size: 1.3rem;
+    }
+
+    .service-features h3, .service-benefits h3, .service-requirements h3 {
+        font-size: 1rem;
+    }
+
+    .service-features li, .service-benefits li, .service-requirements li {
+        font-size: 0.8rem;
+    }
+}
+
+/* Landscape móviles */
+@media (max-width: 767px) and (orientation: landscape) {
+    .stats-section {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .stat-item {
+        width: auto;
+        min-width: 120px;
+    }
+
+    /* Botones de servicios en landscape móvil */
+    .servicios-buttons {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .service-card {
+        padding: 12px 8px;
+        min-height: 55px;
+    }
+
+    .service-name {
+        font-size: 0.8rem;
+    }
+
+    /* Grid de detalles en landscape */
+    .service-details-grid {
+        grid-template-areas: "features benefits" "requirements requirements";
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .service-requirements {
+        grid-area: requirements;
+    }
+
+    .service-actions {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+
+    .btn-contact, .btn-quote, .btn-whatsapp, .btn-download {
+        padding: 10px 8px;
+        font-size: 0.75rem;
+        min-width: auto;
+    }
+}
+
+/* Media query específica para tablets en portrait con muchos botones de servicio */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .servicios-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .service-card {
+        width: 100%;
+        padding: 16px 12px;
+        justify-content: center;
+    }
+
+    /* Grid en columna única para tablets también */
+    .service-details-grid {
+        grid-template-areas:
+            "features"
+            "benefits"
+            "requirements";
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .service-features, .service-benefits, .service-requirements {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}

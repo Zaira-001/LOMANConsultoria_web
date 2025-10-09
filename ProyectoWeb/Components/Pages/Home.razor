@@ -1,0 +1,210 @@
+﻿@page "/"
+
+<PageTitle>Consultoría Integral SC</PageTitle>
+
+
+<link href="css/home.css" rel="stylesheet" />
+
+
+
+<div class="main-content">
+    <div class="hero-section">
+        <!-- Capa de fondo con video/imagen -->
+        <div class="hero-background-layer">
+            <!-- Opción 1: Video de fondo -->
+            <video autoplay muted loop class="background-video">
+                <source src="video.mp4" type="video/mp4">
+                <!-- Fallback a imagen si no carga el video -->
+            </video>
+            <div class="video-gradient"></div>
+
+            <!-- Opción 2: Solo imagen (comentar el video si usas esta) -->
+            <!-- <img src="oficina-fondo.jpg" alt="Fondo oficina" class="background-image"> -->
+            <!-- Overlay para mejorar legibilidad del texto -->
+            <div class="hero-overlay"></div>
+        </div>
+
+        <!-- Capa de contenido (texto por encima) -->
+        <div class="hero-content-layer">
+            <p class="intro-text">
+                Consultoría con visión a la cultura de servicio
+            </p>
+            <h1 class="main-title">TRANSFORMANDO</h1>
+            <h2 class="main-subtitle">TU NEGOCIO</h2>
+            <p class="description">
+                Estamos comprometidos a brindar los mejores servicios para hacer crecer su negocio con soluciones integrales en consultoría empresarial.
+            </p>
+
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <div class="stat-card">
+            <img src="Iconos/personas.png" alt="Clientes" class="stat-icon" />
+            <div class="stat-number" data-target="500">0</div>
+            <div class="stat-label">Clientes satisfechos</div>
+        </div>
+        <div class="stat-card">
+            <img src="Iconos/flecha.png" alt="Experiencia" class="stat-icon" />
+            <div class="stat-number" data-target="15">0</div>
+            <div class="stat-label">Años de experiencia</div>
+        </div>
+        <div class="stat-card">
+            <img src="Iconos/hoja.png" alt="Proyectos" class="stat-icon" />
+            <div class="stat-number" data-target="1000">0</div>
+            <div class="stat-label">Proyectos<br>completados</div>
+        </div>
+        <div class="stat-card">
+            <img src="Iconos/correcto.png" alt="Satisfaccion" class="stat-icon" />
+            <div class="stat-number" data-target="100">0</div>
+            <div class="stat-label">Satisfacción</div>
+        </div>
+    </div>
+    </div>
+
+<section class="essence-section">
+    <h3 class="section-title">Visítanos</h3>
+
+    <!-- Contenedor flexible para columnas -->
+    <div class="content-container">
+
+        <!-- Carrusel de imágenes -->
+        <div class="carousel-container">
+            <h4 class="carousel-title">Conoce mas acerca de nuestros servicios</h4>
+
+            <div class="carousel-wrapper">
+                <div class="carousel-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">5</span>
+                </div>
+
+                <div class="carousel-track" id="carouselTrack">
+                    <div class="carousel-slide">
+                        <img src="consultoria.jpg" alt="Oficina moderna">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="herramientas.jpg" alt="Sala de reuniones">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="negocios.jpg" alt="Área de trabajo">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="porque.jpg" alt="Recepción">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="registrar.jpg" alt="Edificio corporativo">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="sabias.jpg" alt="Edificio corporativo">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="servicios.jpg" alt="Edificio corporativo">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+
+                    <div class="carousel-slide">
+                        <img src="sociedad.jpg" alt="Edificio corporativo">
+                        <div class="slide-overlay">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de navegación -->
+                <button class="carousel-btn prev" onclick="previousSlide()">‹</button>
+                <button class="carousel-btn next" onclick="nextSlide()">›</button>
+            </div>
+
+            <!-- Indicadores -->
+            <div class="carousel-indicators" id="indicators"></div>
+
+            <!-- Botón de acción -->
+            <div style="text-align: center; margin-top: 20px; visibility:collapse;">
+                <a href="#" class="visit-btn" ></a>
+            </div>
+        </div>
+
+        <!-- Contenedor del mapa -->
+        <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.628612268319!2d-99.17163362532634!3d19.42844614081455!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1ff4a8a9c44eb%3A0x5699dae37d869efb!2sC.%20R%C3%ADo%20Lerma%2C%20Cuauht%C3%A9moc%2C%2006500%20Ciudad%20de%20M%C3%A9xico%2C%20CDMX!5e0!3m2!1ses!2smx!4v1756429413643!5m2!1ses!2smx"
+                    width="100%"
+                    height="450"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+
+        </div>
+</section>
+
+
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-content">
+        <!-- Primera columna: Logo y descripción -->
+        <div class="footer-section">
+            <div class="footer-logo">
+                <img src="Iconos/logo.png" alt="Consultoría Integral" />
+            </div>
+            <p class="footer-description">
+                Transformando negocios con consultoría integral y visión a la cultura de servicio
+            </p>
+        </div>
+
+        <!-- Segunda columna: Servicios -->
+        <div class="footer-section">
+            <h3>Servicios</h3>
+            <div class="footer-services">
+                <span>Servicios Administrativos</span>
+                <span>Servicios Fiscales</span>
+                <span>Servicios Financieros</span>
+                <span>Facturación 4.0</span>
+            </div>
+        </div>
+
+        <!-- Tercera columna: Contacto -->
+        <div class="footer-section">
+            <h3>Contacto</h3>
+            <div class="footer-contact">
+                <span>56-5964-4304</span>
+                <span>lomanconsultoria2025@gmail.com</span>
+            </div>
+        </div>
+
+        <!-- Cuarta columna: Horarios -->
+        <div class="footer-section">
+            <h3>Horarios</h3>
+            <div class="footer-hours">
+                <span>Lunes a viernes: 9:00 am - 6:00 pm</span>
+                <span>Sábados: 9:00 am - 2:00 pm</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Línea inferior del copyright -->
+    <div class="footer-bottom">
+        © 2025 Consultoría Integral SC Todos los derechos reservados.
+    </div>
+</footer>
+
+<script src="js/home.js"></script>

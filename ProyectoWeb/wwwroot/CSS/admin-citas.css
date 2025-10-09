@@ -1,0 +1,997 @@
+﻿/* Variables con paleta en tonos azules */
+:root {
+    /* Paleta general en tonos azules */
+    --blue-light: #93c5fd; /* Azul claro */
+    --blue: #3b82f6; /* Azul principal */
+    --blue-dark: #1d4ed8; /* Azul fuerte */
+    --cyan: #06b6d4; /* Azul cian */
+    --teal: #0ea5e9; /* Azul teal */
+    --navy: #1e3a8a; /* Azul navy */
+    --indigo: #4338ca; /* Azul índigo */
+    --black: #000000; 
+    --blanco: #ffffff;
+    /* Fondos y textos */
+    --bg: #f0f9ff;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #cbd5e1;
+    /* 🎨 Colores especiales para modales */
+    --modal-bg: #1e293b; /* Azul grisáceo oscuro */
+    --modal-surface: #334155; /* Fondo del modal */
+    --modal-text: #f1f5f9; /* Texto claro */
+    --modal-border: #475569; /* Bordes del modal */
+    /*Botones*/
+    --verde: #008f39;
+    --rojo: #FF0000;
+}
+
+
+/* Reset box-sizing */
+* {
+    box-sizing: border-box;
+}
+
+.admin-citas-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+    transform: translateY(-70px);
+    background: var(--bg);
+}
+
+/* Header con gradiente azul y animación */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 50%, var(--teal) 100%);
+    background-size: 200% 200%;
+    border-radius: 20px;
+    color: white;
+    box-shadow: 0 10px 40px rgba(59,130,246,0.22);
+    position: relative;
+    overflow: hidden;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.header-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.18), transparent);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+}
+
+.header-section::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.12), transparent);
+    border-radius: 50%;
+    animation: float 8s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-20px) scale(1.1);
+    }
+}
+
+.header-section h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -0.03em;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.header-section p {
+    margin: 8px 0 0 0;
+    opacity: 0.95;
+    font-size: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Botones con efectos hover - tonos azules */
+.nav-btn, .view-btn {
+    padding: 12px 24px;
+    border: 2px solid rgba(255,255,255,0.18);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.95);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    backdrop-filter: blur(10px);
+}
+
+    .nav-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(59,130,246,0.28);
+        background: white;
+        border-color: var(--blue);
+    }
+
+    .nav-btn:active {
+        transform: translateY(-1px) scale(1.02);
+    }
+
+/* Loading con spinner en azules */
+.loading {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.spinner {
+    border: 4px solid transparent;
+    border-top: 4px solid var(--blue);
+    border-right: 4px solid var(--teal);
+    border-bottom: 4px solid var(--blue-dark);
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    margin: 0 auto 24px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Stats cards con acentos azules */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: var(--surface);
+    padding: 28px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--blue-dark), var(--blue), var(--teal));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(59,130,246,0.08), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 35px rgba(59,130,246,0.12);
+        border-color: var(--blue-dark);
+    }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+    .stat-card:nth-child(1):hover {
+        border-color: var(--blue-dark);
+    }
+
+    .stat-card:nth-child(2):hover {
+        border-color: var(--teal);
+    }
+
+    .stat-card:nth-child(3):hover {
+        border-color: var(--cyan);
+    }
+
+    .stat-card:nth-child(4):hover {
+        border-color: var(--blue);
+    }
+
+.stat-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-number {
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--black), var(--blanco));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    animation: numberPulse 2s ease-in-out infinite;
+}
+
+@keyframes numberPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Controles del calendario con estilo azul */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 28px;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+    gap: 16px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+    .calendar-controls:hover {
+        border-color: var(--blue);
+        box-shadow: 0 8px 25px rgba(59,130,246,0.08);
+    }
+
+.month-navigation {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+    .month-navigation .nav-btn {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+        color: white;
+        border: none;
+    }
+
+        .month-navigation .nav-btn:hover {
+            background: linear-gradient(135deg, var(--navy), var(--blue-dark));
+        }
+
+.current-month {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    min-width: 220px;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.view-toggles {
+    display: flex;
+    gap: 8px;
+    background: var(--bg);
+    padding: 6px;
+    border-radius: 14px;
+}
+
+.view-btn {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    transition: all 0.3s ease;
+}
+
+    .view-btn.active {
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+        color: white;
+        box-shadow: 0 4px 15px rgba(59,130,246,0.18);
+    }
+
+    .view-btn:hover:not(.active) {
+        color: var(--blue);
+        transform: scale(1.05);
+    }
+
+/* Calendario con estilo azul */
+.calendar-grid {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 2px solid var(--border);
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--bg);
+}
+
+    .calendar-header > div {
+        text-align: center;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+.calendar-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+/* Días del calendario */
+.calendar-day {
+    min-height: 115px;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+    .calendar-day::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--blue), var(--teal));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+    }
+
+    .calendar-day:hover {
+        transform: translateY(-4px) scale(1.02);
+        border-color: var(--blue);
+        box-shadow: 0 8px 25px rgba(59,130,246,0.10);
+    }
+
+        .calendar-day:hover::before {
+            opacity: 0.03;
+        }
+
+    .calendar-day.other-month {
+        background: var(--bg);
+        opacity: 0.6;
+    }
+
+    .calendar-day.today {
+        border-color: var(--blue);
+        background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(14,165,233,0.04));
+        animation: todayPulse 2s ease-in-out infinite;
+    }
+
+@keyframes todayPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(59,130,246,0.35);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(59,130,246,0);
+    }
+}
+
+.day-number {
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.calendar-day.today .day-number {
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Citas con gradientes azules */
+.appointment-item {
+    font-size: 11px;
+    padding: 8px 10px;
+    margin: 4px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 4px solid;
+    position: relative;
+    z-index: 1;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.appointment-item:hover {
+    transform: translateX(6px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.10);
+}
+
+/* Estados en azules */
+.appointment-item.pendiente {
+    background: linear-gradient(135deg, rgba(147,197,253,0.35), rgba(59,130,246,0.12));
+    border-left-color: var(--blue-light);
+    color: var(--navy);
+}
+
+.appointment-item.confirmada {
+    background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(14,165,233,0.12));
+    border-left-color: var(--cyan);
+    color: var(--navy);
+}
+
+.appointment-item.completada {
+    background: linear-gradient(135deg, rgba(219,234,254,1), rgba(191,219,254,1));
+    border-left-color: var(--blue);
+    color: var(--blue-dark);
+}
+
+.appointment-item.cancelada {
+    background: linear-gradient(135deg, var(--navy), var(--indigo));
+    border-left-color: var(--indigo);
+    color: white;
+}
+
+.appointment-time {
+    font-weight: 800;
+    margin-bottom: 3px;
+}
+
+.appointment-client {
+    font-size: 10px;
+    opacity: 0.85;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Lista con cards animados */
+.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.appointment-card {
+    display: flex;
+    gap: 24px;
+    background: var(--surface);
+    padding: 24px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: cardFadeIn 0.5s ease;
+}
+
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.appointment-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 35px rgba(59,130,246,0.08);
+    border-color: var(--blue);
+}
+
+.appointment-date-badge {
+    min-width: 80px;
+    text-align: center;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(59,130,246,0.18);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: badgePulse 3s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.badge-day {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.badge-month {
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0.95;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.appointment-details {
+    flex: 1;
+}
+
+    .appointment-details h3 {
+        margin: 0 0 14px 0;
+        color: var(--text);
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+.appointment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+    .meta-item:hover {
+        color: var(--blue);
+        transform: scale(1.05);
+    }
+
+/* Badges en tonos azules */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    animation: badgeBounce 0.5s ease;
+}
+
+@keyframes badgeBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.status-pendiente {
+    background: linear-gradient(135deg, var(--blue-light), rgba(59,130,246,0.18));
+    color: var(--navy);
+}
+
+.status-confirmada {
+    background: linear-gradient(135deg, var(--cyan), var(--teal));
+    color: var(--navy);
+}
+
+.status-completada {
+    background: linear-gradient(135deg, var(--blue-light), var(--blue));
+    color: var(--blue-dark);
+}
+
+.status-cancelada {
+    background: linear-gradient(135deg, var(--navy), var(--indigo));
+    color: white;
+}
+
+/* Botones de acción con efectos (azules) */
+.appointment-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+}
+
+.action-btn {
+    padding: 11px 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.18);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .action-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .action-btn:active {
+        transform: translateY(-1px) scale(1.02);
+    }
+
+.btn-view {
+    background: linear-gradient(135deg, var(--blue-dark), var(--navy));
+    color: white;
+}
+
+.btn-confirm {
+    background: linear-gradient(135deg, var(--verde), var(--teal));
+    color: white;
+}
+
+.btn-cancel {
+    background: linear-gradient(135deg, var(--rojo), var(--indigo));
+    color: white;
+}
+
+/* Modal con entrada animada (sombras azules) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6); /* Overlay oscuro */
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+
+    to {
+        opacity: 1;
+        backdrop-filter: blur(8px);
+    }
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 24px;
+    max-width: 700px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(59,130,246,0.12);
+    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 32px;
+    border-bottom: 3px solid var(--bg);
+    background: linear-gradient(135deg, rgba(59,130,246,0.04), rgba(14,165,233,0.03));
+}
+
+    .modal-header h2 {
+        margin: 0;
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 24px;
+        font-weight: 900;
+    }
+
+.close-modal {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text-light);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .close-modal:hover {
+        background: linear-gradient(135deg, var(--blue-dark), var(--navy));
+        border-color: var(--blue-dark);
+        color: white;
+        transform: rotate(90deg) scale(1.1);
+    }
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 20px;
+    padding: 18px 32px;
+    border-bottom: 2px solid var(--bg);
+    transition: all 0.2s ease;
+}
+
+    .detail-row:hover {
+        background: var(--bg);
+    }
+
+.detail-label {
+    font-weight: 800;
+    color: var(--text-light);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.detail-value {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+    .detail-value a {
+        color: var(--blue);
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+        .detail-value a:hover {
+            color: var(--blue-dark);
+            text-decoration: underline;
+        }
+
+.notes-section {
+    padding: 24px 32px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.02), rgba(14,165,233,0.02));
+}
+
+    .notes-section h3 {
+        margin: 0 0 14px 0;
+        color: var(--text);
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+.notes-textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    transition: all 0.3s ease;
+    background: var(--surface);
+}
+
+    .notes-textarea:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
+    }
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    padding: 24px 32px;
+    border-top: 3px solid var(--bg);
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, rgba(59,130,246,0.02), rgba(14,165,233,0.02));
+}
+
+    .modal-actions .action-btn {
+        flex: 1;
+        min-width: 130px;
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+        padding: 32px 24px;
+    }
+
+        .header-section::before, .header-section::after {
+            display: none;
+        }
+
+    .calendar-controls {
+        flex-direction: column;
+    }
+
+    .appointment-card {
+        flex-direction: column;
+    }
+
+    .appointment-actions {
+        flex-direction: row;
+    }
+
+    .calendar-day {
+        min-height: 90px;
+        padding: 8px;
+    }
+
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Scrollbar en azules */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+    border-radius: 4px;
+}
+
+    .modal-content::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    }

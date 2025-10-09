@@ -1,0 +1,31 @@
+﻿@inherits LayoutComponentBase
+@using Radzen.Blazor
+@using Radzen
+@inject NavigationManager Navigation
+
+<div class="page">
+    <header class="top-navbar">
+        @if (!IsSpecialPage)
+        {
+            <NavMenu />
+        }
+    </header>
+
+
+    <main class="main-content">
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool IsSpecialPage =>
+        Navigation.Uri.Contains("/login") || Navigation.Uri.Contains("/admin");
+}

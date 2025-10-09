@@ -1,0 +1,360 @@
+﻿@page "/admin"
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<link href="css/admin.css" rel="stylesheet" />
+<link href="css/administradores.css" rel="stylesheet" />
+
+<div class="admin-container">
+    <!-- Header -->
+    <div class="admin-header">
+        <div class="header-title">
+            <h1 style="margin: 0;">🏢 Panel de Administración</h1>
+            <p style="margin: 5px 0 0 0;">Gestiona las oportunidades laborales de Consultoría Integral SC</p>
+            <span id="adminWelcome">Bienvenido, Administrador</span>
+        </div>
+
+        <!-- Admin info and logout -->
+        <div class="admin-info">
+            <div class="admin-actions-header">
+                <button type="button" class="btn-administradores" onclick="showAdminManager">
+                    👥 Administradores
+                </button>
+                <!-- En Admin.razor, reemplaza el botón actual con este: -->
+                <button type="button"
+                        class="btn-cita"
+                        onclick="navigateToAdminCitas()">
+                    📅 Citas Agendadas
+                </button>
+                <button type="button"
+                        class="btn-cotizacion"
+                        onclick="NavigateToCotizaciones()">
+                    💼 Cotizaciones
+                </button>
+                <button type="button" class="btn-logout" onclick="logout()">
+                    🚪 Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Cargando...</p>
+    </div>
+
+    <!-- Error message -->
+    <div class="error-message" id="errorMessage" style="display: none;">
+        <p id="errorText"></p>
+        <button type="button" onclick="hideError()">Cerrar</button>
+    </div>
+
+    <!-- Success message -->
+    <div class="success-message" id="successMessage" style="display: none;">
+        <p id="successText"></p>
+    </div>
+
+    <!-- Acciones principales -->
+    <div class="admin-actions">
+        <button type="button" class="btn-add-job" onclick="openJobModal()">
+            Agregar Nueva Oportunidad
+        </button>
+        
+        <button type="button" class="btn-refresh" onclick="loadJobs()">
+            Actualizar Lista
+        </button>
+        <button type="button" class="btn-stats" onclick="showStats()">
+            Ver Estadísticas
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters">
+        <select id="filterLevel" onchange="filterJobs()">
+            <option value="">Todos los niveles</option>
+            <option value="Practicante">Practicante</option>
+            <option value="Nivel Junior">Nivel Junior</option>
+            <option value="Especialista">Especialista</option>
+            <option value="Nivel Senior">Nivel Senior</option>
+            <option value="Nivel Ejecutivo">Nivel Ejecutivo</option>
+            <option value="Gerencial">Gerencial</option>
+        </select>
+
+        <select id="filterStatus" onchange="filterJobs()">
+            <option value="">Todos los estados</option>
+            <option value="active">Solo Activos</option>
+            <option value="inactive">Solo Inactivos</option>
+        </select>
+    </div>
+
+    <!-- Stats panel -->
+    <div class="stats-panel" id="statsPanel" style="display: none;">
+        <h3>Estadísticas de Empleos</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="totalJobs">0</div>
+                <div class="stat-label">Total Empleos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="activeJobs">0</div>
+                <div class="stat-label">Activos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="inactiveJobs">0</div>
+                <div class="stat-label">Inactivos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="recentJobs">0</div>
+                <div class="stat-label">Agregados esta semana</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de trabajos -->
+    <div class="jobs-grid" id="jobsGrid">
+        <!-- Los trabajos se cargan dinámicamente -->
+    </div>
+
+    <!-- Instrucciones -->
+    <div class="instructions-card">
+        <h3>Instrucciones de uso:</h3>
+        <ul>
+            <li>Haz clic en "Agregar Nueva Oportunidad" para crear un nuevo puesto</li>
+            <li>Usa "Ver Citas Agendadas" para gestionar las consultas de clientes</li>
+            <li>Usa "Editar" para modificar los detalles de un trabajo existente</li>
+            <li>El botón "Activar/Desactivar" controla si se muestra en la web pública</li>
+            <li>Los trabajos inactivos aparecen atenuados y no se muestran a los visitantes</li>
+            <li>Usa los filtros para encontrar empleos específicos</li>
+            <li>Las estadísticas te muestran un resumen de la actividad</li>
+            <li>En "Administradores" puedes gestionar otros usuarios del sistema</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Modal para agregar/editar trabajo -->
+<div class="modal-overlay" id="jobModal">
+    <div class="modal">
+        <h2 id="modalTitle">Agregar Nueva Oportunidad</h2>
+        <form id="jobForm">
+            <div class="form-group">
+                <label for="jobTitle">Título del Puesto *</label>
+                <input type="text" id="jobTitle" required placeholder="Ej: Contador Público">
+            </div>
+
+            <div class="form-group">
+                <label for="jobIcon">Emoji del Puesto *</label>
+                <div class="emoji-picker-container">
+                    <div class="emoji-input-wrapper">
+                        <input type="text" id="jobIcon" class="emoji-input"
+                               required placeholder="Selecciona un emoji" maxlength="10" readonly>
+                    </div>
+                </div>
+                <small>Haz clic en el campo para abrir el selector</small>
+            </div>
+
+            <div class="form-group">
+                <label for="jobLevel">Nivel del Puesto *</label>
+                <select id="jobLevel" required>
+                    <option value="">Seleccionar nivel</option>
+                    <option value="Practicante">Practicante</option>
+                    <option value="Nivel Junior">Nivel Junior</option>
+                    <option value="Especialista">Especialista</option>
+                    <option value="Nivel Senior">Nivel Senior</option>
+                    <option value="Nivel Ejecutivo">Nivel Ejecutivo</option>
+                    <option value="Gerencial">Gerencial</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="jobArea">Área de Trabajo</label>
+                <input type="text" id="jobArea" placeholder="Ej: Consultoría Fiscal">
+            </div>
+
+            <div class="form-group">
+                <label for="jobModality">Modalidad de Trabajo</label>
+                <select id="jobModality">
+                    <option value="">Sin especificar</option>
+                    <option value="Presencial">Presencial</option>
+                    <option value="Remoto">Remoto</option>
+                    <option value="Híbrido">Híbrido</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="jobSalary">Rango Salarial</label>
+                <input type="text" id="jobSalary" placeholder="Ej: $15,000 - $20,000 MXN">
+            </div>
+
+            <div class="form-group">
+                <label for="jobDescription">Descripción del Puesto *</label>
+                <textarea id="jobDescription" required placeholder="Describe las responsabilidades principales del puesto..." rows="4"></textarea>
+                <small>Mínimo 20 caracteres, máximo 1000</small>
+            </div>
+
+            <div class="form-group">
+                <label>Requisitos Principales</label>
+                <div id="requirementsContainer">
+                    <div class="requirements-input">
+                        <input type="text" placeholder="Ej: Licenciatura en Contaduría">
+                        <button type="button" class="btn-add-requirement" onclick="addRequirement()">+</button>
+                    </div>
+                </div>
+                <small>Agrega los requisitos más importantes para el puesto</small>
+            </div>
+
+            <div class="form-group">
+                <label for="jobStatus">Estado</label>
+                <select id="jobStatus">
+                    <option value="true">Activo (visible en web)</option>
+                    <option value="false">Inactivo (oculto)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeJobModal()">Cancelar</button>
+                <button type="submit" class="btn-save">Guardar Oportunidad</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para gestión de administradores -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal large-modal">
+        <div class="modal-header" style="border-bottom: 2px solid #667eea; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #333;">Gestión de Administradores</h2>
+        </div>
+
+        <!-- Contenedor donde se cargará la lista o formularios -->
+        <div class="admin-management-section" id="adminsListContainer">
+            <div style="text-align: center; padding: 40px;">
+                <div class="spinner" style="margin: 0 auto 20px; width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p>Cargando administradores...</p>
+            </div>
+        </div>
+
+        <div class="modal-actions" style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+            <button type="button" class="btn-cancel" onclick="closeAllModals()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay confirm-overlay" id="confirmModal">
+    <div class="confirm-modal-enhanced">
+        <div class="confirm-modal-header" id="confirmModalHeader">
+            <div class="confirm-warning-icon" id="confirmIcon">⚠️</div>
+            <h3 id="confirmTitle">Confirmar acción</h3>
+        </div>
+        <div class="confirm-modal-content">
+            <p id="confirmMessage">¿Estás seguro de que quieres realizar esta acción?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="confirm-modal-btn confirm-btn-cancel" onclick="closeAllModals()">
+                    Cancelar
+                </button>
+                <button type="button" class="confirm-modal-btn confirm-btn-confirm" id="confirmButton" onclick="executeConfirmedAction()">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool scriptLoaded = false;
+
+    private async Task NavigateToCitas()
+    {
+        try
+        {
+            Console.WriteLine("🔄 Navegando a /admin/citas");
+
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (window.adminSession && !localStorage.getItem('adminSession')) {
+                    localStorage.setItem('adminSession', JSON.stringify(window.adminSession));
+                }
+            ");
+
+            await Task.Delay(50);
+            Navigation.NavigateTo("/admin/citas");
+
+            Console.WriteLine("✅ Navegación completada");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error navegando: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "Error al navegar. Intenta recargar la página.");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !scriptLoaded)
+        {
+            try
+            {
+                scriptLoaded = true;
+                Console.WriteLine("Admin.razor inicializando...");
+
+                // Cargar admin.js principal
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (!window.adminFixedScriptLoaded) {
+                        window.adminFixedScriptLoaded = true;
+                        console.log('Cargando admin.js...');
+
+                        const script = document.createElement('script');
+                        script.src = 'JS/admin.js';
+                        script.async = true;
+
+                        script.onload = function() {
+                            console.log('✅ admin.js cargado exitosamente');
+                        };
+
+                        script.onerror = function(e) {
+                            console.error('❌ Error cargando admin.js:', e);
+                            const errorDiv = document.getElementById('errorMessage');
+                            const errorText = document.getElementById('errorText');
+                            if (errorDiv && errorText) {
+                                errorText.textContent = 'Error cargando scripts. Recarga la página.';
+                                errorDiv.style.display = 'flex';
+                            }
+                        };
+
+                        document.head.appendChild(script);
+                    }
+                ");
+
+                // Cargar admin-users.js para gestión de administradores
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (!window.adminUsersScriptLoaded) {
+                        window.adminUsersScriptLoaded = true;
+                        console.log('Cargando admin-users.js...');
+
+                        const scriptUsers = document.createElement('script');
+                        scriptUsers.src = 'JS/admin-users.js';
+                        scriptUsers.async = true;
+
+                        scriptUsers.onload = function() {
+                            console.log('✅ admin-users.js cargado exitosamente');
+                        };
+
+                        scriptUsers.onerror = function(e) {
+                            console.error('❌ Error cargando admin-users.js:', e);
+                        };
+
+                        document.head.appendChild(scriptUsers);
+                    }
+                ");
+
+                Console.WriteLine("Scripts de admin configurados");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en OnAfterRenderAsync: {ex.Message}");
+            }
+        }
+    }
+}

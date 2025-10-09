@@ -1,0 +1,1138 @@
+﻿@page "/servicios"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<link href="css/servicios.css" rel="stylesheet" />
+<link href="css/servicios-modals.css" rel="stylesheet" />
+
+<div class="nosotros-container">
+    <header class="hero-section">
+        <h1 class="main-title">NUESTROS SERVICIOS INTEGRALES</h1>
+        <p class="description">
+            Ofrecemos soluciones completas para el crecimiento y desarrollo de tu empresa.
+        </p>
+
+        <!-- Botones de servicios -->
+        <div class="servicios-buttons">
+            <div class="service-card @(selectedService == "administrativos" ? "active" : "")" @onclick="@(() => SelectService("administrativos"))">
+                <div class="service-icon">
+                    <img src="Iconos/edificios.png" alt="Administrativos" class="icon-img">
+                </div>
+                <span class="service-name">Trámites Administrativos</span>
+            </div>
+
+            <div class="service-card @(selectedService == "fiscales" ? "active" : "")" @onclick="@(() => SelectService("fiscales"))">
+                <div class="service-icon">
+                    <img src="Iconos/fiscal.png" alt="Fiscales" class="icon-img">
+                </div>
+                <span class="service-name">Servicios Fiscales</span>
+            </div>
+
+            <div class="service-card @(selectedService == "legales" ? "active" : "")" @onclick="@(() => SelectService("legales"))">
+                <div class="service-icon">
+                    <img src="Iconos/hoja.png" alt="Legales" class="icon-img">
+                </div>
+                <span class="service-name">Servicios Legales</span>
+            </div>
+
+            <div class="service-card @(selectedService == "facturacion" ? "active" : "")" @onclick="@(() => SelectService("facturacion"))">
+                <div class="service-icon">
+                    <img src="Iconos/factura.png" alt="Facturacion" class="icon-img">
+                </div>
+                <span class="service-name">Facturación 4.0</span>
+            </div>
+
+            <div class="service-card @(selectedService == "financieros" ? "active" : "")" @onclick="@(() => SelectService("financieros"))">
+                <div class="service-icon">
+                    <img src="Iconos/edificios.png" alt="Financieros" class="icon-img">
+                </div>
+                <span class="service-name">Servicios Financieros</span>
+            </div>
+
+            <div class="service-card @(selectedService == "incubadora" ? "active" : "")" @onclick="@(() => SelectService("incubadora"))">
+                <div class="service-icon">
+                    <img src="Iconos/edificios.png" alt="Incubadora" class="icon-img">
+                </div>
+                <span class="service-name">Incubadora de Negocios</span>
+            </div>
+
+            <div class="service-card @(selectedService == "financiamiento" ? "active" : "")" @onclick="@(() => SelectService("financiamiento"))">
+                <div class="service-icon">
+                    <img src="Iconos/edificios.png" alt="Financiamiento" class="icon-img">
+                </div>
+                <span class="service-name">Financiamiento PYME</span>
+            </div>
+        </div>
+        
+    </header>
+
+    <!-- Sección de información del servicio seleccionado -->
+    @if (!string.IsNullOrEmpty(selectedService))
+    {
+        <div class="service-info-container fade-in">
+            <div class="service-detail">
+                <div class="service-header">
+                    <h2 class="service-title">@GetServiceTitle(selectedService)</h2>
+                    <div class="service-meta">
+                        <span class="delivery-time">⏱️ Tiempo: @GetDeliveryTime(selectedService)</span>
+                        <span class="price-range">💰 Desde: @GetPriceRange(selectedService)</span>
+                        <span class="experience">🏆 @GetExperience(selectedService) años de experiencia</span>
+                    </div>
+                </div>
+
+                <div class="service-content">
+                    <div class="service-description">
+                        <p>@GetServiceDescription(selectedService)</p>
+                    </div>
+
+                    <div class="service-details-grid">
+                        <div class="service-features">
+                            <h3>Características del servicio</h3>
+                            <ul>
+                                @foreach (var feature in GetServiceFeatures(selectedService))
+                                {
+                                    <li>@feature</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="service-benefits">
+                            <h3>Beneficios</h3>
+                            <ul>
+                                @foreach (var benefit in GetServiceBenefits(selectedService))
+                                {
+                                    <li>@benefit</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="service-requirements">
+                            <h3>📋 Documentos útiles para el trámite</h3>
+                            <ul>
+                                @foreach (var requirement in GetRequirements(selectedService))
+                                {
+                                    <li>@requirement</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="service-guarantee">
+                        <h3>🛡️ Nuestra Garantía</h3>
+                        <p class="guarantee-text">@GetServiceGuarantee(selectedService)</p>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>❓ Preguntas Frecuentes</h3>
+                    <div class="faq-items">
+                        @foreach (var faq in GetServiceFAQ(selectedService))
+                        {
+                            <div class="faq-item">
+                                <button class="faq-question" @onclick="@(() => ToggleFAQ(faq.Key))">
+                                    @faq.Key
+                                    <span class="faq-arrow">@(openFAQs.Contains(faq.Key) ? "▼" : "▶")</span>
+                                </button>
+                                @if (openFAQs.Contains(faq.Key))
+                                {
+                                    <div class="faq-answer fade-in">@faq.Value</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="service-actions">
+                    <button class="btn-contact" @onclick="OpenContactModal">📞 Solicitar Información</button>
+                    <button class="btn-quote" @onclick="OpenQuoteModal">📝 Cotizar Ahora</button>
+                    <button class="btn-whatsapp" @onclick="OpenWhatsApp">💬 Chat WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="initial-state">
+            <h3>👆 Selecciona un servicio para ver más información</h3>
+            <p>Haz clic en cualquiera de nuestros servicios para conocer todos los detalles.</p>
+        </div>
+    }
+
+
+    <!-- MODAL DE CONTACTO MEJORADO -->
+    @if (showContactModal)
+    {
+        <div class="modal-overlay" @onclick="CloseContactModal">
+            <div class="modal-content fade-in" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h3>📞 Solicitar Información</h3>
+                    <button type="button" class="modal-close" @onclick="CloseContactModal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📋</div>
+                        <p style="font-size: 18px; font-weight: 600; color: #1f2937;">
+                            ¿Te interesa nuestro servicio de
+                        </p>
+                        <p style="font-size: 20px; font-weight: 700; color: #667eea; margin-top: 5px;">
+                            @GetServiceTitle(selectedService)?
+                        </p>
+                    </div>
+
+                    <div class="info-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">📱</span>
+                            <div>
+                                <p style="margin: 0; font-size: 13px; color: #6b7280;">Llámanos directamente:</p>
+                                <p style="margin: 0; font-size: 18px; font-weight: 700; color: #1f2937;">56-5964-4304</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">📧</span>
+                            <div>
+                                <p style="margin: 0; font-size: 13px; color: #6b7280;">Escríbenos:</p>
+                                <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">lomanconsultoria2025@gmail.com</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">🕒</span>
+                            <div>
+                                <p style="margin: 0; font-size: 13px; color: #6b7280;">Horario de atención:</p>
+                                <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">Lunes a Viernes 9:00 AM - 6:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" @onclick="CloseContactModal">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- MODAL DE COTIZACIÓN MEJORADO -->
+    @if (showQuoteModal)
+    {
+        <div class="modal-overlay" @onclick="HandleQuoteModalOutsideClick">
+            <div class="modal-content fade-in" @onclick:stopPropagation="true" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>📝 Solicitar Cotización</h3>
+                    <button type="button" class="modal-close" @onclick="CloseQuoteModal" disabled="@isSubmitting">×</button>
+                </div>
+
+                @if (quoteSubmitted)
+                {
+                    <!-- MENSAJE DE ÉXITO -->
+                    <div class="modal-body">
+                        <div class="success-message">
+                            <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                            <h3>¡Cotización Enviada Exitosamente!</h3>
+
+                            <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #10b981;">
+                                <p style="margin: 0 0 10px 0; color: #065f46; font-size: 16px;">
+                                    <strong>📋 Servicio:</strong> @GetServiceTitle(selectedService)
+                                </p>
+                                <p style="margin: 0 0 10px 0; color: #065f46; font-size: 16px;">
+                                    <strong>👤 Solicitante:</strong> @quoteForm.Name
+                                </p>
+                                <p style="margin: 0; color: #065f46; font-size: 16px;">
+                                    <strong>📧 Email de confirmación enviado a:</strong><br>
+                                    <span style="font-size: 18px; font-weight: 700; color: #667eea;">@quoteForm.Email</span>
+                                </p>
+                            </div>
+
+                            <div style="background: #dbeafe; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                                <p style="margin: 0 0 8px 0; color: #1e40af; font-weight: 600;">
+                                    ⏱️ ¿Qué sigue ahora?
+                                </p>
+                                <p style="margin: 0; color: #1e40af; font-size: 15px; line-height: 1.6;">
+                                    Nuestro equipo revisará tu solicitud y te contactará en las próximas <strong>24 horas</strong> al número:
+                                </p>
+                                <p style="font-size: 20px; font-weight: 700; color: #667eea; margin: 10px 0 0 0;">
+                                    📱 @quoteForm.Phone
+                                </p>
+                            </div>
+
+                            <p style="margin: 25px 0 15px 0; color: #374151; font-weight: 600;">
+                                ¿Necesitas información inmediata?
+                            </p>
+
+                            <div class="action-buttons">
+                                <button type="button" class="btn-whatsapp" @onclick="OpenWhatsAppQuote">
+                                    💬 Chat por WhatsApp
+                                </button>
+                                <button type="button" class="btn-primary" @onclick="NavigateToAgendarCita">
+                                    📅 Agendar Cita
+                                </button>
+                            </div>
+
+                            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 25px; border-left: 4px solid #f59e0b;">
+                                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                    <strong>💡 Importante:</strong> Guarda este correo de confirmación para futuras referencias.
+                                    También puedes revisar tu bandeja de entrada o spam.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" @onclick="CloseQuoteModal">
+                            Cerrar
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <!-- FORMULARIO DE COTIZACIÓN -->
+                    <div class="modal-body">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="error-message">
+                                <strong>⚠️ Error:</strong><br>
+                                @foreach (var line in errorMessage.Split('\n'))
+                                {
+                                    <span>@line</span>
+                    
+                                    <br>
+                                }
+                            </div>
+                        }
+
+                        <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #667eea;">
+                            <p style="margin: 0; color: #1e3a8a; font-size: 15px;">
+                                <strong>📋 Servicio seleccionado:</strong><br>
+                                <span style="font-size: 18px; font-weight: 700; color: #667eea;">@GetServiceTitle(selectedService)</span>
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #1e3a8a; font-size: 14px;">
+                                💰 Desde: <strong>@GetPriceRange(selectedService)</strong> |
+                                ⏱️ Tiempo: <strong>@GetDeliveryTime(selectedService)</strong>
+                            </p>
+                        </div>
+
+                        <EditForm Model="@quoteForm" OnValidSubmit="SubmitQuote">
+                            <div class="form-group">
+                                <label>Nombre completo *</label>
+                                <InputText @bind-Value="quoteForm.Name" class="form-control"
+                                           disabled="@isSubmitting" placeholder="Ej: Juan Pérez García" />
+                                @if (showValidation && string.IsNullOrWhiteSpace(quoteForm.Name))
+                                {
+                                    <span class="validation-error">⚠️ El nombre es requerido</span>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email *</label>
+                                <InputText type="email" @bind-Value="quoteForm.Email" class="form-control"
+                                           disabled="@isSubmitting" placeholder="Ej: tuempresa@ejemplo.com" />
+                                @if (showValidation && string.IsNullOrWhiteSpace(quoteForm.Email))
+                                {
+                                    <span class="validation-error">⚠️ El email es requerido</span>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Teléfono (WhatsApp) *</label>
+                                <InputText type="tel" @bind-Value="quoteForm.Phone" class="form-control"
+                                           disabled="@isSubmitting" placeholder="Ej: 4421234567" />
+                                @if (showValidation && string.IsNullOrWhiteSpace(quoteForm.Phone))
+                                {
+                                    <span class="validation-error">⚠️ El teléfono es requerido</span>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Empresa</label>
+                                <InputText @bind-Value="quoteForm.Company" class="form-control"
+                                           disabled="@isSubmitting" placeholder="Nombre de tu empresa (opcional)" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Tamaño de Empresa</label>
+                                <InputSelect @bind-Value="quoteForm.CompanySize" class="form-control" disabled="@isSubmitting">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="1-10 empleados">1-10 empleados</option>
+                                    <option value="11-50 empleados">11-50 empleados</option>
+                                    <option value="51-200 empleados">51-200 empleados</option>
+                                    <option value="200+ empleados">200+ empleados</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Prioridad de Atención</label>
+                                <InputSelect @bind-Value="quoteForm.Priority" class="form-control" disabled="@isSubmitting">
+                                    <option value="Media">📅 Media - Respuesta en 24-48 horas</option>
+                                    <option value="Alta">⚡ Alta - Respuesta en menos de 24 horas</option>
+                                    <option value="Urgente">🚨 Urgente - Contacto inmediato</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Cuéntanos tus necesidades *</label>
+                                <InputTextArea @bind-Value="quoteForm.Message" class="form-control" rows="4"
+                                               disabled="@isSubmitting"
+                                               placeholder="Describe qué necesitas, plazos, presupuesto aproximado, etc." />
+                                @if (showValidation && string.IsNullOrWhiteSpace(quoteForm.Message))
+                                {
+                                    <span class="validation-error">⚠️ El mensaje es requerido</span>
+                                }
+                            </div>
+                        </EditForm>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" @onclick="CloseQuoteModal" disabled="@isSubmitting">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn-primary" @onclick="SubmitQuote" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span>⏳ Enviando...</span>
+                            }
+                            else
+                            {
+                                <span>📤 Enviar Cotización</span>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<footer class="footer">
+    <div class="footer-bottom">
+        © 2025 Consultoría Integral SC. Todos los derechos reservados.
+    </div>
+</footer>
+
+@code {
+    private string selectedService = "";
+    private bool showContactModal = false;
+    private bool showQuoteModal = false;
+    private bool quoteSubmitted = false;
+    private bool showValidation = false;
+    private bool isSubmitting = false;
+    private string errorMessage = "";
+    private List<string> openFAQs = new List<string>();
+
+    private class QuoteFormModel
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Company { get; set; } = "";
+        public string CompanySize { get; set; } = "";
+        public string Message { get; set; } = "";
+        public string Priority { get; set; } = "Media";
+    }
+
+    private QuoteFormModel quoteForm = new QuoteFormModel();
+
+    private void SelectService(string serviceType)
+    {
+        selectedService = serviceType;
+        openFAQs.Clear();
+    }
+
+    private void ToggleFAQ(string question)
+    {
+        if (openFAQs.Contains(question))
+            openFAQs.Remove(question);
+        else
+            openFAQs.Add(question);
+    }
+
+    private void OpenContactModal() => showContactModal = true;
+    private void CloseContactModal() => showContactModal = false;
+
+    private void OpenQuoteModal()
+    {
+        showQuoteModal = true;
+        quoteSubmitted = false;
+        showValidation = false;
+        errorMessage = "";
+        quoteForm = new QuoteFormModel();
+    }
+
+    private void CloseQuoteModal()
+    {
+        if (!isSubmitting)
+        {
+            showQuoteModal = false;
+            quoteSubmitted = false;
+            showValidation = false;
+            errorMessage = "";
+        }
+    }
+
+    // CÓDIGO ACTUALIZADO PARA EL MÉTODO SubmitQuote en Servicios.razor
+
+    private async Task SubmitQuote()
+    {
+        showValidation = true;
+        errorMessage = "";
+
+        try
+        {
+            // Validaciones
+            if (string.IsNullOrWhiteSpace(quoteForm.Name))
+            {
+                errorMessage = "El nombre es requerido";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(quoteForm.Email))
+            {
+                errorMessage = "El email es requerido";
+                return;
+            }
+
+            if (!quoteForm.Email.Contains("@"))
+            {
+                errorMessage = "El email no es válido";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(quoteForm.Phone))
+            {
+                errorMessage = "El teléfono es requerido";
+                return;
+            }
+
+            var telefonoLimpio = new string(quoteForm.Phone.Where(char.IsDigit).ToArray());
+            if (telefonoLimpio.Length < 10)
+            {
+                errorMessage = "El teléfono debe tener al menos 10 dígitos";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(quoteForm.Message))
+            {
+                errorMessage = "El mensaje es requerido";
+                return;
+            }
+
+            isSubmitting = true;
+            StateHasChanged();
+
+            // Crear objeto con todos los campos
+            var cotizacionData = new Dictionary<string, object>
+        {
+            { "Nombre", quoteForm.Name.Trim() },
+            { "Correo", quoteForm.Email.Trim().ToLower() },
+            { "Telefono", quoteForm.Phone.Trim() },
+            { "NombreEmpresa", string.IsNullOrWhiteSpace(quoteForm.Company) ? null : quoteForm.Company.Trim() },
+            { "TamanoEmpresa", string.IsNullOrWhiteSpace(quoteForm.CompanySize) ? null : quoteForm.CompanySize },
+            { "TipoConsulta", $"Cotización: {GetServiceTitle(selectedService)}" },
+            { "Prioridad", quoteForm.Priority },
+            { "Mensaje", $"=== SOLICITUD DE COTIZACIÓN ===\n\n" +
+                        $"📋 SERVICIO: {GetServiceTitle(selectedService)}\n" +
+                        $"💰 PRECIO BASE: {GetPriceRange(selectedService)}\n" +
+                        $"⏱️ TIEMPO ESTIMADO: {GetDeliveryTime(selectedService)}\n\n" +
+                        $"🏢 EMPRESA: {(string.IsNullOrWhiteSpace(quoteForm.Company) ? "No especificado" : quoteForm.Company)}\n" +
+                        $"👥 TAMAÑO: {(string.IsNullOrWhiteSpace(quoteForm.CompanySize) ? "No especificado" : quoteForm.CompanySize)}\n" +
+                        $"⚡ PRIORIDAD: {quoteForm.Priority}\n\n" +
+                        $"💬 MENSAJE DEL CLIENTE:\n{quoteForm.Message}" },
+            { "Estado", "Pendiente" },
+            { "UsuarioAlta", "WebClient" },
+            { "UsuarioMod", "WebClient" },
+            { "FechaAlta", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss") },
+            { "FechaMod", DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss") }
+        };
+
+            Console.WriteLine("=== ENVIANDO COTIZACIÓN ===");
+            Console.WriteLine($"API: {Http.BaseAddress}api/Cotizacion");
+
+            var jsonDebug = System.Text.Json.JsonSerializer.Serialize(cotizacionData);
+            Console.WriteLine($"JSON COMPLETO: {jsonDebug}");
+
+            var response = await Http.PostAsJsonAsync("api/Cotizacion", cotizacionData);
+
+            Console.WriteLine($"Status: {response.StatusCode}");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Response: {responseContent}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var options = new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
+
+                    var resultado = System.Text.Json.JsonSerializer.Deserialize<CotizacionResponse>(
+                        responseContent, options);
+
+                    Console.WriteLine($"✅ Éxito - Folio: {resultado?.Folio}");
+
+                    quoteSubmitted = true;
+                    showValidation = false;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✅ Cotización enviada (error parseando respuesta): {ex.Message}");
+                    quoteSubmitted = true;
+                    showValidation = false;
+                }
+            }
+            else
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(responseContent);
+                    if (doc.RootElement.TryGetProperty("errors", out var errors))
+                    {
+                        var errorList = new List<string>();
+                        foreach (var error in errors.EnumerateObject())
+                        {
+                            var fieldErrors = error.Value.EnumerateArray()
+                                .Select(e => e.GetString())
+                                .ToList();
+                            errorList.Add($"• {error.Name}: {string.Join(", ", fieldErrors)}");
+                        }
+                        errorMessage = $"Errores de validación:\n{string.Join("\n", errorList)}";
+                    }
+                    else if (doc.RootElement.TryGetProperty("error", out var errorProp))
+                    {
+                        errorMessage = errorProp.GetString();
+                    }
+                    else
+                    {
+                        errorMessage = $"Error {response.StatusCode}";
+                    }
+                }
+                catch
+                {
+                    errorMessage = $"Error {response.StatusCode}";
+                }
+
+                Console.WriteLine($"❌ Error: {errorMessage}");
+                errorMessage += "\n\n💡 También puedes contactarnos por:\n📞 56-5964-4304\n💬 WhatsApp";
+            }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+            Console.WriteLine($"❌ Error HTTP: {httpEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Ocurrió un error inesperado. Por favor intenta nuevamente.";
+            Console.WriteLine($"❌ Excepción: {ex.Message}");
+            Console.WriteLine($"Stack: {ex.StackTrace}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenWhatsApp()
+    {
+        string phoneNumber = "5215659644304";
+        string serviceTitle = GetServiceTitle(selectedService);
+        string priceRange = GetPriceRange(selectedService);
+        string deliveryTime = GetDeliveryTime(selectedService);
+
+        string message = $"¡Hola! 👋\n\nMe interesa obtener más información sobre:\n📋 *{serviceTitle}*\n\nDetalles que vi:\n💰 Desde: {priceRange}\n⏱️ Tiempo: {deliveryTime}\n\n¿Podrían proporcionarme más información?";
+
+        string whatsappUrl = $"https://wa.me/{phoneNumber}?text={Uri.EscapeDataString(message)}";
+        Navigation.NavigateTo(whatsappUrl, true);
+    }
+
+    private void OpenWhatsAppQuote()
+    {
+        string phoneNumber = "5215659644304";
+        string message = $"Hola, acabo de solicitar una cotización para {GetServiceTitle(selectedService)}. Mi nombre es {quoteForm.Name}.";
+        Navigation.NavigateTo($"https://wa.me/{phoneNumber}?text={Uri.EscapeDataString(message)}", true);
+    }
+
+    private string GetServiceTitle(string service)
+    {
+        return service switch
+        {
+            "administrativos" => "Trámites Administrativos",
+            "fiscales" => "Servicios Fiscales",
+            "legales" => "Servicios Legales",
+            "facturacion" => "Facturación Electrónica 4.0",
+            "financieros" => "Servicios Financieros",
+            "incubadora" => "Incubadora de Negocios",
+            "financiamiento" => "Financiamiento PYME",
+            _ => "Servicio"
+        };
+    }
+
+    private string GetDeliveryTime(string service)
+    {
+        return service switch
+        {
+            "administrativos" => "3-5 días hábiles",
+            "fiscales" => "24-48 horas",
+            "legales" => "1-2 semanas",
+            "facturacion" => "2-3 días",
+            "financieros" => "1 semana",
+            "incubadora" => "2-3 meses",
+            "financiamiento" => "2-4 semanas",
+            _ => "Consultar"
+        };
+    }
+
+    private string GetPriceRange(string service)
+    {
+        return service switch
+        {
+            "administrativos" => "$2,500 MXN",
+            "fiscales" => "$1,800 MXN/mes",
+            "legales" => "$3,500 MXN",
+            "facturacion" => "$1,200 MXN",
+            "financieros" => "$2,800 MXN",
+            "incubadora" => "$15,000 MXN",
+            "financiamiento" => "Sin costo inicial",
+            _ => "Consultar"
+        };
+    }
+
+    private int GetExperience(string service)
+    {
+        return service switch
+        {
+            "administrativos" => 15,
+            "fiscales" => 12,
+            "legales" => 10,
+            "facturacion" => 8,
+            "financieros" => 14,
+            "incubadora" => 6,
+            "financiamiento" => 9,
+            _ => 10
+        };
+    }
+
+    private string GetServiceDescription(string service)
+    {
+        return service switch
+        {
+            "administrativos" => "Gestionamos todos tus trámites administrativos ante diversas dependencias gubernamentales, ahorrándote tiempo y garantizando el cumplimiento de todos los requisitos legales.",
+            "fiscales" => "Te ayudamos a cumplir con todas tus obligaciones fiscales, optimizando tu carga tributaria y manteniéndote siempre en regla ante el SAT.",
+            "legales" => "Brindamos asesoría legal integral para proteger tus intereses comerciales y resolver cualquier situación jurídica que pueda presentarse en tu empresa.",
+            "facturacion" => "Implementamos sistemas de facturación electrónica modernos y eficientes que cumplen con todos los requisitos del SAT y facilitan tu operación diaria.",
+            "financieros" => "Ofrecemos análisis financiero profesional y estrategias de inversión para hacer crecer tu patrimonio de manera inteligente y segura.",
+            "incubadora" => "Acompañamos tu idea de negocio desde la conceptualización hasta su lanzamiento exitoso al mercado, brindando herramientas y conocimientos especializados.",
+            "financiamiento" => "Conectamos a tu PYME con las mejores opciones de financiamiento disponibles en el mercado, adaptadas a tus necesidades específicas.",
+            _ => "Descripción del servicio seleccionado."
+        };
+    }
+
+    private List<string> GetServiceFeatures(string service)
+    {
+        return service switch
+        {
+            "administrativos" => new List<string>
+            {
+                "Creación de personas morales en modalidad S.A.S.",
+                "Elaboración y protocolización de actas constitutivas",
+                "Registro de marca ante el IMPI",
+                "Elaboración de contratos civiles",
+                "Trámites de fianzas",
+                "Empresas padrón de proveedores",
+                "Ejecución de obra",
+                "Licitación de obra",
+                "Constitución de empresas (incluye: Acta constitutiva, Registro público, RFC, e.firma y sello)",
+                "Servicios Integrales IMSS",
+                "Implementación de Normas ISO",
+                "Preparación para Certificaciones Internacionales",
+                "Trámites del SAT",
+                "REPSE (Registro de Empresas Prestadoras de Servicios Especializados)",
+                "Regularización de situación ante el SAT",
+                "Atención de requerimientos del SAT",
+                "Gestión aduanal completa",
+                "Inscripción en Padrón de Importadores",
+                "Cumplimiento con NOM's específicas por sector",
+                "Intermediario confiable para importación/exportación"
+            },
+            "fiscales" => new List<string>
+            {
+                "Declaraciones mensuales y anuales",
+                "Estrategias fiscales para reduccion de carga",
+                "Planeación fiscal efectiva e inteligente",
+                "Elaboracion y timbrado de nomina",
+                "Altas y bajas de empleados",
+                "Estrategias para reduccion de costos de produccion",
+                "Asesorias para fijacion de precios de productos y servicios",
+                "Asesorias para toma de decisiones de financiamiento",
+                "Servicios de Nómina especializados",
+                "Asesoría fiscal integral",
+                "Corrección de errores en declaraciones",
+                "Optimización fiscal para evitar pagos excesivos",
+                "Análisis de situación fiscal personalizada",
+                "Diseño de estrategias fiscales",
+                "Checklist de cumplimiento fiscal (SAT)",
+                "Constitución de sociedades con beneficios fiscales",
+                "Optimización de aranceles y tratados internacionales",
+                "Aprovechamiento de exenciones y regímenes especiales",
+                "Cumplimiento tributario especializado",
+                "Presentación de declaraciones ante Hacienda",
+                "Estrategias para optimizar impuestos dentro de la ley",
+                "Pago justo de impuestos y prevención de sanciones"
+            },
+            "legales" => new List<string>
+            {
+                "Contratos de arrendamiento (asesoría legal especializada)",
+                "Elaboración de contratos civiles",
+                "Protección legal mediante registro de marcas",
+                "Asesoría legal integral",
+                "Consultoría en gestión de riesgos",
+                "Implementación de Normas Oficiales Mexicanas (NOM)",
+                "Acompañamiento legal, fiscal y financiero",
+                "Ahorros legales y sostenibles en comercio exterior"
+            },
+            "facturacion" => new List<string>
+            {
+                "Elaboración y timbrado de nómina",
+                "Servicios contables integrales",
+                "Cumplimiento de obligaciones contables sin complicaciones",
+                "Finanzas y contabilidad especializada",
+                "Auditoría",
+                "Facturas para clientes",
+                "Contabilidad sin estrés",
+                "Registro y organización de operaciones económicas",
+                "Elaboración de estados financieros",
+                "Análisis de situación real de la empresa",
+                "Determinación de ganancias, pérdidas y ajustes necesarios"
+            },
+            "financieros" => new List<string>
+            {
+                "Estados financieros",
+                "Asesorías para toma de decisiones de financiamiento",
+                "Estrategias para reducción de costos de producción",
+                "Asesorías para fijación de precios en productos y servicios",
+                "Control de gastos",
+                "KPI's (Indicadores Clave de Rendimiento)",
+                "Análisis de competencia",
+                "Costeo real del menú",
+                "Reducción de mermas",
+                "Control de inventarios",
+                "Metas por área",
+                "Recursos Humanos",
+                "Administración y servicios de tesorería",
+                "Cálculo de margen de ganancia",
+                "Cursos de finanzas personales y empresariales",
+                "Modelo financiero para proyectos",
+                "Análisis de situación financiera",
+                "Tarifas competitivas en comercio exterior",
+                "Reducción de tiempos y costos en importación/exportación"
+            },
+            "incubadora" => new List<string>
+            {
+                "Herramientas perfectas para llevar a cabo tu idea de negocio",
+                "Consultoría integral para el crecimiento empresarial",
+                "Acompañamiento paso a paso (desde la idea hasta la validación)",
+                "Validación real de tu idea en el mercado",
+                "Apoyo para crear tu primer MVP (Producto Mínimo Viable)",
+                "Mentorías personalizadas",
+                "Herramientas financieras y digitales",
+                "Gestión de Proyectos",
+                "Estrategias para crecimiento empresarial",
+                "Optimización de Procesos",
+                "Transformación de ideas en proyectos rentables",
+                "Asesoría gratuita inicial",
+                "Potenciación de oportunidades de negocio",
+                "Emprendimiento desde cero que incluye:Idea de negocio, Logotipo y redes sociales, Branding, Estrategias de ganancias",
+                "Transformación de ideas en proyectos de impacto real",
+                "Diagnóstico completo del negocio",
+                "Estrategia personalizada",
+                "Capacitación básica en administración",
+                "Soporte continuo",
+                "Elaboración de planes de negocio completos que incluyen: Resumen ejecutivo, Descripción de la empresa, Estudio de mercado, Estrategia de marketing, Plan operativo, Plan financiero",
+                "Enseñanza para crear planes de negocio propios",
+                "Guía para tomar decisiones empresariales",
+                "Preparación para convencer inversionistas o socios",
+                "Anticipación de riesgos y oportunidades",
+                "Asesoría en constitución de diferentes tipos de sociedades: S.A. DE C.V.: Perfecta para empresas de tecnología, comercializadora o constructoras, S.A.P.I: Ideal para empresas familiares o grupos pequeños, S. DE R.L. DE C.V.: Perfecta para los que buscan crecer a lo grande y atraer inversión"
+            },
+            "financiamiento" => new List<string>
+            {
+                "Estrategias fiscales para reducción de carga",
+                "Asesorías para toma de decisiones de financiamiento",
+                "Estrategias para reducción de costos de producción",
+                "Consultoría para crecimiento empresarial",
+                "Planeación fiscal efectiva para ahorro",
+                "Despacho especializado para PYMES y MIPYMES",
+                "Paquetes desde $2,400 mensuales (IVA incluido)"
+            },
+            _ => new List<string> { "Característica 1", "Característica 2", "Característica 3" }
+        };
+    }
+
+    private List<string> GetServiceBenefits(string service)
+    {
+        return service switch
+        {
+            "administrativos" => new List<string>
+            {
+                "Ahorro de tiempo y recursos",
+                "Cumplimiento legal garantizado",
+                "Evitas multas y sanciones",
+                "Procesos más eficientes",
+                "Asesoría especializada",
+                "Seguimiento personalizado",
+                "Constitución de empresa GRATIS al contratar contabilidad",
+                "Protección legal de marca",
+                "Acceso a licitaciones y contratos gubernamentales"
+            },
+            "fiscales" => new List<string>
+            {
+                "Reducción de carga fiscal",
+                "Cumplimiento oportuno",
+                "Evitas problemas con el SAT",
+                "Optimización de recursos",
+                "Tranquilidad empresarial",
+                "Asesoría preventiva",
+                "Pago justo de impuestos (no de más)",
+                "Planeación fiscal inteligente",
+                "Optimización fiscal legal"
+            },
+            "legales" => new List<string>
+            {
+                "Protección jurídica integral",
+                "Prevención de conflictos",
+                "Resolución eficaz de problemas",
+                "Seguridad en contratos",
+                "Cumplimiento normativo",
+                "Respaldo legal profesional",
+                "Contratos blindados",
+                "Ahorros legales y sostenibles"
+            },
+            "facturacion" => new List<string>
+            {
+                "Cumplimiento fiscal automático",
+                "Procesos digitalizados",
+                "Reducción de errores",
+                "Integración con sistemas",
+                "Soporte técnico especializado",
+                "Escalabilidad del negocio",
+                "Contabilidad sin estrés",
+                "Estados financieros precisos",
+                "Conocimiento real de la situación empresarial",
+                "Organización de operaciones económicas"
+            },
+            "financieros" => new List<string>
+            {
+                "Mejor toma de decisiones",
+                "Optimización de recursos",
+                "Identificación de oportunidades",
+                "Control financiero efectivo",
+                "Crecimiento sostenible",
+                "Rentabilidad maximizada",
+                "Reducción de costos de producción"
+            },
+            "incubadora" => new List<string>
+            {
+                "Menor riesgo de fracaso",
+                "Acceso a experiencia",
+                "Red de contactos",
+                "Modelo de negocio validado",
+                "Estrategias probadas",
+                "Acompañamiento integral",
+                "Acompañamiento paso a paso",
+                "Validación real de ideas en el mercado",
+                "Herramientas digitales incluidas",
+                "Transformación de ideas en proyectos rentables"
+            },
+            "financiamiento" => new List<string>
+            {
+                "Acceso a capital",
+                "Mejores condiciones",
+                "Proceso simplificado",
+                "Ahorro en gestiones",
+                "Mayor probabilidad de éxito",
+                "Crecimiento acelerado",
+                "Paquetes desde $2,400 mensuales (IVA incluido)",
+                "Estrategias fiscales especializadas",
+                "Consultoría integral",
+                "Precios ajustables a tu medida"
+            },
+            _ => new List<string> { "Beneficio 1", "Beneficio 2", "Beneficio 3" }
+        };
+    }
+
+    private List<string> GetRequirements(string service)
+    {
+        return service switch
+        {
+            "administrativos" => new List<string>
+            {
+                "Identificación oficial del representante legal",
+                "Comprobante de domicilio fiscal",
+                "RFC actualizado",
+                "Acta constitutiva (si aplica)",
+                "Poder notarial (si aplica)",
+                "Documentación para registro de marca (logotipo, descripción)",
+                "Estados financieros para trámites de fianzas"
+            },
+            "fiscales" => new List<string>
+            {
+                "RFC vigente",
+                "Estados financieros del último ejercicio",
+                "Declaraciones anuales previas",
+                "Comprobantes de ingresos y gastos",
+                "Contratos relevantes",
+                "Comprobantes de nómina",
+                "Cédula de identificación fiscal"
+            },
+            "legales" => new List<string>
+            {
+                "Documentos del caso específico",
+                "Identificaciones de las partes",
+                "Comprobantes de domicilio",
+                "Contratos relacionados",
+                "Correspondencia previa",
+                "Escrituras de propiedad (para arrendamientos)",
+                "Documentos específicos según el tipo de contrato",
+                "Poderes legales (si aplica)"
+            },
+            "facturacion" => new List<string>
+            {
+                "RFC con actividades comerciales",
+                "Certificado de sello digital vigente",
+                "Domicilio fiscal comprobado",
+                "Catálogo de productos/servicios",
+                "Información de clientes frecuentes",
+                "Comprobantes de ingresos y egresos",
+                "Contratos con clientes y proveedores",
+                "Inventarios"
+            },
+            "financieros" => new List<string>
+            {
+                "Estados financieros actuales",
+                "Flujos de efectivo",
+                "Presupuestos y proyecciones",
+                "Información de cuentas bancarias",
+                "Historial crediticio",
+                "Contratos financieros",
+                "Análisis de costos"
+            },
+            "incubadora" => new List<string>
+            {
+                "Resumen ejecutivo del proyecto",
+                "Análisis de mercado inicial",
+                "Perfil del emprendedor",
+                "Recursos disponibles",
+                "Cronograma tentativo",
+                "Proyecciones financieras"
+            },
+            "financiamiento" => new List<string>
+            {
+                "Solicitud de crédito completa",
+                "Estados financieros auditados",
+                "Plan de negocios",
+                "Garantías propuestas",
+                "Referencias comerciales y bancarias",
+                "Flujo de efectivo proyectado",
+                "Comprobantes de ingresos"
+            },
+            _ => new List<string> { "Documento 1", "Documento 2", "Documento 3" }
+        };
+    }
+
+    private Dictionary<string, string> GetServiceFAQ(string service)
+    {
+        return service switch
+        {
+            "administrativos" => new Dictionary<string, string>
+            {
+                ["¿Cuánto tiempo toma constituir una empresa?"] = "El proceso completo toma entre 3 a 5 días hábiles, dependiendo de la disponibilidad de los documentos requeridos.",
+                ["¿Qué tipo de empresas pueden constituir?"] = "Podemos constituir S.A. de C.V., S.A.S., S. de R.L. de C.V., y otras figuras jurídicas según sus necesidades.",
+                ["¿Incluye el registro ante SAT?"] = "Sí, incluimos todos los trámites fiscales necesarios para que su empresa pueda operar legalmente."
+            },
+            "fiscales" => new Dictionary<string, string>
+            {
+                ["¿Qué sucede si tengo atraso en mis declaraciones?"] = "Podemos regularizar su situación fiscal y establecer estrategias para evitar multas futuras.",
+                ["¿Manejan todos los regímenes fiscales?"] = "Sí, tenemos experiencia con todos los regímenes: físicas, morales, RESICO, incorporación fiscal, etc.",
+                ["¿Qué incluye el servicio mensual?"] = "Incluye elaboración y presentación de declaraciones, timbrado de nómina, y asesoría fiscal continua."
+            },
+            "legales" => new Dictionary<string, string>
+            {
+                ["¿Qué áreas del derecho manejan?"] = "Especialistas en derecho corporativo, laboral, fiscal, civil y mercantil.",
+                ["¿Ofrecen representación en juicios?"] = "Sí, brindamos representación legal completa en procedimientos judiciales y administrativos.",
+                ["¿Cuánto cuesta una consulta?"] = "La primera consulta es gratuita. Los costos posteriores se establecen según el caso específico."
+            },
+            "facturacion" => new Dictionary<string, string>
+            {
+                ["¿El sistema es compatible con mi software actual?"] = "Nuestro sistema se integra con la mayoría de plataformas contables y administrativas del mercado.",
+                ["¿Qué pasa si hay cambios en las reglas del SAT?"] = "Mantenemos el sistema actualizado automáticamente con todos los cambios normativos.",
+                ["¿Incluye capacitación para mi personal?"] = "Sí, incluimos capacitación completa para que su equipo pueda usar el sistema eficientemente."
+            },
+            "financieros" => new Dictionary<string, string>
+            {
+                ["¿Cada cuánto entregan reportes?"] = "Entregamos reportes mensuales detallados y análisis trimestrales con recomendaciones estratégicas.",
+                ["¿Trabajas con empresas de cualquier tamaño?"] = "Sí, desde microempresas hasta corporativos grandes. Adaptamos nuestro servicio al tamaño y necesidades.",
+                ["¿Qué software utilizan?"] = "Trabajamos con herramientas profesionales como Excel avanzado, Power BI, QuickBooks y software especializado."
+            },
+            "incubadora" => new Dictionary<string, string>
+            {
+                ["¿Qué tan desarrollada debe estar mi idea?"] = "Aceptamos desde ideas en etapa conceptual hasta negocios que buscan escalamiento.",
+                ["¿Cuánto dura el programa?"] = "El programa estándar dura 6 meses, pero puede extenderse según las necesidades específicas del proyecto.",
+                ["¿Qué tasa de éxito tienen?"] = "Más del 75% de nuestros proyectos logran lanzarse exitosamente al mercado y mantenerse operando."
+            },
+            "financiamiento" => new Dictionary<string, string>
+            {
+                ["¿Garantizan la aprobación del crédito?"] = "No podemos garantizar aprobación, pero nuestra tasa de éxito es superior al 80% gracias a nuestra preparación.",
+                ["¿Trabajan con bancos específicos?"] = "Trabajamos con una red amplia de instituciones financieras, bancarias y no bancarias.",
+                ["¿Qué pasa si mi solicitud es rechazada?"] = "Analizamos las razones del rechazo y preparamos nuevas estrategias con otros financiadores."
+            },
+            _ => new Dictionary<string, string>()
+        };
+    }
+
+    private string GetServiceGuarantee(string service)
+    {
+        return service switch
+        {
+            "administrativos" => "Garantizamos la correcta constitución de su empresa o devolvemos el 100% de su inversión.",
+            "fiscales" => "Si por error nuestro recibe multas del SAT, nosotros nos hacemos cargo del pago completo.",
+            "legales" => "Respaldamos todos nuestros servicios con seguro de responsabilidad profesional.",
+            "facturacion" => "Sistema con 99.9% de tiempo activo garantizado y soporte técnico 24/7.",
+            "financieros" => "Si no ve resultados medibles en 3 meses, le reembolsamos la inversión.",
+            "incubadora" => "Acompañamiento garantizado hasta el lanzamiento exitoso de su negocio.",
+            "financiamiento" => "No cobramos si no conseguimos el financiamiento que necesita.",
+            _ => "Garantizamos la calidad y resultados de nuestros servicios."
+        };
+    }
+
+    private void NavigateToAgendarCita()
+    {
+        Navigation.NavigateTo("/agendar-cita");
+    }
+
+    private void HandleQuoteModalOutsideClick()
+    {
+        if (!isSubmitting)
+        {
+            CloseQuoteModal();
+        }
+    }
+
+    // Clases helper para deserialización
+    private class CotizacionResponse
+    {
+        public bool Success { get; set; }
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public string Correo { get; set; }
+        public string Estado { get; set; }
+        public string Message { get; set; }
+        public string Folio { get; set; }
+    }
+
+    private class ErrorResponse
+    {
+        public string Error { get; set; }
+        public string Title { get; set; }
+        public int Status { get; set; }
+    }
+}

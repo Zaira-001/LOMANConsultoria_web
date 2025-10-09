@@ -1,0 +1,881 @@
+﻿@page "/nosotros"
+@inject IJSRuntime JSRuntime
+
+<link href="css/nosotros.css" rel="stylesheet" />
+<link href="css/cvform.css" rel="stylesheet" />
+<link href="css/calendar-styles.css" rel="stylesheet" />
+
+<div class="nosotros-container">
+    <header class="hero-section">
+        <h1 class="main-title">TRANSFORMANDO NEGOCIOS</h1>
+        <h2 class="subtitle">DESDE 2009</h2>
+        <p class="description">
+            Más de 15 años brindando soluciones integrales en consultoría empresarial,
+            contabilidad y asesoría legal para impulsar el crecimiento de tu empresa.
+        </p>
+    </header>
+
+    <section class="essence-section">
+        <h3 class="section-title">Nuestra Esencia</h3>
+
+        <div class="cards-container">
+            <!-- Tarjeta Misión -->
+            <div class="card card-mision">
+                <div class="card-icon">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="#4A90E2" stroke-width="2" />
+                        <path d="M12 6v6l4 2" stroke="#4A90E2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h4 class="card-title">Misión</h4>
+                <p class="card-content">
+                    Llevar a cabo servicios de consultoría y apoyo de alta calidad para aquellos clientes que aspiran a 
+                    la mejor optimización de sus organizaciones mediante la mejora de la competitividad desde la perspectiva 
+                    de mejora continua, innovación y calidad en la gestión; por todo ello conseguiremos en todo momento 
+                    la SATISFACCIÓN DE NUESTROS CLIENTES.
+                </p>
+            </div>
+
+            <!-- Tarjeta Visión -->
+            <div class="card card-vision">
+                <div class="card-icon">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#4A90E2" stroke-width="2" />
+                        <circle cx="12" cy="12" r="3" stroke="#4A90E2" stroke-width="2" />
+                    </svg>
+                </div>
+                <h4 class="card-title">Visión</h4>
+                <p class="card-content">
+                    Pretendemos ser una consultora de referencia, responsable y eficiente, obtener el reconocimiento de 
+                    nuestro buen hacer por parte de nuestros clientes y compañeros de sector y Entidades de Certificación de referencia
+                </p>
+            </div>
+
+            <!-- Tarjeta Valores -->
+            <div class="card card-valores">
+                <div class="card-icon">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#E74C3C" />
+                    </svg>
+                </div>
+                <h4 class="card-title">Valores</h4>
+                <div class="card-content">
+                    <ul class="values-list">
+                        <li>Actitud positiva</li>
+                        <li>Calidad</li>
+                        <li>Confianza</li>
+                        <li>Responsabilidad</li>
+                        <li>Orientación al cliente</li>
+                        <li>Innovación</li>
+                        <li>Empatía</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección del Equipo Profesional -->
+    <section class="team-section">
+        <h3 class="section-title">Nuestro Equipo Profesional</h3>
+
+        <div class="team-grid">
+            <!-- Contadores Públicos -->
+            <div class="team-card">
+                <div class="team-image">
+                    <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" alt="Contadores Públicos" />
+                    <div class="image-overlay">
+                        <div class="overlay-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-content">
+                    <h4 class="team-title">Contadores Públicos</h4>
+                    <ul class="services-list">
+                        <li>Contabilidad general</li>
+                        <li>Declaraciones fiscales</li>
+                        <li>Auditorías financieras</li>
+                        <li>Planeación fiscal</li>
+                        <li>Estados financieros</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Consultores Empresariales -->
+            <div class="team-card">
+                <div class="team-image">
+                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" alt="Consultores Empresariales" />
+                    <div class="image-overlay">
+                        <div class="overlay-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-content">
+                    <h4 class="team-title">Consultores Empresariales</h4>
+                    <ul class="services-list">
+                        <li>Estrategia empresarial</li>
+                        <li>Optimización de procesos</li>
+                        <li>Análisis financiero</li>
+                        <li>Transformación digital</li>
+                        <li>Desarrollo organizacional</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Abogados Especialistas -->
+            <div class="team-card">
+                <div class="team-image">
+                    <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" alt="Abogados Especialistas" />
+                    <div class="image-overlay">
+                        <div class="overlay-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-content">
+                    <h4 class="team-title">Abogados Especialistas</h4>
+                    <ul class="services-list">
+                        <li>Derecho corporativo</li>
+                        <li>Contratos comerciales</li>
+                        <li>Derecho laboral</li>
+                        <li>Propiedad intelectual</li>
+                        <li>Cumplimiento regulatorio</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN MEJORADA DE RESIDENCIAS -->
+    <section class="residencias-section">
+        <h3 class="section-title">Programa de Residencias Profesionales</h3>
+        <p class="residencias-subtitle">
+            Únete a nuestro programa y desarrolla tu carrera profesional con experiencia real en consultoría empresarial
+        </p>
+
+        <div class="circle-card-container">
+            <!-- Tarjeta: Carreras -->
+            <div class="circle-card @(selectedCard == "carreras" ? "active" : "")" @onclick="@(() => ShowModal("carreras"))">
+                <div class="circle-bg-image carreras-bg"></div>
+                <div class="circle-overlay"></div>
+                <div class="circle-content">
+                    <div class="circle-icon">🎓</div>
+                    <h4>Carreras que buscamos</h4>
+                </div>
+            </div>
+
+            <!-- Tarjeta: Beneficios -->
+            <div class="circle-card @(selectedCard == "beneficios" ? "active" : "")" @onclick="@(() => ShowModal("beneficios"))">
+                <div class="circle-bg-image beneficios-bg"></div>
+                <div class="circle-overlay"></div>
+                <div class="circle-content">
+                    <div class="circle-icon">💼</div>
+                    <h4>Beneficios del programa</h4>
+                </div>
+            </div>
+
+            <!-- Tarjeta: Convenios -->
+            <div class="circle-card @(selectedCard == "convenios" ? "active" : "")" @onclick="@(() => ShowModal("convenios"))">
+                <div class="circle-bg-image convenios-bg"></div>
+                <div class="circle-overlay"></div>
+                <div class="circle-content">
+                    <div class="circle-icon">🏫</div>
+                    <h4>Convenios con universidades</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón debajo de las tarjetas -->
+        <div class="enviar-cv-container">
+            <a class="btn-enviar-cv" onclick="openResidenciaModal()">📩 Envía tu CV</a>
+        </div>
+
+        <!-- REEMPLAZAR la sección oportunidades-section en Nosotros.razor -->
+        <!-- SECCIÓN DE OPORTUNIDADES LABORALES - REEMPLAZAR COMPLETA -->
+        <section class="oportunidades-section">
+            <h3 class="section-title">Oportunidades Laborales</h3>
+            <p class="oportunidades-subtitle">
+                Descubre tu próximo desafío profesional en nuestro equipo de expertos
+            </p>
+
+            <!-- Indicador de carga -->
+            <div class="jobs-loading" id="jobsLoading" style="text-align: center; margin: 40px 0;">
+                <div class="loading-spinner"></div>
+                <p>Cargando oportunidades...</p>
+            </div>
+
+            <!-- Grid de tarjetas de empleos -->
+            <div class="jobs-grid-container" id="jobsGridContainer">
+                <!-- Los empleos se cargarán dinámicamente aquí por JavaScript -->
+            </div>
+
+            <!-- MODAL DE DETALLE DEL EMPLEO -->
+            <div class="job-detail-modal" id="jobDetailModal" style="display: none;">
+                <div class="modal-overlay" onclick="closeJobDetail()"></div>
+                <div class="modal-content">
+                    <button class="close-btn" onclick="closeJobDetail()">&times;</button>
+
+                    <div class="job-detail-header">
+                        <div class="job-detail-icon" id="jobDetailIcon">💼</div>
+                        <div class="job-detail-info">
+                            <h3 class="job-detail-title" id="jobDetailTitle">Cargando...</h3>
+                            <div class="job-detail-level" id="jobDetailLevel">Nivel</div>
+                            <div class="job-detail-area" id="jobDetailArea">Área</div>
+                        </div>
+                    </div>
+
+                    <div class="job-detail-meta">
+                        <span class="meta-item" id="jobDetailModality">
+                            <i class="icon">🏢</i> Modalidad
+                        </span>
+                        <span class="meta-item" id="jobDetailSalary">
+                            <i class="icon">💰</i> Salario
+                        </span>
+                    </div>
+
+                    <div class="job-detail-description">
+                        <h4>Descripción del puesto</h4>
+                        <p id="jobDetailDescriptionText">Descripción...</p>
+                    </div>
+
+                    <div class="job-detail-requirements">
+                        <h4>Requisitos principales</h4>
+                        <ul id="jobDetailRequirements">
+                            <li>Cargando requisitos...</li>
+                        </ul>
+                    </div>
+
+                    <div class="job-detail-actions">
+                        <button type="button" class="btn-info-modal" onclick="EnviarMensajeWhatsApp()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.595z" fill="currentColor" />
+                            </svg>
+                            💬 Consultar por WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- NUEVA SECCIÓN: ¿Por Qué Elegirnos? -->
+        <div class="why-choose-us-section">
+            <h3 class="why-choose-title">¿Por Qué Elegirnos?</h3>
+            
+            <div class="why-choose-grid">
+                <!-- Tarjeta: Experiencia Comprobada -->
+                <div class="why-card">
+                    <div class="why-icon experience-icon">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#4A90E2"/>
+                        </svg>
+                    </div>
+                    <h4 class="why-title">Experiencia Comprobada</h4>
+                    <p class="why-description">15+ años de experiencia exitosa en el mercado mexicano</p>
+                </div>
+
+                <!-- Tarjeta: Equipo Multidisciplinario -->
+                <div class="why-card">
+                    <div class="why-icon team-icon">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#2ECC71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="9" cy="7" r="4" stroke="#2ECC71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="#2ECC71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="#2ECC71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4 class="why-title">Equipo Multidisciplinario</h4>
+                    <p class="why-description">Profesionistas especializados en cada área de negocio</p>
+                </div>
+
+                <!-- Tarjeta: Soluciones Innovadoras -->
+                <div class="why-card">
+                    <div class="why-icon innovation-icon">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L22 3" stroke="#F39C12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C13.1047 3 14.1683 3.1784 15.1615 3.50758" stroke="#F39C12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4 class="why-title">Soluciones Innovadoras</h4>
+                    <p class="why-description">Tecnología de vanguardia para optimizar tus procesos</p>
+                </div>
+
+                <!-- Tarjeta: Atención Personalizada -->
+                <div class="why-card">
+                    <div class="why-icon personal-icon">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="#9B59B6" stroke-width="2"/>
+                            <polyline points="12,6 12,12 16,14" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4 class="why-title">Atención Personalizada</h4>
+                    <p class="why-description">Servicio 24/7 adaptado a las necesidades de tu empresa</p>
+                </div>
+            </div>
+
+            
+            <!-- Sección de llamada a la acción -->
+            <div class="cta-section">
+                <h4 class="cta-title">¿Listo para Transformar tu Empresa?</h4>
+                <p class="cta-subtitle">
+                    Únete a más de 500 empresas que han confiado en nosotros para impulsar su crecimiento. Agenda
+                    una consulta gratuita hoy mismo.
+                </p>
+                <button class="btn-agendar-consulta" onclick="openCitaModal()">Agendar Consulta</button>
+            </div>
+            </div>
+
+        <!-- MODAL MEJORADO -->
+        @if (modalVisible)
+        {
+            <div class="modal-overlay @(modalVisible ? "show" : "")" @onclick="CloseModal">
+                <div class="modal-content" @onclick:stopPropagation>
+                    <button class="close-button" @onclick="CloseModal">✕</button>
+                    <div class="modal-header-uno">
+                        <div class="modal-icon">@modalIcon</div>
+                        <h4 class="modal-title">@modalTitle</h4>
+                    </div>
+                    <div class="modal-text">
+                        @((MarkupString)modalContent)
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- MODAL HÍBRIDO PARA CITAS - Reemplazar en Nosotros.razor -->
+    <div class="cv-modal-overlay" id="citaModal">
+        <div class="cv-modal-content calendar-modal">
+            <div class="modal-header cita">
+                <button class="close-modal-btn" onclick="closeCitaModal()">&times;</button>
+                <h2 class="modal-title">📅 Agendar Consulta Gratuita</h2>
+                <p class="modal-subtitle">Selecciona fecha y horario disponible</p>
+            </div>
+
+            <!-- Progress Indicators -->
+            <div class="step-indicators">
+                <div class="step active" id="step-1">1</div>
+                <div class="step" id="step-2">2</div>
+                <div class="step" id="step-3">3</div>
+                <div class="step" id="step-4">4</div>
+            </div>
+
+            <!-- Error Message Container -->
+            <div id="error-message" class="error-container" style="display: none;"></div>
+
+            <!-- Step 1: Calendar -->
+            <div id="calendar-container" class="modal-step">
+                <h3>Selecciona una fecha disponible</h3>
+                <div class="loading-spinner" style="display: none;"></div>
+                <!-- El calendario se renderiza aquí por JavaScript -->
+            </div>
+
+            <!-- Step 2: Time Slots -->
+            <div id="time-slots-container" class="modal-step" style="display: none;">
+                <!-- Los horarios se renderizan aquí por JavaScript -->
+            </div>
+
+            <!-- Step 3: Client Form -->
+            <div id="client-form-container" class="modal-step" style="display: none;">
+                <div id="selected-appointment-info"></div>
+
+                <form id="client-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nombre">Nombre Completo *</label>
+                            <input type="text" id="nombre" name="nombre" required
+                                   placeholder="Ingresa tu nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="empresa">Empresa *</label>
+                            <input type="text" id="empresa" name="empresa" required
+                                   placeholder="Nombre de tu empresa">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required
+                                   placeholder="tu.email@ejemplo.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono *</label>
+                            <input type="tel" id="telefono" name="telefono" required
+                                   placeholder="+52 55 1234 5678">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="servicio">Servicio de Interés *</label>
+                        <select id="servicio" name="servicio" required>
+                            <option value="">Selecciona un servicio</option>
+                            <option value="Servicios Administrativos">Servicios Administrativos</option>
+                            <option value="Servicios Fiscales">Servicios Fiscales</option>
+                            <option value="Servicios Legales">Servicios Legales</option>
+                            <option value="Facturación 4.0">Facturación 4.0</option>
+                            <option value="Servicios Financieros">Servicios Financieros</option>
+                            <option value="Incubadora de Negocios">Incubadora de Negocios</option>
+                            <option value="Financiamiento PYME">Financiamiento PYME</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Modalidad de la Cita *</label>
+                        <div class="radio-options">
+                            <label class="radio-label">
+                                <input type="radio" name="modalidad" value="Presencial" required>
+                                <span>🏢 Presencial</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="modalidad" value="Virtual" required>
+                                <span>💻 Virtual (Google Meet)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="modalidad" value="Telefonica" required>
+                                <span>📞 Teléfono</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Descripción (opcional)</label>
+                        <textarea id="descripcion" name="descripcion" rows="3"
+                                  placeholder="Cuéntanos qué necesitas o qué temas te gustaría abordar en la consulta..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" onclick="calendarSystem.goBack()" class="btn-back">← Atrás</button>
+                        <button type="submit" class="btn-submit">Confirmar Cita</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Confirmation -->
+            <div id="confirmation-container" class="modal-step" style="display: none;">
+                <!-- La confirmación se renderiza aquí por JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESIDENCIAS -->
+    <div class="cv-modal-overlay" id="residenciaModal">
+        <div class="cv-modal-content">
+            <div class="modal-header residencia">
+                <button class="close-modal-btn" onclick="closeResidenciaModal()">&times;</button>
+                <h2 class="modal-title">🎓 Residencia Profesional</h2>
+                <p class="modal-subtitle">Inicia tu carrera profesional con nosotros</p>
+            </div>
+
+            <div class="modal-body">
+                <form id="residenciaForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="nombreCompletoRes">Nombre Completo <span class="required">*</span></label>
+                        <input type="text" id="nombreCompletoRes" name="nombreCompleto" required placeholder="Ingresa tu nombre completo">
+                        <div class="error-message" id="nombreCompletoResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailRes">Email <span class="required">*</span></label>
+                        <input type="email" id="emailRes" name="email" required placeholder="tu.email@ejemplo.com">
+                        <div class="error-message" id="emailResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoRes">Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="telefonoRes" name="telefono" required placeholder="+52 55 1234 5678">
+                        <div class="error-message" id="telefonoResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="carreraRes">Carrera <span class="required">*</span></label>
+                        <select id="carreraRes" name="carrera" required>
+                            <option value="">Selecciona tu carrera</option>
+                            <option value="Administración Empresarial">Lic. Administración Empresarial</option>
+                            <option value="Diseño Gráfico">Lic. Diseño Gráfico</option>
+                            <option value="Contabilidad y Finanzas">Lic. Contabilidad y Finanzas</option>
+                            <option value="Ciencias y Técnica de la Comunicación">Lic. Ciencias y Técnica de la Comunicación</option>
+                            <option value="Sistemas Computacionales">Ing. Sistemas Computacionales</option>
+                        </select>
+                        <div class="error-message" id="carreraResError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="universidadRes">Universidad <span class="required">*</span></label>
+                        <select id="universidadRes" name="universidad" required>
+                            <option value="">Selecciona tu universidad</option>
+                            <option value="Universidad Tecnológica de Nezahualcóyotl (UTN)">Universidad Tecnológica de Nezahualcóyotl (UTN)</option>
+                            <option value="Universidad Tecmilenio">Universidad Tecmilenio en el Estado de México</option>
+                            <option value="Instituto Tecnológico y de Estudios Superiores de Monterrey (ITESM)">Instituto Tecnológico y de Estudios Superiores de Monterrey (ITESM)</option>
+                            <option value="Universidad del Valle de México (UVM)">Universidad del Valle de México (UVM)</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                        <div class="error-message" id="universidadResError"></div>
+
+                        <!-- Campo personalizado que aparece cuando se selecciona "Otra" -->
+                        <div class="universidad-custom" id="universidadCustomRes">
+                            <label for="universidadOtraRes">Especifica tu universidad <span class="required">*</span></label>
+                            <input type="text"
+                                   id="universidadOtraRes"
+                                   name="universidadOtra"
+                                   placeholder="Escribe el nombre completo de tu universidad..."
+                                   maxlength="200">
+                            <div class="help-text">
+                                💡 Incluye el nombre completo de tu institución educativa
+                            </div>
+                            <div class="error-message" id="universidadOtraResError"></div>
+                        </div>
+                    </div>
+                  
+
+                    <div class="form-group">
+                        <label for="mensajeRes">Mensaje (Opcional)</label>
+                        <textarea id="mensajeRes" name="mensaje" placeholder="Cuéntanos por qué te interesa hacer tu residencia con nosotros..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CV (Opcional)</label>
+                        <div class="file-upload" onclick="document.getElementById('archivoCVRes').click()">
+                            <input type="file" id="archivoCVRes" name="archivoCV" accept=".pdf,.doc,.docx">
+                            <div class="file-upload-text">
+                                <p>📄 Arrastra tu CV aquí o haz clic para seleccionar</p>
+                                <small>PDF, DOC, DOCX - Máximo 10MB</small>
+                            </div>
+                            <div class="file-info" id="fileInfoRes"></div>
+                        </div>
+                        <div class="error-message" id="archivoCVResError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit residencia">
+                        🚀 Enviar Solicitud de Residencia
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE TRABAJO -->
+    <div class="cv-modal-overlay" id="trabajoModal">
+        <div class="cv-modal-content">
+            <div class="modal-header">
+                <button class="close-modal-btn" onclick="closeTrabajoModal()">&times;</button>
+                <h2 class="modal-title">💼 Oportunidad Laboral</h2>
+                <p class="modal-subtitle">Forma parte de nuestro equipo profesional</p>
+            </div>
+
+            <div class="modal-body">
+                <form id="trabajoForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="nombreCompletoTrab">Nombre Completo <span class="required">*</span></label>
+                        <input type="text" id="nombreCompletoTrab" name="nombreCompleto" required placeholder="Ingresa tu nombre completo">
+                        <div class="error-message" id="nombreCompletoTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailTrab">Email <span class="required">*</span></label>
+                        <input type="email" id="emailTrab" name="email" required placeholder="tu.email@ejemplo.com">
+                        <div class="error-message" id="emailTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoTrab">Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="telefonoTrab" name="telefono" required placeholder="+52 55 1234 5678">
+                        <div class="error-message" id="telefonoTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="experienciaTrab">Experiencia Profesional <span class="required">*</span></label>
+                        <select id="experienciaTrab" name="experiencia" required>
+                            <option value="">Selecciona tu experiencia</option>
+                            <option value="0-1 años">0-1 años (Junior)</option>
+                            <option value="2-3 años">2-3 años (Mid-Level)</option>
+                            <option value="4+ años">4+ años (Senior)</option>
+                        </select>
+                        <div class="error-message" id="experienciaTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="posicionInteresTrab">Posición de Interés <span class="required">*</span></label>
+                        <input type="text" id="posicionInteresTrab" name="posicionInteres" readonly required
+                               placeholder="Se cargará automáticamente según el puesto seleccionado"
+                               style="background-color: #f8f9fa; cursor: not-allowed;">
+                        <div class="error-message" id="posicionInteresTrabError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensajeTrab">Mensaje (Opcional)</label>
+                        <textarea id="mensajeTrab" name="mensaje" placeholder="Cuéntanos sobre tu experiencia y por qué te interesa trabajar con nosotros..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CV <span class="required">*</span></label>
+                        <div class="file-upload" onclick="document.getElementById('archivoCVTrab').click()">
+                            <input type="file" id="archivoCVTrab" name="archivoCV" accept=".pdf,.doc,.docx" required>
+                            <div class="file-upload-text">
+                                <p>📄 Arrastra tu CV aquí o haz clic para seleccionar</p>
+                                <small>PDF, DOC, DOCX - Máximo 10MB</small>
+                            </div>
+                            <div class="file-info" id="fileInfoTrab"></div>
+                        </div>
+                        <div class="error-message" id="archivoCVTrabError"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        🚀 Enviar CV para Trabajo
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Éxito -->
+    <div id="successModal" class="success-modal-overlay">
+        <div class="success-modal">
+            <!-- Confetti -->
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            <div class="confetti"></div>
+            
+            <div class="success-modal-header">
+                <div class="success-icon">
+                    ✓
+                </div>
+                <h2 class="success-modal-title" id="successTitle">¡CV Enviado Exitosamente!</h2>
+                <p class="success-modal-subtitle" id="successSubtitle">Tu solicitud ha sido procesada correctamente</p>
+            </div>
+            
+            <div class="success-modal-body">
+                <div class="success-message" id="successMessage">
+                    Tu CV ha sido enviado exitosamente a nuestro departamento de Recursos Humanos. 
+                    Te contactaremos pronto para continuar con el proceso.
+                </div>
+                
+                <div class="next-steps">
+                    <h4>📋 Próximos pasos:</h4>
+                    <ul id="nextStepsList">
+                        <li>Revisaremos tu solicitud en las próximas 48 horas</li>
+                        <li>Te contactaremos por email o teléfono</li>
+                        <li>Prepararemos una entrevista inicial</li>
+                    </ul>
+                </div>
+                
+                <div class="contact-info">
+                    <strong>💼 Consultoría Integral SC</strong><br>
+                </div>
+            </div>
+            
+            <div class="success-modal-footer">
+                <button class="close-success-btn" onclick="closeSuccessModal()">
+                    👍 ¡Perfecto!
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+
+    <!-- Línea inferior del copyright -->
+    <div class="footer-bottom">
+        © 2025 Consultoría Integral SC Todos los derechos reservados.
+    </div>
+</footer>
+
+<!-- CARGAR SCRIPTS UNA SOLA VEZ Y EN ORDEN CORRECTO -->
+<script src="js/cv-form.js"></script>
+<script src="js/unified-calendar-system.js"></script>
+<script src="js/nosotros.js"></script>
+
+
+@code {
+    private bool modalVisible = false;
+    private string modalTitle = "";
+    private string modalContent = "";
+    private string modalIcon = "";
+    private string selectedCard = "";
+    private readonly string whatsappNumber = "525659644304";
+    private readonly string phoneNumber = "5659644304";
+    private object selectedJob = null;
+    private bool isInitialized = false;
+
+    private void ShowModal(string tipo)
+    {
+        modalVisible = true;
+        selectedCard = tipo;
+
+        switch (tipo)
+        {
+            case "carreras":
+                modalIcon = "🎓";
+                modalTitle = "Carreras que buscamos";
+                modalContent = @"
+                    <p>Buscamos estudiantes talentosos de diversas disciplinas:</p>
+                    <ul class='modal-list'>
+                        <li>Lic. Administración Empresarial</li>
+                        <li>Lic Diseño Gráfico</li>
+                        <li>Lic. Contabilidad y finanzas</li>
+                        <li>Lic. Ciencias y Técnica de la comunicación</li>
+                        <li>Ing. Sistemas Computacionales</li>
+                    </ul>
+                ";
+                break;
+            case "beneficios":
+                modalIcon = "💼";
+                modalTitle = "Beneficios del programa";
+                modalContent = @"
+                    <p>Nuestro programa de residencias te ofrece:</p>
+                    <ul class='modal-list'>
+                        <li>Experiencia profesional real en proyectos empresariales</li>
+                        <li>Posibilidad de contratación al finalizar</li>
+                        <li>Desarrollo de habilidades técnicas y blandas</li>
+                        <li>Networking con empresarios y profesionales</li>
+                        <li>Flexibilidad de horarios compatible con estudios</li>
+                    </ul>
+                ";
+                break;
+            case "convenios":
+                modalIcon = "🏫";
+                modalTitle = "Convenios con universidades";
+                modalContent = @"
+                    <p>Mantenemos alianzas estratégicas con las mejores instituciones educativas:</p>
+                    <ul class='modal-list'>
+                        <li>Universidad Tecnológica de Nezahualcóyotl (UTN)</li>
+                        <li>Universidad Tecmilenio en el Estado de México</li>
+                        <li>Instituto Tecnológico y de Estudios Superiores de Monterrey (ITESM)</li>
+                        <li>Universidad del Valle de México (UVM)</li>
+                    </ul>
+                    <p><strong>¿Tu universidad no está en la lista?</strong> Contactanos para establecer un nuevo convenio.</p>
+                ";
+                break;
+        }
+    }
+
+    private void CloseModal()
+    {
+        modalVisible = false;
+        selectedCard = "";
+    }
+
+    private async Task EnviarMensajeWhatsAppTrabajo(string jobTitle = "", string jobLevel = "", string jobArea = "")
+    {
+        try
+        {
+            string mensaje;
+
+            if (!string.IsNullOrEmpty(jobTitle))
+            {
+                mensaje = $"Hola, me interesa la posición de *{jobTitle}* ({jobLevel}) en el área de {jobArea}. " +
+                         "¿Podrían proporcionarme más información sobre los requisitos, el proceso de selección y los beneficios? " +
+                         "Estoy muy interesado/a en formar parte de su equipo.";
+            }
+            else
+            {
+                mensaje = "Hola, me interesa conocer más sobre las oportunidades laborales disponibles en su empresa. " +
+                         "¿Podrían proporcionarme información sobre las posiciones abiertas y el proceso de aplicación?";
+            }
+
+            var mensajeCodificado = Uri.EscapeDataString(mensaje);
+            var whatsappUri = $"https://wa.me/{whatsappNumber}?text={mensajeCodificado}";
+
+            await JSRuntime.InvokeVoidAsync("open", whatsappUri, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al abrir WhatsApp: {ex.Message}");
+            // No mostrar alert para evitar interrumpir la experiencia del usuario
+        }
+    }
+
+    private async Task EnviarMensajeWhatsApp()
+    {
+        await EnviarMensajeWhatsAppTrabajo();
+    }
+
+    [JSInvokable]
+    public async Task SendWhatsAppForJob(string jobTitle, string jobLevel, string jobArea)
+    {
+        try
+        {
+            await EnviarMensajeWhatsAppTrabajo(jobTitle, jobLevel, jobArea);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en SendWhatsAppForJob: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (firstRender && !isInitialized)
+            {
+                // Esperar un poco para que el DOM esté completamente cargado
+                await Task.Delay(500);
+
+                // Registrar el componente para JavaScript
+
+                // Inicializar scripts específicos de la página
+                await InitializePageScripts();
+
+                isInitialized = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en OnAfterRenderAsync: {ex.Message}");
+            // No propagar el error para evitar romper el circuito
+        }
+    }
+
+    private async Task InitializePageScripts()
+    {
+        try
+        {
+            // Inicializar carrusel si existe
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (typeof initializeCarousel === 'function') {
+                    initializeCarousel();
+                    console.log('Carrusel inicializado desde Blazor');
+                }
+            ");
+
+            // Inicializar sección de empleos si existe
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (typeof initializeJobsSection === 'function') {
+                    initializeJobsSection();
+                    console.log('Sección de empleos inicializada desde Blazor');
+                }
+            ");
+
+            Console.WriteLine("Scripts de página inicializados correctamente");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inicializando scripts: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        // Limpiar recursos si es necesario
+        isInitialized = false;
+    }
+
+}
+

@@ -1,0 +1,363 @@
+﻿@page "/admin/cotizaciones"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@using COMMON.Entidades
+@using Microsoft.JSInterop
+
+<link href="css/admin-cotizaciones.css" rel="stylesheet" />
+
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+        <div class="spinner"></div>
+        <p>Verificando autenticación...</p>
+    </div>
+}
+else if (!isAuthenticated)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+        <p>Redirigiendo al login...</p>
+    </div>
+}
+else
+{
+<div class="admin-cotizaciones-container">
+    <div class="header-section">
+        <div>
+            <h1 style="margin: 0;">💼 Gestión de Cotizaciones</h1>
+            <p style="margin: 5px 0 0 0;">Panel de administración - Organizado por estado</p>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="nav-btn" onclick="window.location.href='/admin'">← Volver al Panel</button>
+            <button type="button" class="nav-btn" onclick="window.refreshCotizaciones ? window.refreshCotizaciones() : location.reload()">🔄 Actualizar</button>
+        </div>
+    </div>
+
+    @if (isLoadingCotizaciones)
+    {
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Cargando cotizaciones...</p>
+        </div>
+    }
+    else
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total</div>
+                <div class="stat-number" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendientes</div>
+                <div class="stat-number" style="color: #ff9800;" id="statPendientes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">En Proceso</div>
+                <div class="stat-number" style="color: #2196F3;" id="statEnProceso">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Enviadas</div>
+                <div class="stat-number" style="color: #4caf50;" id="statEnviadas">0</div>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filter-group">
+                <label>🔍 Buscar:</label>
+                <input type="text" class="search-input" id="searchInput" 
+                       oninput="window.aplicarFiltros ? window.aplicarFiltros() : null"
+                       placeholder="Buscar por folio, nombre, email o empresa..." />
+                <small style="color: #666; margin-top: 4px;">Tip: Busca por #000123 para encontrar por folio</small>
+            </div>
+            
+            <div class="filter-group">
+                <label>📊 Filtrar por Estado:</label>
+                <select class="filter-select" id="estadoFilter" onchange="window.aplicarFiltros ? window.aplicarFiltros() : null">
+                    <option value="">Todos los estados</option>
+                    <option value="Pendiente">⏳ Pendiente</option>
+                    <option value="En Proceso">🔄 En Proceso</option>
+                    <option value="Enviada">✅ Enviada</option>
+                    <option value="Rechazada">❌ Rechazada</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>⚡ Filtrar por Prioridad:</label>
+                <select class="filter-select" id="prioridadFilter" onchange="window.aplicarFiltros ? window.aplicarFiltros() : null">
+                    <option value="">Todas las prioridades</option>
+                    <option value="Urgente">🔴 Urgente</option>
+                    <option value="Alta">🟠 Alta</option>
+                    <option value="Media">🟡 Media</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>🔄 Ordenar por:</label>
+                <select class="filter-select" id="sortSelect" onchange="window.ordenarCotizaciones ? window.ordenarCotizaciones(this.value) : null">
+                    <option value="fechaAlta">📅 Fecha de solicitud (más recientes)</option>
+                    <option value="prioridad">⚡ Prioridad (más urgentes)</option>
+                    <option value="nombre">👤 Nombre (A-Z)</option>
+                    <option value="estado">📊 Estado</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="cotizaciones-list" id="cotizacionesList">
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">📭</div>
+                <h3 style="color: #666; margin: 0;">Cargando cotizaciones...</h3>
+            </div>
+        </div>
+    }
+</div>
+}
+
+<!-- Modal de detalles -->
+<div class="modal-overlay" id="cotizacionModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📋 Detalles de Cotización</h2>
+            <button type="button" class="close-modal" onclick="window.closeCotizacionModal()">×</button>
+        </div>
+
+        <div id="modalContent">
+            <!-- Se llena dinámicamente con JS -->
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-save" onclick="window.saveNotas ? window.saveNotas() : null">💾 Guardar Notas</button>
+            <button type="button" class="btn-close" onclick="window.closeCotizacionModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Cotizacion> todasCotizaciones = new();
+    private bool isLoading = true;
+    private bool isLoadingCotizaciones = false;
+    private bool scriptLoaded = false;
+    private bool isAuthenticated = false;
+    private bool dataInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("🔐 AdminCotizaciones: Iniciando...");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // PASO 1: Verificar autenticación
+                Console.WriteLine("🔐 Verificando autenticación...");
+                isAuthenticated = await CheckAuthentication();
+                
+                if (!isAuthenticated)
+                {
+                    Console.WriteLine("❌ No autenticado, redirigiendo...");
+                    isLoading = false;
+                    StateHasChanged();
+                    await Task.Delay(500);
+                    Navigation.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+                
+                Console.WriteLine("✅ Autenticado correctamente");
+                isLoading = false;
+                StateHasChanged();
+                
+                // PASO 2: Cargar datos PRIMERO
+                await LoadCotizaciones();
+                
+                await Task.Delay(200);
+
+                // PASO 3: Cargar script JavaScript
+                if (!scriptLoaded)
+                {
+                    scriptLoaded = true;
+                    Console.WriteLine("📜 Cargando admin-cotizaciones.js...");
+
+                    await JSRuntime.InvokeVoidAsync("eval", @"
+                        (function() {
+                            if (window.adminCotizacionesScriptLoaded) {
+                                console.log('✅ Script ya cargado');
+                                return;
+                            }
+                            
+                            window.adminCotizacionesScriptLoaded = true;
+                            
+                            const script = document.createElement('script');
+                            script.src = 'JS/admin-cotizaciones.js?v=' + Date.now();
+                            script.async = false;
+                            
+                            script.onload = () => {
+                                console.log('✅ admin-cotizaciones.js cargado');
+                            };
+                            
+                            script.onerror = (e) => {
+                                console.error('❌ Error cargando script:', e);
+                            };
+                            
+                            document.head.appendChild(script);
+                        })();
+                    ");
+
+                    // PASO 4: Esperar a que el script esté listo
+                    int attempts = 0;
+                    bool scriptReady = false;
+                    
+                    while (attempts < 20 && !scriptReady)
+                    {
+                        await Task.Delay(100);
+                        
+                        try
+                        {
+                            scriptReady = await JSRuntime.InvokeAsync<bool>("eval", @"
+                                window.adminCotizacionesInitialized === true &&
+                                typeof window.initAdminCotizaciones === 'function'
+                            ");
+                        }
+                        catch
+                        {
+                            scriptReady = false;
+                        }
+                        
+                        attempts++;
+                        
+                        if (scriptReady)
+                        {
+                            Console.WriteLine($"✅ Script listo después de {attempts * 100}ms");
+                            break;
+                        }
+                    }
+                    
+                    if (!scriptReady)
+                    {
+                        Console.WriteLine("⚠️ Timeout esperando script. Forzando inicialización...");
+                    }
+
+                    // PASO 5: Pasar datos a JavaScript
+                    await InitializeJavaScriptData();
+
+                    Console.WriteLine("✅ Sistema de cotizaciones inicializado");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en OnAfterRenderAsync: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+            }
+        }
+    }
+
+    private async Task InitializeJavaScriptData()
+    {
+        if (dataInitialized) return;
+        
+        try
+        {
+            var cotizacionesJson = System.Text.Json.JsonSerializer.Serialize(todasCotizaciones, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            });
+            
+            Console.WriteLine($"📊 Pasando {todasCotizaciones.Count} cotizaciones a JavaScript...");
+            Console.WriteLine($"📝 JSON preview: {cotizacionesJson.Substring(0, Math.Min(200, cotizacionesJson.Length))}...");
+            
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                console.log('📊 Configurando datos globales de cotizaciones...');
+                window.cotizacionesData = {cotizacionesJson};
+                console.log('✅ Datos configurados:', {{
+                    totalCotizaciones: window.cotizacionesData.length,
+                    primeraCotizacion: window.cotizacionesData.length > 0 ? window.cotizacionesData[0].nombre : 'ninguna'
+                }});
+            ");
+
+            await Task.Delay(200);
+            
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                console.log('🚀 Inicializando interfaz de cotizaciones...');
+                if (typeof window.initAdminCotizaciones === 'function') {
+                    window.initAdminCotizaciones();
+                    console.log('✅ Interfaz inicializada correctamente');
+                } else {
+                    console.warn('⚠️ initAdminCotizaciones no disponible');
+                }
+            ");
+            
+            dataInitialized = true;
+            Console.WriteLine("✅ Datos JavaScript inicializados");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error inicializando datos JS: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> CheckAuthentication()
+    {
+        try
+        {
+            var isValid = await JSRuntime.InvokeAsync<bool>("eval", @"
+                (function() {
+                    try {
+                        const session = JSON.parse(localStorage.getItem('adminSession') || 'null');
+                        return session && session.expiresAt && session.expiresAt > Date.now();
+                    } catch(e) {
+                        return false;
+                    }
+                })()
+            ");
+            return isValid;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task LoadCotizaciones()
+    {
+        isLoadingCotizaciones = true;
+        StateHasChanged();
+        
+        try
+        {
+            var apiUrl = "http://ConsultoriaIntegralSC.somee.com/api/Cotizacion";
+            Console.WriteLine($"📡 Cargando cotizaciones desde: {apiUrl}");
+            
+            var response = await Http.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<Cotizacion>>();
+                todasCotizaciones = result ?? new List<Cotizacion>();
+                Console.WriteLine($"✅ {todasCotizaciones.Count} cotizaciones cargadas en C#");
+                
+                // DEBUG: Mostrar primeras 3 cotizaciones
+                foreach (var cotizacion in todasCotizaciones.Take(3))
+                {
+                    Console.WriteLine($"   📋 ID: {cotizacion.Id}, Nombre: {cotizacion.Nombre}, Estado: {cotizacion.Estado}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"❌ Error HTTP: {response.StatusCode}");
+                todasCotizaciones = new List<Cotizacion>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error cargando cotizaciones: {ex.Message}");
+            todasCotizaciones = new List<Cotizacion>();
+        }
+        finally
+        {
+            isLoadingCotizaciones = false;
+            StateHasChanged();
+        }
+    }
+}
