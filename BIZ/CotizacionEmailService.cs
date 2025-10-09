@@ -613,16 +613,15 @@ namespace BIZ
                 mailMessage.SubjectEncoding = Encoding.UTF8;
 
                 // ADJUNTAR PDF SI EXISTE
-                if (cotizacion.ArchivoPDF != null && cotizacion.ArchivoPDF.Length > 0)
+                if (cotizacion.NombreArchivoPDF != null && cotizacion.NombreArchivoPDF.Length > 0)
                 {
                     string nombreArchivo = cotizacion.NombreArchivoPDF ?? $"Cotizacion_{cotizacion.Id:D6}.pdf";
                     var attachment = new Attachment(
-                        new System.IO.MemoryStream(cotizacion.ArchivoPDF),
                         nombreArchivo,
                         "application/pdf"
                     );
                     mailMessage.Attachments.Add(attachment);
-                    System.Diagnostics.Debug.WriteLine($"📎 PDF adjuntado: {nombreArchivo} ({cotizacion.ArchivoPDF.Length} bytes)");
+                    System.Diagnostics.Debug.WriteLine($"📎 PDF adjuntado: {nombreArchivo} ({cotizacion.NombreArchivoPDF.Length} bytes)");
                 }
 
                 await smtpClient.SendMailAsync(mailMessage);

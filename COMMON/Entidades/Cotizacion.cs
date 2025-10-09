@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace COMMON.Entidades
@@ -60,10 +61,6 @@ namespace COMMON.Entidades
 
         [MaxLength(1000)]
         public string? NotasInternas { get; set; }  // ← NULLABLE
-
-        // NUEVAS PROPIEDADES PARA ARCHIVO PDF
-        [NotMapped] // No se guarda en BD, solo para transferencia
-        public byte[]? ArchivoPDF { get; set; }
 
         [MaxLength(255)]
         public string? NombreArchivoPDF { get; set; }

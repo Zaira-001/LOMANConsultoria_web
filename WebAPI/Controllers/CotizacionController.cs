@@ -326,7 +326,6 @@ namespace WebAPI.Controllers
 
                 if (pdfBytes != null)
                 {
-                    cotizacion.ArchivoPDF = pdfBytes;
                     cotizacion.NombreArchivoPDF = nombrePDF;
                 }
 
@@ -404,42 +403,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        /// <summary>
-        /// DESCARGAR PDF DE COTIZACIÓN
-        /// Descarga el PDF que el admin adjuntó al enviar la cotización
-        /// </summary>
-        [HttpGet("{id}/descargar-pdf")]
-        public ActionResult DescargarPdfCotizacion(int id)
-        {
-            try
-            {
-                _logger.LogInformation($"📄 Descargando PDF de cotización ID: {id}");
-
-                var cotizacion = _repositorio.ObtenerPorId(id);
-                if (cotizacion == null)
-                {
-                    _logger.LogWarning($"❌ Cotización {id} no encontrada");
-                    return NotFound(new { error = "Cotización no encontrada" });
-                }
-
-                if (cotizacion.ArchivoPDF == null || cotizacion.ArchivoPDF.Length == 0)
-                {
-                    _logger.LogWarning($"⚠️ Cotización {id} no tiene PDF almacenado");
-                    return NotFound(new { error = "Esta cotización no tiene PDF adjunto" });
-                }
-
-                var nombreArchivo = cotizacion.NombreArchivoPDF ?? $"Cotizacion_{id:D6}.pdf";
-                _logger.LogInformation($"✅ Enviando PDF: {nombreArchivo} ({cotizacion.ArchivoPDF.Length} bytes)");
-
-                return File(cotizacion.ArchivoPDF, "application/pdf", nombreArchivo);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"❌ Error descargando PDF: {ex.Message}");
-                return StatusCode(500, new { error = "Error al descargar el PDF" });
-            }
-        }
-
+       
         [HttpPut("{id}/estado")]
         public ActionResult UpdateEstado(int id, [FromBody] EstadoCotizacionDto dto)
         {
