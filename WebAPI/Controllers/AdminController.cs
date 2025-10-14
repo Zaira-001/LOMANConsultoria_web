@@ -3,6 +3,7 @@ using COMMON.Entidades;
 using COMMON.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
@@ -15,12 +16,54 @@ namespace WebAPI.Controllers
     public class AdminController : GenericController<Admin>
     {
         private readonly AdminManager _adminManager;
-        private const string LLAVE_MAESTRA_HASH = "PgfWeRepd1+Hjjo0Cessx5wDtpOq5dAiOx5xvX+MpVo="; // Hash de "Lom4n2025#"
+        private readonly IHttpContextAccessor _httpContextAccessor; // 🆕
 
-        // Constructor que recibe y pasa el repositorio
-        public AdminController(IDB<Admin> repositorio) : base(repositorio)
+        public AdminController(IDB<Admin> repositorio, IHttpContextAccessor httpContextAccessor): base(repositorio)
         {
-            _adminManager = new AdminManager(repositorio); // Pasar el repositorio al AdminManager
+            _adminManager = new AdminManager(repositorio);
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        // GET: api/Admin
+        [HttpGet]
+        public override ActionResult<List<Admin>> Get()
+        {
+            try
+            {
+                Console.WriteLine("[GET] Obteniendo lista de administradores...");
+
+                var admins = _repositorio.ObtenerTodos();
+
+                if (admins != null)
+                {
+                    // Limpiar passwords antes de enviar
+                    foreach (var admin in admins)
+                    {
+                        admin.PasswordHash = null;
+                    }
+
+                    Console.WriteLine($"[GET] ✅ Retornando {admins.Count} administradores");
+                    return Ok(admins);
+                }
+                else
+                {
+                    Console.WriteLine($"[GET] ❌ Error: {_repositorio.Error}");
+                    return BadRequest(new
+                    {
+                        message = _repositorio.Error ?? "Error desconocido",
+                        codigo = "ERROR_OBTENIENDO_ADMINS"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GET] ❌ Excepción: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    message = ex.Message,
+                    codigo = "ERROR_SERVIDOR"
+                });
+            }
         }
 
         // POST: api/Admin/login
@@ -29,13 +72,10 @@ namespace WebAPI.Controllers
         {
             try
             {
-                Console.WriteLine($"[LOGIN] =========================");
                 Console.WriteLine($"[LOGIN] Intento de login para usuario: {request.Username}");
-                Console.WriteLine($"[LOGIN] Fingerprint recibido: {request.FingerprintDispositivo?.Substring(0, Math.Min(10, request.FingerprintDispositivo?.Length ?? 0))}...");
 
                 if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
                 {
-                    Console.WriteLine("[LOGIN] Error: Usuario y contraseña son requeridos");
                     return BadRequest(new LoginResponse
                     {
                         Success = false,
@@ -43,51 +83,13 @@ namespace WebAPI.Controllers
                     });
                 }
 
-                // Verificar conexión a base de datos
-                Console.WriteLine("[LOGIN] Verificando conexión a base de datos...");
-                try
-                {
-                    var testConnection = await _adminManager.ObtenerTodos();
-                    Console.WriteLine($"[LOGIN] Conexión OK. Encontrados {testConnection?.Count ?? 0} administradores en total");
-
-                    if (testConnection != null && testConnection.Count > 0)
-                    {
-                        Console.WriteLine("[LOGIN] Usuarios encontrados:");
-                        foreach (var adminItem in testConnection)
-                        {
-                            Console.WriteLine($"[LOGIN] - ID: {adminItem.Id}, Username: '{adminItem.Username}', Email: '{adminItem.Email}', Activo: {adminItem.Activo}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("[LOGIN] ⚠️ No se encontraron administradores en la base de datos");
-                        return BadRequest(new LoginResponse
-                        {
-                            Success = false,
-                            Message = "Sistema no inicializado. Contacte al administrador."
-                        });
-                    }
-                }
-                catch (Exception dbEx)
-                {
-                    Console.WriteLine($"[LOGIN] ERROR DE CONEXIÓN: {dbEx.Message}");
-                    Console.WriteLine($"[LOGIN] Stack trace: {dbEx.StackTrace}");
-                    return StatusCode(500, new LoginResponse
-                    {
-                        Success = false,
-                        Message = $"Error de conexión a base de datos: {dbEx.Message}"
-                    });
-                }
-
-                // Intentar login
-                Console.WriteLine($"[LOGIN] Intentando login para usuario '{request.Username}'...");
                 var admin = await _adminManager.Login(request.Username, request.Password);
 
                 if (admin != null)
                 {
                     Console.WriteLine($"[LOGIN] ✅ Login exitoso para admin ID: {admin.Id}");
 
-                    var response = new LoginResponse
+                    return Ok(new LoginResponse
                     {
                         Success = true,
                         Message = "Login exitoso",
@@ -97,205 +99,27 @@ namespace WebAPI.Controllers
                         NombreCompleto = admin.NombreCompleto,
                         Rol = admin.Rol,
                         UltimoLogin = admin.UltimoLogin,
-                        RequiereClaveMaestra = false // Por ahora false para testing
-                    };
-
-                    Console.WriteLine($"[LOGIN] Respuesta enviada exitosamente");
-                    return Ok(response);
+                        EsAdminPrincipal = admin.EsAdminPrincipal
+                    });
                 }
                 else
                 {
-                    Console.WriteLine($"[LOGIN] ❌ Login fallido");
-                    string errorMessage = _adminManager.Error ?? "Credenciales incorrectas";
-                    Console.WriteLine($"[LOGIN] Error: '{errorMessage}'");
-
-                    // Si el error está vacío, proporcionar un mensaje genérico
-                    if (string.IsNullOrEmpty(errorMessage))
-                    {
-                        errorMessage = "Usuario o contraseña incorrectos";
-                    }
-
+                    Console.WriteLine($"[LOGIN] ❌ Login fallido: {_adminManager.Error}");
                     return BadRequest(new LoginResponse
                     {
                         Success = false,
-                        Message = errorMessage
+                        Message = _adminManager.Error ?? "Credenciales incorrectas"
                     });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[LOGIN] ❌ Excepción no controlada: {ex.Message}");
-                Console.WriteLine($"[LOGIN] Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"[LOGIN] ❌ Excepción: {ex.Message}");
                 return StatusCode(500, new LoginResponse
                 {
                     Success = false,
-                    Message = $"Error interno del servidor: {ex.Message}"
+                    Message = $"Error interno: {ex.Message}"
                 });
-            }
-        }
-
-        // POST: api/Admin/test-db - Endpoint de diagnóstico MEJORADO
-        [HttpPost("test-db")]
-        public async Task<ActionResult> TestDatabase()
-        {
-            try
-            {
-                Console.WriteLine("[TEST] =========================");
-                Console.WriteLine("[TEST] Iniciando diagnóstico completo...");
-
-                // Test 1: Verificar repositorio
-                Console.WriteLine("[TEST] 1. Verificando repositorio...");
-                if (_repositorio == null)
-                {
-                    return Ok(new { error = "Repositorio es null" });
-                }
-                Console.WriteLine("[TEST] ✅ Repositorio inicializado correctamente");
-
-                // Test 2: Verificar AdminManager
-                Console.WriteLine("[TEST] 2. Verificando AdminManager...");
-                if (_adminManager == null)
-                {
-                    return Ok(new { error = "AdminManager es null" });
-                }
-                Console.WriteLine("[TEST] ✅ AdminManager inicializado correctamente");
-
-                // Test 3: Probar conexión directa
-                Console.WriteLine("[TEST] 3. Probando conexión directa...");
-                var adminsDirecto = _repositorio.ObtenerTodos();
-                Console.WriteLine($"[TEST] Resultado directo: {adminsDirecto?.Count ?? 0} registros");
-
-                // Test 4: Probar through AdminManager
-                Console.WriteLine("[TEST] 4. Probando through AdminManager...");
-                var adminsManager = await _adminManager.ObtenerTodos();
-                Console.WriteLine($"[TEST] Resultado AdminManager: {adminsManager?.Count ?? 0} registros");
-
-                // Test 5: Información detallada
-                var resultado = new
-                {
-                    repositorioFunciona = adminsDirecto != null,
-                    adminManagerFunciona = adminsManager != null,
-                    countDirecto = adminsDirecto?.Count ?? 0,
-                    countManager = adminsManager?.Count ?? 0,
-                    errorRepositorio = _repositorio.Error,
-                    errorAdminManager = _adminManager.Error,
-                    usuarios = adminsManager?.Select(a => new {
-                        a.Id,
-                        a.Username,
-                        a.Email,
-                        a.Activo,
-                        PasswordLength = a.PasswordHash?.Length ?? 0,
-                        PasswordStart = a.PasswordHash?.Substring(0, Math.Min(10, a.PasswordHash?.Length ?? 0)) ?? ""
-                    }).ToList(),
-                    mensaje = "Diagnóstico completado"
-                };
-
-                Console.WriteLine("[TEST] ✅ Diagnóstico completado");
-                return Ok(resultado);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TEST] ❌ Error en diagnóstico: {ex.Message}");
-                return Ok(new
-                {
-                    error = ex.Message,
-                    stackTrace = ex.StackTrace,
-                    innerException = ex.InnerException?.Message
-                });
-            }
-        }
-
-        // POST: api/Admin/test-hash - Nuevo endpoint para verificar hashing
-        [HttpPost("test-hash")]
-        public ActionResult TestHash([FromBody] TestHashRequest request)
-        {
-            try
-            {
-                Console.WriteLine("[HASH] =========================");
-                Console.WriteLine($"[HASH] Probando hash para: '{request?.Password ?? "NULL"}'");
-
-                if (string.IsNullOrEmpty(request?.Password))
-                {
-                    return BadRequest(new
-                    {
-                        error = "Password es requerido",
-                        ejemplo = "{ \"password\": \"LOMAN567#Consultoria\" }"
-                    });
-                }
-
-                var hashCalculado = AdminManager.HashPassword(request.Password);
-                Console.WriteLine($"[HASH] Hash calculado: {hashCalculado}");
-
-                var hashEsperado = "PgfWeRepd1+Hjjo0Cessx5wDtpOq5dAiOx5xvX+MpVo="; // Hash de LOMAN567#Consultoria
-                var coincide = hashCalculado == hashEsperado;
-
-                Console.WriteLine($"[HASH] Hash esperado: {hashEsperado}");
-                Console.WriteLine($"[HASH] Coinciden: {coincide}");
-
-                return Ok(new
-                {
-                    password = request.Password,
-                    hashCalculado = hashCalculado,
-                    hashEsperado = hashEsperado,
-                    coinciden = coincide,
-                    verificacion = AdminManager.VerificarPassword(request.Password, hashEsperado),
-                    nota = coincide ? "✅ Contraseña correcta" : "❌ Contraseña incorrecta"
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[HASH] Error: {ex.Message}");
-                return BadRequest(new { error = ex.Message });
-            }
-        }
-
-        // También agrega este método GET para probar sin body
-        [HttpGet("test-hash-simple")]
-        public ActionResult TestHashSimple()
-        {
-            try
-            {
-                var password = "LOMAN567#Consultoria";
-                var hashCalculado = AdminManager.HashPassword(password);
-                var hashEsperado = "PgfWeRepd1+Hjjo0Cessx5wDtpOq5dAiOx5xvX+MpVo=";
-                var coincide = hashCalculado == hashEsperado;
-
-                return Ok(new
-                {
-                    password = password,
-                    hashCalculado = hashCalculado,
-                    hashEsperado = hashEsperado,
-                    coinciden = coincide,
-                    mensaje = coincide ? "Hash correcto" : "Hash incorrecto"
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
-
-        // POST: api/Admin/verificar-clave-maestra
-        [HttpPost("verificar-clave-maestra")]
-        public async Task<ActionResult> VerificarClaveMaestra([FromBody] VerificarClaveMaestraRequest request)
-        {
-            try
-            {
-                Console.WriteLine("[CLAVE_MAESTRA] Verificando clave maestra...");
-
-                string hashClaveRecibida = HashPassword(request.ClaveMaestra);
-                if (hashClaveRecibida != LLAVE_MAESTRA_HASH)
-                {
-                    Console.WriteLine("[CLAVE_MAESTRA] Clave maestra incorrecta");
-                    return BadRequest(new { message = "Clave maestra incorrecta" });
-                }
-
-                Console.WriteLine("[CLAVE_MAESTRA] Clave maestra correcta");
-                return Ok(new { mensaje = "Dispositivo agregado como confiable" });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[CLAVE_MAESTRA] Excepción: {ex.Message}");
-                return StatusCode(500, new { message = $"Error en el servidor: {ex.Message}" });
             }
         }
 
@@ -305,14 +129,19 @@ namespace WebAPI.Controllers
         {
             try
             {
-                Console.WriteLine($"[CREAR_ADMIN] Creando admin: {request.Username}");
+                Console.WriteLine($"[CREAR_ADMIN] Username: {request.Username}, Email: {request.Email}");
 
-                if (!AdminManager.EsPasswordValida(request.Password))
-                {
-                    string mensaje = AdminManager.ObtenerMensajeValidacionPassword(request.Password);
-                    return BadRequest(new { message = $"Contraseña no válida: {mensaje}" });
-                }
+                // Validaciones...
+                if (string.IsNullOrWhiteSpace(request.Username))
+                    return BadRequest(new { message = "El nombre de usuario es requerido" });
 
+                if (string.IsNullOrWhiteSpace(request.Email))
+                    return BadRequest(new { message = "El email es requerido" });
+
+                if (string.IsNullOrWhiteSpace(request.Password))
+                    return BadRequest(new { message = "La contraseña es requerida" });
+
+                // Crear admin
                 var admin = await _adminManager.CrearAdmin(
                     request.Username,
                     request.Email,
@@ -322,22 +151,254 @@ namespace WebAPI.Controllers
 
                 if (admin != null)
                 {
-                    Console.WriteLine($"[CREAR_ADMIN] Admin creado exitosamente: {admin.Id}");
+                    Console.WriteLine($"[CREAR_ADMIN] ✅ Admin creado con ID: {admin.Id}");
+
+                    // 🆕 OBTENER URL BASE DINÁMICA DESDE EL REQUEST
+                    string baseUrl = ObtenerUrlBase();
+                    Console.WriteLine($"[CREAR_ADMIN] 🌐 URL Base detectada: {baseUrl}");
+
+                    // 📧 ENVIAR EMAIL CON URL DINÁMICA
+                    try
+                    {
+                        var emailService = new AdminEmailService();
+                        var datosCredenciales = new DatosCredencialesAdmin
+                        {
+                            Username = admin.Username,
+                            Email = admin.Email,
+                            PasswordTemporal = request.Password,
+                            NombreCompleto = admin.NombreCompleto,
+                            RolDescripcion = admin.EsAdminPrincipal
+                                ? "Administrador Principal - Acceso Total"
+                                : "Administrador - Gestión de Contenido",
+                            EsAdminPrincipal = admin.EsAdminPrincipal
+                        };
+
+                        // 👉 Pasar la URL base dinámica
+                        var emailEnviado = await emailService.EnviarCredencialesNuevoAdmin(
+                            datosCredenciales,
+                            baseUrl); // 🆕 URL dinámica
+
+                        if (emailEnviado)
+                        {
+                            Console.WriteLine($"[CREAR_ADMIN] ✅ Email enviado a: {admin.Email}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[CREAR_ADMIN] ⚠️ No se pudo enviar el email");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"[CREAR_ADMIN] ⚠️ Error enviando email: {emailEx.Message}");
+                    }
+
                     admin.PasswordHash = null;
-                    return Ok(admin);
+                    return Ok(new
+                    {
+                        message = "Administrador creado exitosamente",
+                        emailEnviado = true,
+                        data = admin
+                    });
                 }
                 else
                 {
-                    Console.WriteLine($"[CREAR_ADMIN] Error creando admin: {_adminManager.Error}");
                     return BadRequest(new { message = _adminManager.Error });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[CREAR_ADMIN] Excepción: {ex.Message}");
-                return StatusCode(500, new { message = $"Error en el servidor: {ex.Message}" });
+                Console.WriteLine($"[CREAR_ADMIN] ❌ Excepción: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        private string ObtenerUrlBase()
+        {
+            try
+            {
+                var request = _httpContextAccessor.HttpContext?.Request;
+
+                if (request == null)
+                {
+                    Console.WriteLine("⚠️ HttpContext no disponible, usando fallback");
+                    return "http://localhost:5067";
+                }
+
+                // Construir URL base: scheme + host + (port si no es estándar)
+                var scheme = request.Scheme; // http o https
+                var host = request.Host.Host; // dominio
+                var port = request.Host.Port; // puerto
+
+                string baseUrl;
+
+                // Si el puerto es estándar (80 para HTTP, 443 para HTTPS), no incluirlo
+                if ((scheme == "http" && port == 80) || (scheme == "https" && port == 443) || !port.HasValue)
+                {
+                    baseUrl = $"{scheme}://{host}";
+                }
+                else
+                {
+                    baseUrl = $"{scheme}://{host}:{port}";
+                }
+
+                Console.WriteLine($"✅ URL Base construida: {baseUrl}");
+                Console.WriteLine($"   - Scheme: {scheme}");
+                Console.WriteLine($"   - Host: {host}");
+                Console.WriteLine($"   - Port: {port}");
+
+                return baseUrl;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error obteniendo URL base: {ex.Message}");
+                return "http://localhost:5067";
+            }
+        }
+
+        // 🆕 ENDPOINT DE PRUEBA PARA VERIFICAR LA URL
+        [HttpGet("test-url-base")]
+        public ActionResult TestUrlBase()
+        {
+            var baseUrl = ObtenerUrlBase();
+            var request = _httpContextAccessor.HttpContext?.Request;
+
+            return Ok(new
+            {
+                urlBase = baseUrl,
+                urlLogin = $"{baseUrl}/login",
+                urlAdmin = $"{baseUrl}/admin",
+                detalles = new
+                {
+                    scheme = request?.Scheme,
+                    host = request?.Host.Host,
+                    port = request?.Host.Port,
+                    path = request?.Path.Value,
+                    fullUrl = $"{request?.Scheme}://{request?.Host}{request?.Path}"
+                }
+            });
+        }
+
+        // GET: api/Admin/{id}
+        [HttpGet("{id}")]
+        public override ActionResult<Admin> GetById(int id)
+        {
+            try
+            {
+                var admin = _repositorio.ObtenerPorId(id);
+                if (admin != null)
+                {
+                    admin.PasswordHash = null;
+                    return Ok(admin);
+                }
+                else
+                {
+                    return NotFound(new { message = "Administrador no encontrado" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public ActionResult<Admin> Put(int id, [FromBody] Admin entidad)
+        {
+            try
+            {
+                if (entidad == null)
+                    return BadRequest(new { message = "Entidad nula" });
+
+                var adminActual = _repositorio.ObtenerPorId(id);
+                if (adminActual == null)
+                    return BadRequest(new { message = "Admin no existe" });
+
+                // ✅ Si no viene passwordHash en la petición, usar el actual
+                if (string.IsNullOrWhiteSpace(entidad.PasswordHash))
+                {
+                    entidad.PasswordHash = adminActual.PasswordHash;
+                }
+
+                entidad.Id = id;
+                var datos = _repositorio.Actualizar(entidad);
+
+                if (datos != null)
+                {
+                    datos.PasswordHash = null;
+                    return Ok(datos);
+                }
+                else
+                {
+                    return BadRequest(new { message = _repositorio.Error });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/datos")]
+        public ActionResult<Admin> ActualizarDatos(int id, [FromBody] ActualizarDatosAdminRequest request)
+        {
+            try
+            {
+                var adminActual = _repositorio.ObtenerPorId(id);
+                if (adminActual == null)
+                    return BadRequest(new { message = "Admin no existe" });
+
+                adminActual.Username = request.Username;
+                adminActual.Email = request.Email;
+                adminActual.NombreCompleto = request.NombreCompleto;
+                adminActual.Activo = request.Activo;
+                adminActual.FechaMod = DateTime.Now;
+                adminActual.UsuarioMod = request.UsuarioMod;
+
+                var datos = _repositorio.Actualizar(adminActual);
+
+                if (datos != null)
+                {
+                    datos.PasswordHash = null;
+                    return Ok(datos);
+                }
+                else
+                {
+                    return BadRequest(new { message = _repositorio.Error });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+
+        // PUT: api/Admin/{id}/estado
+        [HttpPut("{id}/estado")]
+        public async Task<ActionResult> CambiarEstado(int id, [FromBody] EstadoAdminRequest request)
+        {
+            try
+            {
+                Console.WriteLine($"[CAMBIAR_ESTADO] ID: {id}, Nuevo estado: {request.Activo}");
+
+                var resultado = await _adminManager.CambiarEstadoAdmin(id, request.Activo);
+                if (resultado)
+                {
+                    return Ok(new { mensaje = $"Estado cambiado a {(request.Activo ? "activo" : "inactivo")}" });
+                }
+                else
+                {
+                    return BadRequest(new { message = _adminManager.Error });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
 
         // PUT: api/Admin/cambiar-password
         [HttpPut("cambiar-password")]
@@ -351,7 +412,12 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = $"Nueva contraseña no válida: {mensaje}" });
                 }
 
-                var resultado = await _adminManager.CambiarPassword(request.AdminId, request.PasswordActual, request.NuevaPassword);
+                var resultado = await _adminManager.CambiarPassword(
+                    request.AdminId,
+                    request.PasswordActual,
+                    request.NuevaPassword
+                );
+
                 if (resultado)
                 {
                     return Ok(new { mensaje = "Contraseña cambiada correctamente" });
@@ -363,95 +429,95 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error en el servidor: {ex.Message}" });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        // PUT: api/Admin/5/estado
-        [HttpPut("{id}/estado")]
-        public async Task<ActionResult> CambiarEstado(int id, [FromBody] EstadoAdminRequest request)
+        // PUT: api/Admin/{id}/reset-password
+        [HttpPut("{id}/reset-password")]
+        public async Task<ActionResult> ResetPasswordAdmin(int id, [FromBody] ResetPasswordRequest request)
         {
             try
             {
-                var resultado = await _adminManager.CambiarEstadoAdmin(id, request.Activo);
-                if (resultado)
+                Console.WriteLine($"[RESET_PASSWORD] Admin ID: {id}");
+
+                if (!AdminManager.EsPasswordValida(request.NuevaPassword))
                 {
-                    return Ok(new { mensaje = $"Estado del administrador cambiado a {(request.Activo ? "activo" : "inactivo")}" });
+                    string mensaje = AdminManager.ObtenerMensajeValidacionPassword(request.NuevaPassword);
+                    return BadRequest(new { message = $"Nueva contraseña no válida: {mensaje}" });
+                }
+
+                var adminActual = _repositorio.ObtenerPorId(id);
+                if (adminActual == null)
+                    return NotFound(new { message = "Administrador no encontrado" });
+
+                // Actualizar contraseña directamente (sin validar la anterior)
+                adminActual.PasswordHash = AdminManager.HashPassword(request.NuevaPassword);
+                adminActual.FechaMod = DateTime.Now;
+                adminActual.UsuarioMod = request.UsuarioMod ?? "admin";
+
+                var resultado = _repositorio.Actualizar(adminActual);
+
+                if (resultado != null)
+                {
+                    Console.WriteLine($"[RESET_PASSWORD] ✅ Contraseña actualizada para admin ID: {id}");
+                    return Ok(new { mensaje = "Contraseña actualizada correctamente" });
                 }
                 else
                 {
-                    return BadRequest(new { message = _adminManager.Error });
+                    return BadRequest(new { message = _repositorio.Error });
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error en el servidor: {ex.Message}" });
+                Console.WriteLine($"[RESET_PASSWORD] ❌ Error: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        // GET: api/Admin
-        [HttpGet]
-        public new ActionResult<List<Admin>> Get()
+        // GET: api/Admin/test-db
+        [HttpGet("test-db")]
+        public async Task<ActionResult> TestDatabase()
         {
             try
             {
-                var admins = _repositorio.ObtenerTodos();
-                if (admins != null)
+                var admins = await _adminManager.ObtenerTodos();
+
+                if (admins == null)
                 {
-                    foreach (var admin in admins)
+                    return Ok(new
                     {
-                        admin.PasswordHash = null;
-                    }
-                    return Ok(admins);
+                        funciona = false,
+                        count = 0,
+                        error = _adminManager.Error ?? "Error desconocido"
+                    });
                 }
-                else
+
+                return Ok(new
                 {
-                    return BadRequest(new { message = _repositorio.Error });
-                }
+                    funciona = true,
+                    count = admins.Count,
+                    usuarios = admins.Select(a => new {
+                        a.Id,
+                        a.Username,
+                        a.Email,
+                        a.Activo,
+                        a.Rol
+                    }).ToList()
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-        // GET: api/Admin/5
-        [HttpGet("{id}")]
-        public new ActionResult<Admin> Get(int id)
-        {
-            try
-            {
-                var admin = _repositorio.ObtenerPorId(id);
-                if (admin != null)
+                return Ok(new
                 {
-                    admin.PasswordHash = null;
-                    return Ok(admin);
-                }
-                else
-                {
-                    return BadRequest(new { message = _repositorio.Error });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-        // Método auxiliar para hashear
-        private static string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var salt = "ConsultoriaIntegralSC_2024";
-                var saltedPassword = password + salt;
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword));
-                return Convert.ToBase64String(hashedBytes);
+                    funciona = false,
+                    error = ex.Message
+                });
             }
         }
     }
 
-    // Clases para las requests y responses
+    // DTOs simplificados
     public class LoginRequest
     {
         [Required]
@@ -459,8 +525,6 @@ namespace WebAPI.Controllers
 
         [Required]
         public string Password { get; set; } = "";
-
-        public string FingerprintDispositivo { get; set; } = "";
     }
 
     public class LoginResponse
@@ -473,21 +537,7 @@ namespace WebAPI.Controllers
         public string NombreCompleto { get; set; } = "";
         public string Rol { get; set; } = "";
         public DateTime? UltimoLogin { get; set; }
-        public bool RequiereClaveMaestra { get; set; } = false;
-    }
-
-    public class VerificarClaveMaestraRequest
-    {
-        [Required]
-        public int AdminId { get; set; }
-
-        [Required]
-        public string ClaveMaestra { get; set; } = "";
-
-        [Required]
-        public string FingerprintDispositivo { get; set; } = "";
-
-        public string NombreDispositivo { get; set; } = "";
+        public bool EsAdminPrincipal { get; set; } // Agregar esta propiedad
     }
 
     public class CrearAdminRequest
@@ -522,9 +572,21 @@ namespace WebAPI.Controllers
         public bool Activo { get; set; }
     }
 
-    public class TestHashRequest
+    // DTO para actualizar solo datos (sin passwordHash)
+    public class ActualizarDatosAdminRequest
+    {
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string NombreCompleto { get; set; }
+        public bool Activo { get; set; }
+        public string UsuarioMod { get; set; }
+    }
+
+    public class ResetPasswordRequest
     {
         [Required]
-        public string Password { get; set; } = "";
+        public string NuevaPassword { get; set; } = "";
+
+        public string UsuarioMod { get; set; } = "";
     }
 }

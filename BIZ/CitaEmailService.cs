@@ -490,7 +490,7 @@ namespace BIZ
                         <p style='margin: 10px 0;'>Te esperamos en nuestras oficinas a la hora agendada.</p>
                         
                         <ul style='margin-top: 15px;'>
-                            <li><strong>Dirección:</strong> [Incluir dirección completa aquí]</li>
+                            <li><strong>Dirección:</strong> Rio Sena #94, 3er. Piso Col. Rio Lerma Cuauhtémoc, Ciudad de México C.P.06500</li>
                             <li><strong>Llega 10 minutos antes</strong> para el registro</li>
                             <li><strong>Trae identificación oficial</strong></li>
                             <li><strong>Estacionamiento disponible</strong></li>
@@ -498,14 +498,10 @@ namespace BIZ
                         </ul>
                         
                         <div style='text-align: center; margin: 20px 0;'>
-                            <a href='https://maps.google.com/?q=Consultoria+Integral+SC' class='highlight-link' style='color: white;'>
+                            <a href='https://maps.app.goo.gl/KdAYdZXMLxiqqK2v9' class='highlight-link' style='color: white;'>
                                 📍 Ver Ubicación en Maps
                             </a>
                         </div>
-                        
-                        <p style='margin-top: 15px; font-size: 14px; opacity: 0.9;'>
-                            💡 <strong>Tip:</strong> Te recomendamos usar Waze o Google Maps para evitar tráfico.
-                        </p>
                     </div>
                 ";
             }

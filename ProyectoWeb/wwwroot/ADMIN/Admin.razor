@@ -18,7 +18,15 @@
         <!-- Admin info and logout -->
         <div class="admin-info">
             <div class="admin-actions-header">
-                <button type="button" class="btn-administradores" onclick="showAdminManager">
+                <!-- ✅ BOTÓN CON VERIFICACIÓN DE PERMISOS -->
+                <!-- 
+                    Se oculta por defecto con style="display: none"
+                    JavaScript lo mostrará solo si el usuario es admin principal
+                -->
+                <button type="button"
+                        class="btn-administradores"
+                        style="display: none;"
+                        onclick="openAdministradoresModalSeguro()">
                     👥 Administradores
                 </button>
                 <!-- En Admin.razor, reemplaza el botón actual con este: -->
@@ -220,23 +228,26 @@
     </div>
 </div>
 
-<!-- Modal para gestión de administradores -->
-<div class="modal-overlay" id="adminModal">
-    <div class="modal large-modal">
-        <div class="modal-header" style="border-bottom: 2px solid #667eea; padding-bottom: 15px; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #333;">Gestión de Administradores</h2>
+<!-- Modal de administradores - VERSIÓN ACTUALIZADA -->
+<div class="admin-modal-overlay" id="adminModal">
+    <div class="admin-modal-container">
+        <!-- Header -->
+        <div class="admin-modal-header">
+            <h2>Gestión de Administradores</h2>
+            <button type="button" class="admin-modal-close-btn" onclick="closeAllModals()">✕</button>
         </div>
 
-        <!-- Contenedor donde se cargará la lista o formularios -->
-        <div class="admin-management-section" id="adminsListContainer">
-            <div style="text-align: center; padding: 40px;">
-                <div class="spinner" style="margin: 0 auto 20px; width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <!-- Body -->
+        <div class="admin-modal-body" id="adminsListContainer">
+            <div class="admin-modal-loading">
+                <div class="admin-modal-spinner"></div>
                 <p>Cargando administradores...</p>
             </div>
         </div>
 
-        <div class="modal-actions" style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
-            <button type="button" class="btn-cancel" onclick="closeAllModals()">Cerrar</button>
+        <!-- Footer -->
+        <div class="admin-modal-footer">
+            <button type="button" class="admin-modal-btn-secondary" onclick="closeAllModals()">Cerrar</button>
         </div>
     </div>
 </div>
@@ -357,4 +368,5 @@
             }
         }
     }
+
 }

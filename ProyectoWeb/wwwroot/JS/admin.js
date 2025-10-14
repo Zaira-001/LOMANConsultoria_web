@@ -62,6 +62,110 @@ if (window.adminSystemActive) {
         }
     }
 
+    function esAdminPrincipal() {
+        try {
+            const session = getSessionData();
+            if (!session) return false;
+
+            // Verificación primaria: por flag
+            if (session.esAdminPrincipal === true) {
+                return true;
+            }
+
+            // Verificación secundaria: por username (backup)
+            const adminPrincipales = ['admin', 'master', 'root'];
+            if (adminPrincipales.includes(session.username?.toLowerCase())) {
+                return true;
+            }
+
+            // Verificación terciaria: por rol
+            if (session.rol === 'AdminPrincipal' || session.rol === 'SuperAdmin') {
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Error verificando admin principal:', error);
+            return false;
+        }
+    }
+
+    // Configurar visibilidad de elementos según permisos
+    function configurarPermisos() {
+        console.log('🔧 Configurando permisos de usuario...');
+
+        const session = getSessionData();
+        if (!session) {
+            console.warn('No hay sesión activa');
+            return;
+        }
+
+        const isPrincipal = esAdminPrincipal();
+        console.log(`Usuario ${session.username}: ${isPrincipal ? 'ADMIN PRINCIPAL ✅' : 'Admin normal'}`);
+
+        // Configurar botón de administradores
+        const botonAdministradores = document.querySelector('.btn-administradores');
+        if (botonAdministradores) {
+            if (isPrincipal) {
+                botonAdministradores.style.display = 'inline-block';
+                botonAdministradores.style.visibility = 'visible';
+                botonAdministradores.style.opacity = '1';
+                botonAdministradores.disabled = false;
+                console.log('✅ Botón Administradores: VISIBLE');
+            } else {
+                botonAdministradores.style.display = 'none';
+                botonAdministradores.style.visibility = 'hidden';
+                botonAdministradores.style.opacity = '0';
+                botonAdministradores.disabled = true;
+                console.log('🚫 Botón Administradores: OCULTO');
+            }
+        }
+
+        // Agregar indicador visual en el header
+        const welcomeElement = document.getElementById('adminWelcome');
+        if (welcomeElement && isPrincipal) {
+            const existingBadge = welcomeElement.querySelector('.badge-principal');
+            if (!existingBadge) {
+                const badge = document.createElement('span');
+                badge.className = 'badge-principal';
+                badge.textContent = '👑 Principal';
+                badge.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 0.75em;
+                margin-left: 10px;
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            `;
+                welcomeElement.appendChild(badge);
+            }
+        }
+    }
+
+    // Función segura para abrir modal de administradores
+    window.openAdministradoresModalSeguro = function () {
+        console.log('🔐 Verificando permisos para gestión de administradores...');
+
+        if (!esAdminPrincipal()) {
+            console.warn('⛔ Acceso denegado: No eres administrador principal');
+
+            showError('⛔ Acceso Denegado\n\nSolo el administrador principal puede gestionar otros administradores del sistema.');
+
+            return;
+        }
+
+        console.log('✅ Permiso concedido, abriendo modal...');
+
+        if (window.openAdministradoresModal && typeof window.openAdministradoresModal === 'function') {
+            window.openAdministradoresModal();
+        } else {
+            console.error('❌ openAdministradoresModal no disponible');
+            showError('Error: Módulo de administradores no cargado.');
+        }
+    };
+
     // === FUNCIONES DE API CORREGIDAS ===
     async function apiRequest(url, options = {}) {
         const controller = new AbortController();
@@ -290,7 +394,28 @@ if (window.adminSystemActive) {
         if (session) {
             const welcomeElement = document.getElementById('adminWelcome');
             if (welcomeElement) {
-                welcomeElement.textContent = `Bienvenido, ${session.nombreCompleto || session.username}`;
+                const nombreMostrar = session.nombreCompleto || session.username;
+                const isPrincipal = esAdminPrincipal();
+
+                welcomeElement.textContent = `Bienvenido, ${nombreMostrar}`;
+
+                // Agregar badge si es principal
+                if (isPrincipal) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge-principal';
+                    badge.textContent = '👑 Principal';
+                    badge.style.cssText = `
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 0.75em;
+                    margin-left: 10px;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                `;
+                    welcomeElement.appendChild(badge);
+                }
             }
         }
     }
@@ -1438,8 +1563,33 @@ async function createJob(jobData) {
     }
 
     function showAdminManager() {
-        showError('Gestión de administradores en desarrollo');
+    console.log('Abriendo gestión de administradores...');
+    
+    // Llamar a la función del módulo admin-users.js
+    if (window.showAdminManager && typeof window.showAdminManager === 'function') {
+        // Ya existe la función correcta, no hacer nada
+        return;
     }
+    
+    // Si no existe, intentar abrir el modal manualmente
+    const modal = document.getElementById('adminModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        
+        // Cargar lista de administradores si existe la función
+        setTimeout(() => {
+            if (window.loadAdminsList && typeof window.loadAdminsList === 'function') {
+                window.loadAdminsList();
+            } else {
+                console.error('loadAdminsList no está disponible');
+                showError('Módulo de administradores no cargado. Recarga la página.');
+            }
+        }, 100);
+    } else {
+        console.error('Modal adminModal no encontrado');
+        showError('Modal de administradores no encontrado');
+    }
+}
 
     function filterJobs() {
         const levelFilter = document.getElementById('filterLevel')?.value;
@@ -1533,9 +1683,17 @@ async function createJob(jobData) {
                 }
 
                 isInitialized = true;
+
+                // Mostrar información del admin
                 displayAdminInfo();
+
+                // ✅ CONFIGURAR PERMISOS (NUEVO)
+                configurarPermisos();
+
+                // Configurar event listeners
                 setupEventListeners();
 
+                // Cargar empleos
                 const loadPromise = loadJobs();
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Timeout inicial')), 8000)
@@ -2432,3 +2590,100 @@ function NavigateToCotizaciones() {
     // Navegar
     window.location.href = '/admin/cotizaciones';
 }
+
+// === FUNCIÓN GLOBAL PARA ABRIR MODAL DE ADMINISTRADORES ===
+window.openAdministradoresModal = function () {
+    console.log('🔘 openAdministradoresModal llamada');
+
+    const modal = document.getElementById('adminModal');
+    if (!modal) {
+        console.error('❌ Modal adminModal no encontrado');
+        alert('Error: Modal no encontrado');
+        return;
+    }
+
+    console.log('✅ Modal encontrado, configurando...');
+
+    // Limpiar estilos previos
+    modal.removeAttribute('style');
+    modal.classList.remove('modal-hidden', 'hiding');
+
+    // Configurar estilos del overlay
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.right = '0';
+    modal.style.bottom = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.zIndex = '9999';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.padding = '20px';
+    modal.style.boxSizing = 'border-box';
+
+    // Agregar clases de animación
+    modal.classList.add('show', 'modal-active');
+
+    // Configurar el contenido del modal
+    const modalContent = modal.querySelector('.modal');
+    if (modalContent) {
+        modalContent.style.display = 'block';
+        modalContent.style.visibility = 'visible';
+        modalContent.style.opacity = '1';
+        modalContent.style.position = 'relative';
+        modalContent.style.zIndex = '10000';
+        modalContent.style.background = 'white';
+        modalContent.style.borderRadius = '20px';
+        modalContent.style.padding = '40px';
+        modalContent.style.maxWidth = '900px';
+        modalContent.style.width = '90%';
+        modalContent.style.maxHeight = '90vh';
+        modalContent.style.overflowY = 'auto';
+        modalContent.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+    }
+
+    console.log('✅ Modal configurado, cargando lista en 300ms...');
+
+    // Cargar lista de administradores
+    setTimeout(() => {
+        if (window.loadAdminsList && typeof window.loadAdminsList === 'function') {
+            console.log('✅ Llamando a loadAdminsList...');
+            window.loadAdminsList();
+        } else {
+            console.error('❌ loadAdminsList no disponible');
+            console.log('Funciones disponibles:', Object.keys(window).filter(k => k.includes('Admin')));
+
+            const container = document.getElementById('adminsListContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <h3 style="color: #e74c3c;">Módulo no cargado</h3>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            El módulo de gestión de administradores no se cargó correctamente.
+                        </p>
+                        <button class="btn-primary" onclick="location.reload()" 
+                                style="background: #667eea; color: white; border: none; 
+                                       padding: 12px 30px; border-radius: 8px; cursor: pointer;">
+                            🔄 Recargar Página
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }, 300);
+};
+
+// ============================================
+// EXPORTAR FUNCIONES GLOBALES
+// ============================================
+window.esAdminPrincipal = esAdminPrincipal;
+window.configurarPermisos = configurarPermisos;
+window.openAdministradoresModalSeguro = openAdministradoresModalSeguro;
+
+console.log('✅ Sistema de permisos configurado');
+
+console.log('✅ openAdministradoresModal registrada globalmente');

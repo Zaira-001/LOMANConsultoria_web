@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace COMMON.Entidades
@@ -34,12 +35,12 @@ namespace COMMON.Entidades
         [StringLength(50)]
         public string Rol { get; set; } = "Admin"; // Solo un tipo de rol: Admin
 
-        public int IntentosLogin { get; set; } = 0;
+        public int? IntentosLogin { get; set; } = 0;
 
         public DateTime? BloqueoHasta { get; set; }
 
-        // Nueva propiedad para dispositivos confiables
-        public virtual ICollection<DispositivoConfiable> DispositivosConfiables { get; set; } = new List<DispositivoConfiable>();
+        public bool EsAdminPrincipal { get; set; } = false; // Indica si es el admin principal      
+
     }
 
    

@@ -1,5 +1,6 @@
 ﻿/* Variables con paleta en tonos azules */
 :root {
+    --primary-gradient: linear-gradient(135deg, #5B8DB3 0%, #1E3A5F 100%);
     /* Paleta general en tonos azules */
     --blue-light: #93c5fd; /* Azul claro */
     --blue: #3b82f6; /* Azul principal */
@@ -8,7 +9,7 @@
     --teal: #0ea5e9; /* Azul teal */
     --navy: #1e3a8a; /* Azul navy */
     --indigo: #4338ca; /* Azul índigo */
-    --black: #000000; 
+    --black: #000000;
     --blanco: #ffffff;
     /* Fondos y textos */
     --bg: #f0f9ff;
@@ -47,7 +48,7 @@
     align-items: center;
     margin-bottom: 32px;
     padding: 40px;
-    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 50%, var(--teal) 100%);
+    background: linear-gradient(135deg, #5B8DB3 0%, #1E3A5F 50%, #A4C3D2 100%);
     background-size: 200% 200%;
     border-radius: 20px;
     color: white;

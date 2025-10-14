@@ -12,10 +12,25 @@ namespace WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // DIAGNÓSTICO - Mostrar controladores encontrados
+            var controllerTypes = typeof(Program).Assembly
+                .GetTypes()
+                .Where(t => t.Name.EndsWith("Controller"))
+                .ToList();
+
+            Console.WriteLine($"=== CONTROLADORES ENCONTRADOS: {controllerTypes.Count} ===");
+            foreach (var controller in controllerTypes)
+            {
+                Console.WriteLine($"  - {controller.Name}");
+            }
+            Console.WriteLine("=====================================");
+
+            builder.Services.AddControllers()
+                .AddApplicationPart(typeof(Program).Assembly)
+                .AddControllersAsServices();
+
             builder.Services.AddRazorComponents()
                .AddInteractiveServerComponents();
-
-            builder.Services.AddControllers();
 
             // CONFIGURAR HttpClient para Blazor Server con BaseAddress
             builder.Services.AddScoped(sp =>
@@ -36,7 +51,6 @@ namespace WebAPI
                 });
 
             builder.Services.AddHttpClient();
-
 
             // Registrar la fábrica
             builder.Services.AddSingleton<FabricRepository>(_ => Parametros.FabricaRepository);
@@ -69,6 +83,8 @@ namespace WebAPI
             // Registrar validadores
             builder.Services.AddScoped<AbstractValidator<Cita>, CitaValidator>();
             builder.Services.AddScoped<AbstractValidator<Cotizacion>, CotizacionValidator>();
+
+            builder.Services.AddHttpContextAccessor();
 
             // CONFIGURAR CORS
             builder.Services.AddCors(options =>
@@ -103,9 +119,14 @@ namespace WebAPI
 
             var app = builder.Build();
 
-            // CORS debe ir ANTES de routing
+            // ============================================
+            // ORDEN CORRECTO DE MIDDLEWARES - CRÍTICO
+            // ============================================
+
+            // 1. CORS PRIMERO (ANTES que todo)
             app.UseCors("AllowAll");
 
+            // 2. Manejo de errores
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -118,31 +139,43 @@ namespace WebAPI
                 app.UseHsts();
             }
 
+            // 3. HTTPS
             app.UseHttpsRedirection();
+
+            // 4. Archivos estáticos
             app.UseStaticFiles();
+
+            // 5. Routing
             app.UseRouting();
+
+            // 6. Autenticación y Autorización
             app.UseAuthorization();
 
-            // Middleware personalizado si existe
+            // 7. Antiforgery ANTES de MapControllers
+            app.UseAntiforgery();
+
+            // 8. Middleware personalizado si existe
             if (typeof(Program).Assembly.GetTypes().Any(t => t.Name == "AuthMiddleware"))
             {
                 app.UseAuthMiddleware();
             }
 
-            app.UseAntiforgery();
+            // 9. Mapeo de controladores DESPUÉS de todos los middlewares
             app.MapControllers();
 
-            // ENDPOINT DE PRUEBA
+            // 10. ENDPOINT DE PRUEBA
             app.MapGet("/api/test/ping", () => Results.Ok(new
             {
                 message = "API funcionando",
                 timestamp = DateTime.Now,
-                version = "2.0-Simplified"
+                version = "2.0-Simplified",
+                corsEnabled = true
             }));
 
             Console.WriteLine("===========================================");
             Console.WriteLine("API Simplificada - Sin Google Calendar");
             Console.WriteLine("Sistema de citas con gestión administrativa");
+            Console.WriteLine("CORS HABILITADO - AllowAll");
             Console.WriteLine("===========================================");
 
             app.Run();

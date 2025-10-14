@@ -46,7 +46,7 @@
     align-items: center;
     margin-bottom: 32px;
     padding: 40px;
-    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 50%, var(--teal) 100%);
+    background: linear-gradient(135deg, #5B8DB3 0%, #1E3A5F 50%, #A4C3D2 100%);
     background-size: 200% 200%;
     border-radius: 20px;
     color: white;
@@ -1001,6 +1001,7 @@
 
 .btn-close {
     padding: 12px 20px;
+    min-width: 150px;
     background: #e0e0e0;
     color: #333;
     border: none;
@@ -1008,7 +1009,10 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    text-align: center;
+    height: 34px;
 }
+
 
     .btn-close:hover {
         background: #d0d0d0;

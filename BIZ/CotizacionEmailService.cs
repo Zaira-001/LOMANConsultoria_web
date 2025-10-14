@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -57,7 +58,7 @@ namespace BIZ
             }
         }
 
-        // Email con la cotización al cliente
+        // Email con la cotización al cliente (SIN PDF)
         public async Task<bool> EnviarCotizacionCliente(Cotizacion cotizacion, string respuesta, decimal? monto)
         {
             try
@@ -91,6 +92,69 @@ namespace BIZ
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Error enviando cotización: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ✅ CORREGIDO: Email con la cotización Y PDF adjunto
+        public async Task<bool> EnviarCotizacionClienteConPDF(
+            Cotizacion cotizacion,
+            string respuesta,
+            decimal? monto,
+            byte[] pdfBytes,
+            string nombreArchivoPDF)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 Enviando cotización con PDF a: {cotizacion.Correo}");
+                System.Diagnostics.Debug.WriteLine($"📎 PDF: {nombreArchivoPDF} ({pdfBytes?.Length ?? 0} bytes)");
+
+                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
+                smtpClient.EnableSsl = true;
+                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+
+                var emailBody = GenerarEmailCotizacion(cotizacion, respuesta, monto, tienePDF: true);
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
+                    Subject = $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
+                    Body = emailBody,
+                    IsBodyHtml = true
+                };
+
+                mailMessage.To.Add(cotizacion.Correo);
+                mailMessage.BodyEncoding = Encoding.UTF8;
+                mailMessage.SubjectEncoding = Encoding.UTF8;
+
+                // ✅ ADJUNTAR PDF DESDE BYTES
+                if (pdfBytes != null && pdfBytes.Length > 0)
+                {
+                    using (var stream = new MemoryStream(pdfBytes))
+                    {
+                        var attachment = new Attachment(stream, nombreArchivoPDF, "application/pdf");
+                        mailMessage.Attachments.Add(attachment);
+
+                        System.Diagnostics.Debug.WriteLine($"📎 PDF adjuntado correctamente: {nombreArchivoPDF}");
+
+                        await smtpClient.SendMailAsync(mailMessage);
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("⚠️ No hay bytes de PDF para adjuntar");
+                    await smtpClient.SendMailAsync(mailMessage);
+                }
+
+                mailMessage.Dispose();
+
+                System.Diagnostics.Debug.WriteLine("✅ Cotización con PDF enviada por email");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error enviando cotización con PDF: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
                 return false;
             }
         }
@@ -365,7 +429,7 @@ namespace BIZ
             return emailBody.ToString();
         }
 
-        private string GenerarEmailCotizacion(Cotizacion cotizacion, string respuesta, decimal? monto)
+        private string GenerarEmailCotizacion(Cotizacion cotizacion, string respuesta, decimal? monto, bool tienePDF = false)
         {
             string montoTexto = monto.HasValue
                 ? $"${monto.Value:N2} MXN"
@@ -446,6 +510,14 @@ namespace BIZ
                             border-left: 4px solid #ffc107;
                             margin: 20px 0;
                         }}
+                        .pdf-badge {{
+                            background: #e3f2fd;
+                            border: 2px solid #2196F3;
+                            border-radius: 8px;
+                            padding: 15px;
+                            margin: 20px 0;
+                            text-align: center;
+                        }}
                         .cta-container {{
                             text-align: center;
                             padding: 30px 0;
@@ -512,6 +584,17 @@ namespace BIZ
                                 Hemos preparado tu cotización para <strong>{escapeHtml(cotizacion.TipoConsulta)}</strong>. 
                                 A continuación encontrarás todos los detalles:
                             </p>
+
+                            {(tienePDF ? @"
+                            <div class='pdf-badge'>
+                                <p style='margin: 0; color: #2196F3; font-weight: 600; font-size: 18px;'>
+                                    📎 Cotización Detallada Adjunta
+                                </p>
+                                <p style='margin: 8px 0 0 0; color: #666; font-size: 14px;'>
+                                    Revisa el archivo PDF adjunto para ver todos los detalles de tu cotización
+                                </p>
+                            </div>
+                            " : "")}
                             
                             <div class='monto-box'>
                                 <h3>💰 Inversión Estimada</h3>
@@ -583,58 +666,6 @@ namespace BIZ
                 .Replace(">", "&gt;")
                 .Replace("\"", "&quot;")
                 .Replace("'", "&#39;");
-        }
-
-
-        // Agrega este método al final de tu CotizacionEmailService.cs
-
-        public async Task<bool> EnviarCotizacionClienteConPDF(Cotizacion cotizacion, string respuesta, decimal? monto)
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"📧 Enviando cotización con PDF a: {cotizacion.Correo}");
-
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
-
-                var emailBody = GenerarEmailCotizacion(cotizacion, respuesta, monto);
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
-                    Subject = $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(cotizacion.Correo);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                // ADJUNTAR PDF SI EXISTE
-                if (cotizacion.NombreArchivoPDF != null && cotizacion.NombreArchivoPDF.Length > 0)
-                {
-                    string nombreArchivo = cotizacion.NombreArchivoPDF ?? $"Cotizacion_{cotizacion.Id:D6}.pdf";
-                    var attachment = new Attachment(
-                        nombreArchivo,
-                        "application/pdf"
-                    );
-                    mailMessage.Attachments.Add(attachment);
-                    System.Diagnostics.Debug.WriteLine($"📎 PDF adjuntado: {nombreArchivo} ({cotizacion.NombreArchivoPDF.Length} bytes)");
-                }
-
-                await smtpClient.SendMailAsync(mailMessage);
-                mailMessage.Dispose();
-
-                System.Diagnostics.Debug.WriteLine("✅ Cotización con PDF enviada por email");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Error enviando cotización con PDF: {ex.Message}");
-                return false;
-            }
         }
     }
 }

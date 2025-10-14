@@ -84,21 +84,55 @@ namespace BIZ
         {
             try
             {
+                Console.WriteLine($"[AdminManager.CrearAdmin] =========================");
+                Console.WriteLine($"[AdminManager.CrearAdmin] Iniciando creación de admin");
+                Console.WriteLine($"[AdminManager.CrearAdmin]   Username: {username}");
+                Console.WriteLine($"[AdminManager.CrearAdmin]   Email: {email}");
+                Console.WriteLine($"[AdminManager.CrearAdmin]   NombreCompleto: {nombreCompleto}");
+
+                // Validaciones básicas
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    Error = "El nombre de usuario es requerido";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ {Error}");
+                    return null;
+                }
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    Error = "El email es requerido";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ {Error}");
+                    return null;
+                }
+
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    Error = "La contraseña es requerida";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ {Error}");
+                    return null;
+                }
+
                 // Verificar si el usuario ya existe
+                Console.WriteLine($"[AdminManager.CrearAdmin] Verificando si usuario existe...");
                 var existeUsuario = await BuscarPorUsername(username);
                 if (existeUsuario != null)
                 {
                     Error = "El nombre de usuario ya existe";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ {Error}");
                     return null;
                 }
 
                 // Verificar si el email ya existe
+                Console.WriteLine($"[AdminManager.CrearAdmin] Verificando si email existe...");
                 var existeEmail = await BuscarPorEmail(email);
                 if (existeEmail != null)
                 {
                     Error = "El email ya está registrado";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ {Error}");
                     return null;
                 }
+
+                Console.WriteLine($"[AdminManager.CrearAdmin] ✅ Validaciones pasadas, creando objeto Admin...");
 
                 var admin = new Admin
                 {
@@ -111,14 +145,38 @@ namespace BIZ
                     FechaAlta = DateTime.Now,
                     FechaMod = DateTime.Now,
                     UsuarioAlta = "Sistema",
-                    UsuarioMod = "Sistema"
+                    UsuarioMod = "Sistema",
+                    IntentosLogin = 0
                 };
 
-                return _repositorio.Insertar(admin);
+                Console.WriteLine($"[AdminManager.CrearAdmin] Insertando en base de datos...");
+
+                var resultado = _repositorio.Insertar(admin);
+
+                if (resultado != null)
+                {
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ✅ Admin insertado con ID: {resultado.Id}");
+                    Error = null;
+                    return resultado;
+                }
+                else
+                {
+                    Error = _repositorio.Error ?? "Error desconocido al insertar en la base de datos";
+                    Console.WriteLine($"[AdminManager.CrearAdmin] ❌ Error insertando: {Error}");
+                    return null;
+                }
             }
             catch (Exception ex)
             {
-                Error = ex.Message;
+                Error = $"Excepción al crear administrador: {ex.Message}";
+                Console.WriteLine($"[AdminManager.CrearAdmin] ❌ Excepción: {Error}");
+                Console.WriteLine($"[AdminManager.CrearAdmin] Stack: {ex.StackTrace}");
+
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[AdminManager.CrearAdmin] InnerException: {ex.InnerException.Message}");
+                }
+
                 return null;
             }
         }

@@ -340,15 +340,20 @@ namespace WebAPI.Controllers
 
                 _logger.LogInformation($"✅ Cotización actualizada en BD");
 
-                // ENVIAR EMAIL (CON O SIN PDF)
+                // ✅ ENVIAR EMAIL (CON O SIN PDF) - CORREGIDO
                 bool emailEnviado;
                 if (pdfBytes != null && pdfBytes.Length > 0)
                 {
                     _logger.LogInformation($"📧 Enviando email con PDF adjunto a {actualizado.Correo}...");
+                    _logger.LogInformation($"📎 Adjuntando: {nombrePDF} ({pdfBytes.Length} bytes)");
+
+                    // ✅ PASAR LOS BYTES DEL PDF AL SERVICIO DE EMAIL
                     emailEnviado = await _emailService.EnviarCotizacionClienteConPDF(
                         actualizado,
                         dto.Respuesta,
-                        dto.MontoEstimado
+                        dto.MontoEstimado,
+                        pdfBytes,      // ✅ BYTES DEL PDF
+                        nombrePDF      // ✅ NOMBRE DEL ARCHIVO
                     );
                 }
                 else
@@ -403,7 +408,7 @@ namespace WebAPI.Controllers
             }
         }
 
-       
+
         [HttpPut("{id}/estado")]
         public ActionResult UpdateEstado(int id, [FromBody] EstadoCotizacionDto dto)
         {

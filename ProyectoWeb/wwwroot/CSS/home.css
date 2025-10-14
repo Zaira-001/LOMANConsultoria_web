@@ -500,16 +500,62 @@ html, body {
     }
 
 .footer-bottom {
-    padding: 30px 20px 30px 20px;
-    margin: 0 !important;
-    text-align: center;
+    display: flex;
+    flex-direction: column; /* Apila texto arriba y enlaces abajo */
+    align-items: center; /* Centra horizontalmente */
+    justify-content: center;
+    gap: 10px; /* Espacio entre texto y enlaces */
+    padding: 10px 20px 30px;
+    background-color: #1E3A5F;
     color: #ffffff;
     font-size: 0.9rem;
-    background-color: #1E3A5F;
     width: 100%;
-    display: block;
-    padding-top: 40px;
+    box-sizing: border-box;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.5); /* 💙 línea separadora */
+    margin-top: 30px; /* espacio superior para que respire */
 }
+
+.footer-bottom-left {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.footer-bottom-right {
+    display: flex;
+    justify-content: center; /* Enlaces centrados */
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.legal-link {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    text-decoration: underline;
+}
+
+    .legal-link:hover {
+        color: #ffffff;
+    }
+
+.legal-separator {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* 📱 Responsive (opcional, ya está centrado pero por si acaso) */
+@media (max-width: 768px) {
+    .footer-bottom {
+        padding: 30px 15px;
+    }
+
+    .footer-bottom-right {
+        flex-wrap: wrap;
+    }
+}
+
 
 /* Sección y contenedor flexible */
 .essence-section {
@@ -1059,3 +1105,4 @@ html, body {
         flex: none !important;
     }
 }
+

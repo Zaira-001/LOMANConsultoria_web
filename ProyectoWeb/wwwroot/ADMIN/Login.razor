@@ -6,52 +6,9 @@
 <link href="css/login.css" rel="stylesheet" />
 
 <div class="login-container">
-    <!-- Modal de Llave Maestra (mismo contenido que antes) -->
-    <div class="modal-overlay" id="masterKeyModal" style="display: none;">
-        <div class="modal security-modal">
-            <div class="modal-header">
-                <h2>Acceso de Seguridad</h2>
-                <div class="security-warning">
-                    <span class="warning-icon">⚠️</span>
-                    <p>Dispositivo no reconocido detectado</p>
-                </div>
-            </div>
-
-            <div class="security-explanation">
-                <h4>Verificación de Seguridad Requerida</h4>
-                <p>Para proteger el sistema, se requiere una llave maestra para acceder desde dispositivos no confiables.</p>
-                <p>Esta medida adicional garantiza que solo personal autorizado pueda administrar el sistema.</p>
-            </div>
-
-            <form id="masterKeyForm">
-                <div class="form-group">
-                    <label for="masterKey">Llave Maestra *</label>
-                    <div class="password-input">
-                        <input type="password" id="masterKey" required
-                               placeholder="Ingrese la llave maestra del sistema">
-                        <button type="button" class="toggle-password" onclick="toggleMasterKeyVisibility()">
-                            <span id="masterKeyToggleIcon">👁️</span>
-                        </button>
-                    </div>
-                    <small class="form-help">Esta llave fue configurada durante la instalación inicial del sistema.</small>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="submit" class="btn-verify" id="verifyMasterKeyBtn">
-                        Verificar Acceso
-                    </button>
-                </div>
-            </form>
-
-            <div class="security-footer">
-                <p><strong>Nota:</strong> Si no tienes la llave maestra, contacta al administrador principal del sistema.</p>
-                <p>Los intentos de acceso no autorizados son registrados y monitoreados.</p>
-            </div>
-        </div>
-    </div>
-
     <div class="login-card">
         <div class="login-header">
+            <div class="logo-icon">🔐</div>
             <h1>Panel de Administración</h1>
             <p>Consultoría Integral SC</p>
         </div>
@@ -84,19 +41,11 @@
                 <div class="password-input">
                     <input type="password" id="password" required placeholder="Ingresa tu contraseña" autocomplete="current-password">
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
-                        <span id="passwordToggleIcon">👁️</span>
+                        <span id="passwordToggleIcon">🙈</span>
                     </button>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="rememberMe">
-                    <span class="checkmark"></span>
-                    Recordar dispositivo como confiable
-                </label>
-                <small class="form-help">Al marcar esta opción, no se solicitará la llave maestra en futuros accesos desde este dispositivo.</small>
-            </div>
 
             <button type="submit" class="btn-login" id="loginButton">
                 Iniciar Sesión
@@ -105,17 +54,6 @@
 
         <div class="login-footer">
             <p>¿Problemas para acceder? Contacta al administrador del sistema.</p>
-        </div>
-
-        <!-- Info panel -->
-        <div class="info-panel">
-            <h3>Información de Acceso</h3>
-            <ul>
-                <li>Solo personal autorizado puede acceder</li>
-                <li>Las sesiones se cierran automáticamente por inactividad</li>
-                <li>Los intentos de acceso son monitoreados</li>
-                <li>Se requiere llave maestra para dispositivos no confiables</li>
-            </ul>
         </div>
     </div>
 

@@ -1,4 +1,33 @@
 ﻿/* Login Page Styles */
+
+/* Variables con paleta en tonos azules */
+:root {
+    /* Paleta general en tonos azules */
+    --blue-light: #93c5fd; /* Azul claro */
+    --blue: #3b82f6; /* Azul principal */
+    --blue-dark: #1d4ed8; /* Azul fuerte */
+    --cyan: #06b6d4; /* Azul cian */
+    --teal: #0ea5e9; /* Azul teal */
+    --navy: #1e3a8a; /* Azul navy */
+    --indigo: #4338ca; /* Azul índigo */
+    --black: #000000;
+    --blanco: #ffffff;
+    /* Fondos y textos */
+    --bg: #f0f9ff;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #cbd5e1;
+    /* 🎨 Colores especiales para modales */
+    --modal-bg: #1e293b; /* Azul grisáceo oscuro */
+    --modal-surface: #334155; /* Fondo del modal */
+    --modal-text: #f1f5f9; /* Texto claro */
+    --modal-border: #475569; /* Bordes del modal */
+    /*Botones*/
+    --verde: #008f39;
+    --rojo: #FF0000;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -7,7 +36,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #5B8DB3 0%, #1E3A5F 100%);
     min-height: 100vh;
     overflow-x: hidden;
 }
@@ -19,7 +48,7 @@ body {
     justify-content: center;
     padding: 20px;
     position: relative;
-    transform: translateY(-55px);
+    transform: translateY(-100px);
 }
 
 .login-card {
@@ -50,6 +79,83 @@ body {
 
     10%, 30%, 50%, 70%, 90% {
         transform: translateX(-10px);
+    }
+}
+
+/* Logo Icon Styles */
+.logo-icon {
+    display: inline-block;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #1E3A5F);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    animation: bounce 2s ease-in-out infinite;
+    margin-left: 155px;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Ajuste para el header existente */
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+    .login-header h1 {
+        color: #333;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .login-header p {
+        color: #666;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+/* Responsive para el logo */
+@media (max-width: 768px) {
+    .logo-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+
+    .login-header h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .login-header h1 {
+        font-size: 22px;
     }
 }
 
@@ -172,7 +278,7 @@ body {
 .btn-login {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #5B8DB3, #1E3A5F);
     color: white;
     border: none;
     border-radius: 12px;
@@ -201,7 +307,7 @@ body {
 
 .login-footer {
     text-align: center;
-    color: #888;
+    color: #334155;
     font-size: 14px;
     margin-bottom: 30px;
 }

@@ -1,586 +1,953 @@
-﻿// admin-users.js - Sistema de gestión de administradores
-console.log('Cargando módulo de gestión de administradores...');
+﻿// admin-users.js - Gestión completa de administradores con diseño mejorado
+console.log('📋 Cargando módulo de gestión de administradores...');
 
-// Configuración
-const CONFIG = {
-    API_URL: 'http://consultoriaintegralsc.somee.com/api/Admin',
-    MIN_PASSWORD_LENGTH: 8
-};
+console.log('📋 admin-users.js INICIANDO CARGA...');
+console.log('📋 Timestamp:', new Date().toISOString());
 
-// Estado del módulo
-let adminsList = [];
-let editingAdminId = null;
+// Prevenir múltiples inicializaciones
+if (window.adminUsersModuleLoaded) {
+    console.log('⚠️ Módulo de administradores ya cargado');
+} else {
+    window.adminUsersModuleLoaded = true;
 
+    // Configuración de API
+    const ADMIN_API_URL = 'http://consultoriaintegralsc.somee.com/api/Admin';
 
+    // Estado del módulo
+    let adminsData = [];
+    let currentEditingAdminId = null;
 
-// Función principal para mostrar el modal de administradores
-window.showAdminManager = async function () {
-    console.log('Abriendo gestor de administradores...');
+    // Función helper para obtener el usuario actual
+    function getCurrentUsername() {
+        try {
+            if (window.adminSession && window.adminSession.username) {
+                return window.adminSession.username;
+            }
 
-    const modal = document.getElementById('adminModal');
-    if (!modal) {
-        console.error('Modal de administradores no encontrado');
-        return;
+            const sessionData = localStorage.getItem('adminSession');
+            if (sessionData) {
+                const parsed = JSON.parse(sessionData);
+                if (parsed && parsed.username) {
+                    return parsed.username;
+                }
+            }
+
+            const sessionData2 = sessionStorage.getItem('adminSession');
+            if (sessionData2) {
+                const parsed = JSON.parse(sessionData2);
+                if (parsed && parsed.username) {
+                    return parsed.username;
+                }
+            }
+
+            console.warn('⚠️ No se pudo obtener usuario actual, usando "admin"');
+            return 'admin';
+        } catch (error) {
+            console.error('Error obteniendo usuario actual:', error);
+            return 'admin';
+        }
     }
 
-    // Cargar lista de administradores
-    await loadAdminsList();
+    // ============================================
+    // FUNCIONES PRINCIPALES DE GESTIÓN
+    // ============================================
 
-    modal.style.display = 'flex';
-};
+    async function loadAdminsList() {
+        console.log('📥 Cargando lista de administradores...');
 
-// Cargar lista de administradores desde la API
-async function loadAdminsList() {
-    try {
-        showAdminLoading(true);
-
-        const response = await fetch(`${CONFIG.API_URL}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+        const container = document.getElementById('adminsListContainer');
+        if (!container) {
+            console.error('Container adminsListContainer no encontrado');
+            return;
         }
 
-        const data = await response.json();
-        adminsList = data || [];
+        try {
+            // Mostrar loading moderno
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; min-height: 400px;">
+                    <div style="width: 60px; height: 60px; border: 4px solid #f0f0f0; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 20px; color: #666; font-size: 16px;">Cargando administradores...</p>
+                </div>
+            `;
 
-        console.log(`Cargados ${adminsList.length} administradores`);
-        renderAdminsList();
+            const response = await fetch(ADMIN_API_URL);
 
-    } catch (error) {
-        console.error('Error cargando administradores:', error);
-        showAdminError('Error al cargar la lista de administradores: ' + error.message);
-    } finally {
-        showAdminLoading(false);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            adminsData = await response.json();
+            console.log(`✅ ${adminsData.length} administradores cargados`);
+
+            renderAdminsList(adminsData);
+
+        } catch (error) {
+            console.error('❌ Error cargando administradores:', error);
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: 0 8px 16px rgba(238, 90, 111, 0.3);">
+                        <span style="font-size: 40px; color: white;">⚠️</span>
+                    </div>
+                    <h3 style="color: #2c3e50; margin-bottom: 12px; font-size: 24px; font-weight: 600;">Error al cargar</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 30px; max-width: 400px; line-height: 1.6;">${error.message}</p>
+                    <button onclick="loadAdminsList()" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); transition: all 0.3s ease;">
+                        🔄 Reintentar
+                    </button>
+                </div>
+            `;
+        }
     }
-}
 
-// Renderizar lista de administradores
-function renderAdminsList() {
-    const container = document.getElementById('adminsListContainer');
-    if (!container) {
-        console.error('Contenedor de administradores no encontrado');
-        return;
-    }
+    function renderAdminsList(admins) {
+        const container = document.getElementById('adminsListContainer');
+        if (!container) return;
 
-    if (adminsList.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>No hay administradores registrados</p>
-                <button type="button" class="btn-add" onclick="openAddAdminForm()">
-                    Agregar Primer Administrador
-                </button>
+        if (admins.length === 0) {
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center;">
+                    <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);">
+                        <span style="font-size: 60px; color: white;">👥</span>
+                    </div>
+                    <h3 style="color: #2c3e50; margin-bottom: 12px; font-size: 26px; font-weight: 600;">No hay administradores</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 35px; font-size: 16px; max-width: 450px; line-height: 1.6;">Crea el primer administrador del sistema para comenzar a gestionar el acceso</p>
+                    <button onclick="showCreateAdminForm()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 36px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">➕</span>
+                        Crear Primer Administrador
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #2c3e50; display: flex; align-items: center; gap: 12px;">
+                            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">👥</span>
+                            Administradores del Sistema
+                        </h3>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">Gestiona los usuarios con acceso al panel de administración</p>
+                    </div>
+                    <button onclick="showCreateAdminForm()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">➕</span>
+                        Agregar Administrador
+                    </button>
+                </div>
+                
+                <div style="background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden;">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Nombre Completo</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Email</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Estado</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Último Login</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+        admins.forEach((admin, index) => {
+            if (!admin._originalPasswordHash) {
+                admin._originalPasswordHash = admin.passwordHash;
+            }
+
+            const estadoBg = admin.activo ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            const estadoText = admin.activo ? 'Activo' : 'Inactivo';
+            const lastLogin = admin.ultimoLogin ?
+                new Date(admin.ultimoLogin).toLocaleString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : 'Nunca';
+
+            const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+            const opacity = admin.activo ? '1' : '0.6';
+
+            html += `
+                <tr style="background: ${rowBg}; opacity: ${opacity}; transition: all 0.2s ease;">
+                    <td style="padding: 20px 24px; border-bottom: 1px solid #e9ecef;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px;">
+                                ${escapeHtml(admin.username.charAt(0).toUpperCase())}
+                            </div>
+                            <strong style="color: #2c3e50; font-size: 15px;">${escapeHtml(admin.username)}</strong>
+                        </div>
+                    </td>
+                    <td style="padding: 20px 24px; color: #495057; font-size: 14px; border-bottom: 1px solid #e9ecef;">${escapeHtml(admin.nombreCompleto || '-')}</td>
+                    <td style="padding: 20px 24px; color: #6c757d; font-size: 14px; border-bottom: 1px solid #e9ecef;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 16px;">📧</span>
+                            ${escapeHtml(admin.email)}
+                        </div>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                        <span style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">
+                            ${escapeHtml(admin.rol)}
+                        </span>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                        <span style="background: ${estadoBg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 8px ${admin.activo ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
+                            ${estadoText}
+                        </span>
+                    </td>
+                    <td style="padding: 20px 24px; color: #6c757d; font-size: 13px; border-bottom: 1px solid #e9ecef;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span>🕒</span>
+                            ${lastLogin}
+                        </div>
+                    </td>
+                    <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <button onclick="showEditAdminForm(${admin.id})" title="Editar" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center;">
+                                ✏️
+                            </button>
+                            <button onclick="confirmToggleAdmin(${admin.id})" title="${admin.activo ? 'Desactivar' : 'Activar'}" style="background: ${admin.activo ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}; color: white; border: none; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px ${admin.activo ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; display: flex; align-items: center; justify-content: center;">
+                                ${admin.activo ? '⏸️' : '▶️'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">ℹ️</span>
+                        <div>
+                            <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">Total de administradores: ${admins.length}</p>
+                            <p style="margin: 4px 0 0 0; color: #3b82f6; font-size: 13px;">Activos: ${admins.filter(a => a.activo).length} | Inactivos: ${admins.filter(a => !a.activo).length}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
-        return;
+
+        container.innerHTML = html;
     }
 
-    const html = `
-        <div class="admins-header">
-            <h3>Administradores del Sistema (${adminsList.length})</h3>
-            <button type="button" class="btn-add" onclick="openAddAdminForm()">
-                + Nuevo Administrador
-            </button>
-        </div>
-        <div class="admins-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Nombre Completo</th>
-                        <th>Email</th>
-                        <th>Estado</th>
-                        <th>Último Login</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${adminsList.map(admin => `
-                        <tr class="${admin.activo ? '' : 'inactive-admin'}">
-                            <td>${admin.id}</td>
-                            <td><strong>${admin.username}</strong></td>
-                            <td>${admin.nombreCompleto || '-'}</td>
-                            <td>${admin.email}</td>
-                            <td>
-                                <span class="status-badge ${admin.activo ? 'active' : 'inactive'}">
-                                    ${admin.activo ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </td>
-                            <td>${formatDate(admin.ultimoLogin)}</td>
-                            <td class="actions-cell">
-                                <button type="button" 
-                                        class="btn-icon btn-edit" 
-                                        onclick="editAdmin(${admin.id})"
-                                        title="Editar">
-                                    ✏️
-                                </button>
-                                <button type="button" 
-                                        class="btn-icon ${admin.activo ? 'btn-deactivate' : 'btn-activate'}" 
-                                        onclick="toggleAdminStatus(${admin.id}, ${!admin.activo})"
-                                        title="${admin.activo ? 'Desactivar' : 'Activar'}">
-                                    ${admin.activo ? '🔒' : '🔓'}
-                                </button>
-                                <button type="button" 
-                                        class="btn-icon btn-password" 
-                                        onclick="changeAdminPassword(${admin.id})"
-                                        title="Cambiar contraseña">
-                                    🔑
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
+    function showCreateAdminForm() {
+        console.log('📝 Mostrando formulario de creación...');
+        currentEditingAdminId = null;
 
-    container.innerHTML = html;
-}
+        const container = document.getElementById('adminsListContainer');
+        if (!container) return;
 
-// Abrir formulario para agregar administrador
-window.openAddAdminForm = function () {
-    editingAdminId = null;
-
-    const formHtml = `
-        <div class="admin-form-container" id="adminFormContainer">
-            <h3>Agregar Nuevo Administrador</h3>
-            <form id="addAdminForm" onsubmit="return handleAddAdmin(event)">
-                <div class="form-group">
-                    <label for="newAdminUsername">Nombre de Usuario *</label>
-                    <input type="text" 
-                           id="newAdminUsername" 
-                           required 
-                           minlength="3"
-                           maxlength="50"
-                           placeholder="Ej: juan.perez">
-                    <small>Mínimo 3 caracteres, sin espacios</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="newAdminEmail">Email *</label>
-                    <input type="email" 
-                           id="newAdminEmail" 
-                           required
-                           maxlength="100"
-                           placeholder="admin@consultoria.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="newAdminNombre">Nombre Completo</label>
-                    <input type="text" 
-                           id="newAdminNombre"
-                           maxlength="100"
-                           placeholder="Juan Pérez García">
-                </div>
-
-                <div class="form-group">
-                    <label for="newAdminPassword">Contraseña *</label>
-                    <div class="password-input">
-                        <input type="password" 
-                               id="newAdminPassword" 
-                               required
-                               minlength="8"
-                               placeholder="Mínimo 8 caracteres">
-                        <button type="button" 
-                                class="toggle-password" 
-                                onclick="togglePasswordField('newAdminPassword')">
-                            <span id="newAdminPasswordIcon">👁️</span>
-                        </button>
+        container.innerHTML = `
+            <div style="max-width: 900px; margin: 0 auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #2c3e50; display: flex; align-items: center; gap: 12px;">
+                            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">➕</span>
+                            Crear Nuevo Administrador
+                        </h3>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">Completa el formulario para agregar un nuevo administrador al sistema</p>
                     </div>
-                    <div id="passwordStrength" class="password-strength"></div>
-                    <small>Debe contener: mayúscula, minúscula, número y carácter especial</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="newAdminPasswordConfirm">Confirmar Contraseña *</label>
-                    <div class="password-input">
-                        <input type="password" 
-                               id="newAdminPasswordConfirm" 
-                               required
-                               minlength="8"
-                               placeholder="Repite la contraseña">
-                        <button type="button" 
-                                class="toggle-password" 
-                                onclick="togglePasswordField('newAdminPasswordConfirm')">
-                            <span id="newAdminPasswordConfirmIcon">👁️</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeAdminForm()">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn-save">
-                        Crear Administrador
+                    <button onclick="loadAdminsList()" style="background: white; color: #6c757d; border: 2px solid #dee2e6; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                        ← Volver
                     </button>
                 </div>
-            </form>
-        </div>
-    `;
 
-    const container = document.getElementById('adminsListContainer');
-    container.innerHTML = formHtml;
+                <form id="adminUserForm" autocomplete="off" style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08);">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Usuario <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="adminUsername" 
+                                   name="new-admin-username"
+                                   required 
+                                   placeholder="Ej: juan.perez"
+                                   pattern="[a-zA-Z0-9_]+"
+                                   autocomplete="off"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                            <small style="color: #6c757d; font-size: 12px; display: block; margin-top: 6px;">Solo letras, números y guiones bajos</small>
+                        </div>
 
-    // Agregar validación en tiempo real
-    const passwordInput = document.getElementById('newAdminPassword');
-    if (passwordInput) {
-        passwordInput.addEventListener('input', function () {
-            validatePasswordStrength(this.value);
-        });
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Email <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="email" 
+                                   id="adminEmail" 
+                                   name="new-admin-email"
+                                   required 
+                                   placeholder="correo@ejemplo.com"
+                                   autocomplete="off"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                            Nombre Completo
+                        </label>
+                        <input type="text" 
+                               id="adminNombreCompleto" 
+                               name="new-admin-fullname"
+                               placeholder="Ej: Juan Pérez López"
+                               autocomplete="off"
+                               style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Contraseña <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="password" 
+                                   id="adminPassword" 
+                                   name="new-admin-password"
+                                   required 
+                                   placeholder="Mínimo 8 caracteres"
+                                   autocomplete="new-password"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                            <div id="passwordHelp" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 12px; line-height: 1.6;"></div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Confirmar Contraseña <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="password" 
+                                   id="adminPasswordConfirm" 
+                                   name="new-admin-password-confirm"
+                                   required 
+                                   placeholder="Repite la contraseña"
+                                   autocomplete="new-password"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 2px solid #e9ecef;">
+                        <button type="button" onclick="loadAdminsList()" style="background: white; color: #6c757d; border: 2px solid #dee2e6; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                            Cancelar
+                        </button>
+                        <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                            <span>✅</span>
+                            Crear Administrador
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        setupPasswordValidation();
+
+        const form = document.getElementById('adminUserForm');
+        form.addEventListener('submit', handleCreateAdmin);
+
+        setTimeout(() => {
+            const inputs = ['adminUsername', 'adminEmail', 'adminPassword', 'adminPasswordConfirm', 'adminNombreCompleto'];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = '';
+            });
+        }, 100);
+
+        setTimeout(() => {
+            const allInputs = form.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.addEventListener('focus', function (e) {
+                    if (this.value && this.value.length > 0) {
+                        this.value = '';
+                    }
+                }, { once: true });
+            });
+        }, 200);
     }
-};
 
-// Manejar envío del formulario de nuevo administrador
-window.handleAddAdmin = async function (event) {
-    event.preventDefault();
+    function showEditAdminForm(adminId) {
+        console.log('✏️ Mostrando formulario de edición para admin:', adminId);
+        currentEditingAdminId = adminId;
 
-    const username = document.getElementById('newAdminUsername').value.trim();
-    const email = document.getElementById('newAdminEmail').value.trim();
-    const nombreCompleto = document.getElementById('newAdminNombre').value.trim();
-    const password = document.getElementById('newAdminPassword').value;
-    const passwordConfirm = document.getElementById('newAdminPasswordConfirm').value;
-
-    // Validaciones
-    if (password !== passwordConfirm) {
-        showAdminError('Las contraseñas no coinciden');
-        return false;
-    }
-
-    if (!validatePasswordRequirements(password)) {
-        showAdminError('La contraseña no cumple con los requisitos de seguridad');
-        return false;
-    }
-
-    try {
-        showAdminLoading(true);
-
-        const response = await fetch(`${CONFIG.API_URL}/crear`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                username,
-                email,
-                nombreCompleto,
-                password
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            showAdminSuccess('Administrador creado exitosamente');
-            await loadAdminsList();
-        } else {
-            throw new Error(data.message || 'Error al crear administrador');
+        const admin = adminsData.find(a => a.id === adminId);
+        if (!admin) {
+            showError('Administrador no encontrado');
+            return;
         }
 
-    } catch (error) {
-        console.error('Error creando administrador:', error);
-        showAdminError('Error: ' + error.message);
-    } finally {
-        showAdminLoading(false);
-    }
+        const container = document.getElementById('adminsListContainer');
+        if (!container) return;
 
-    return false;
-};
-
-// Cambiar estado de administrador
-window.toggleAdminStatus = async function (adminId, newStatus) {
-    const action = newStatus ? 'activar' : 'desactivar';
-
-    if (!confirm(`¿Estás seguro de ${action} este administrador?`)) {
-        return;
-    }
-
-    try {
-        showAdminLoading(true);
-
-        const response = await fetch(`${CONFIG.API_URL}/${adminId}/estado`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ activo: newStatus })
-        });
-
-        if (response.ok) {
-            showAdminSuccess(`Administrador ${action}do exitosamente`);
-            await loadAdminsList();
-        } else {
-            const data = await response.json();
-            throw new Error(data.message || `Error al ${action} administrador`);
-        }
-
-    } catch (error) {
-        console.error('Error cambiando estado:', error);
-        showAdminError('Error: ' + error.message);
-    } finally {
-        showAdminLoading(false);
-    }
-};
-
-// Cambiar contraseña de administrador
-window.changeAdminPassword = function (adminId) {
-    const admin = adminsList.find(a => a.id === adminId);
-    if (!admin) return;
-
-    const formHtml = `
-        <div class="admin-form-container" id="adminFormContainer">
-            <h3>Cambiar Contraseña - ${admin.username}</h3>
-            <form id="changePasswordForm" onsubmit="return handlePasswordChange(event, ${adminId})">
-                <div class="form-group">
-                    <label for="currentPassword">Contraseña Actual *</label>
-                    <div class="password-input">
-                        <input type="password" 
-                               id="currentPassword" 
-                               required
-                               placeholder="Ingresa la contraseña actual">
-                        <button type="button" 
-                                class="toggle-password" 
-                                onclick="togglePasswordField('currentPassword')">
-                            <span>👁️</span>
-                        </button>
+        container.innerHTML = `
+            <div style="max-width: 900px; margin: 0 auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #2c3e50; display: flex; align-items: center; gap: 12px;">
+                            <span style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">✏️</span>
+                            Editar Administrador
+                        </h3>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">Modifica la información del administrador ${escapeHtml(admin.username)}</p>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="newPassword">Nueva Contraseña *</label>
-                    <div class="password-input">
-                        <input type="password" 
-                               id="newPassword" 
-                               required
-                               minlength="8"
-                               placeholder="Mínimo 8 caracteres">
-                        <button type="button" 
-                                class="toggle-password" 
-                                onclick="togglePasswordField('newPassword')">
-                            <span>👁️</span>
-                        </button>
-                    </div>
-                    <div id="passwordStrength" class="password-strength"></div>
-                    <small>Debe contener: mayúscula, minúscula, número y carácter especial</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="newPasswordConfirm">Confirmar Nueva Contraseña *</label>
-                    <div class="password-input">
-                        <input type="password" 
-                               id="newPasswordConfirm" 
-                               required
-                               minlength="8"
-                               placeholder="Repite la nueva contraseña">
-                        <button type="button" 
-                                class="toggle-password" 
-                                onclick="togglePasswordField('newPasswordConfirm')">
-                            <span>👁️</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="loadAdminsList()">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn-save">
-                        Cambiar Contraseña
+                    <button onclick="loadAdminsList()" style="background: white; color: #6c757d; border: 2px solid #dee2e6; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                        ← Volver
                     </button>
                 </div>
-            </form>
-        </div>
-    `;
 
-    const container = document.getElementById('adminsListContainer');
-    container.innerHTML = formHtml;
+                <form id="adminEditForm" style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08);">
+                    
+                    <div style="margin-bottom: 30px; padding: 18px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">ℹ️</span>
+                            <p style="margin: 0; color: #1e40af; font-weight: 600;">
+                                Editando usuario: <strong>${escapeHtml(admin.username)}</strong>
+                            </p>
+                        </div>
+                    </div>
 
-    // Validación en tiempo real
-    const newPasswordInput = document.getElementById('newPassword');
-    if (newPasswordInput) {
-        newPasswordInput.addEventListener('input', function () {
-            validatePasswordStrength(this.value);
-        });
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Usuario <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="editAdminUsername" 
+                                   required 
+                                   value="${escapeHtml(admin.username)}"
+                                   pattern="[a-zA-Z0-9_]+"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Email <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="email" 
+                                   id="editAdminEmail" 
+                                   required 
+                                   value="${escapeHtml(admin.email)}"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                            Nombre Completo
+                        </label>
+                        <input type="text" 
+                               id="editAdminNombreCompleto" 
+                               value="${escapeHtml(admin.nombreCompleto || '')}"
+                               style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 30px; padding: 16px; background: #f8f9fa; border-radius: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="editAdminActivo" ${admin.activo ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 600; color: #2c3e50; font-size: 14px;">Administrador activo</span>
+                        </label>
+                        <small style="color: #6c757d; font-size: 12px; display: block; margin-top: 6px; margin-left: 30px;">Los administradores inactivos no pueden iniciar sesión en el sistema</small>
+                    </div>
+
+                    <hr style="margin: 35px 0; border: none; border-top: 2px solid #e9ecef;">
+
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">🔐</span>
+                            Cambiar Contraseña
+                        </h4>
+                        <p style="color: #6c757d; font-size: 13px; margin: 0;">
+                            Deja estos campos en blanco si no deseas modificar la contraseña actual
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Nueva Contraseña
+                            </label>
+                            <input type="password" 
+                                   id="editAdminPassword" 
+                                   placeholder="Opcional - Solo si deseas cambiarla"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 14px;">
+                                Confirmar Nueva Contraseña
+                            </label>
+                            <input type="password" 
+                                   id="editAdminPasswordConfirm" 
+                                   placeholder="Repite la nueva contraseña"
+                                   style="width: 100%; padding: 12px 16px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; box-sizing: border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 2px solid #e9ecef;">
+                        <button type="button" onclick="loadAdminsList()" style="background: white; color: #6c757d; border: 2px solid #dee2e6; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                            Cancelar
+                        </button>
+                        <button type="submit" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                            <span>💾</span>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        const form = document.getElementById('adminEditForm');
+        form.addEventListener('submit', handleEditAdmin);
     }
-};
 
-// Manejar cambio de contraseña
-window.handlePasswordChange = async function (event, adminId) {
-    event.preventDefault();
+    // ============================================
+    // MANEJADORES DE FORMULARIOS
+    // ============================================
+    async function handleCreateAdmin(e) {
+        e.preventDefault();
+        console.log('📤 Creando nuevo administrador...');
 
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
+        const username = document.getElementById('adminUsername').value.trim();
+        const email = document.getElementById('adminEmail').value.trim();
+        const nombreCompleto = document.getElementById('adminNombreCompleto').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const passwordConfirm = document.getElementById('adminPasswordConfirm').value;
 
-    if (newPassword !== newPasswordConfirm) {
-        showAdminError('Las contraseñas nuevas no coinciden');
-        return false;
-    }
-
-    if (!validatePasswordRequirements(newPassword)) {
-        showAdminError('La nueva contraseña no cumple con los requisitos de seguridad');
-        return false;
-    }
-
-    try {
-        showAdminLoading(true);
-
-        const response = await fetch(`${CONFIG.API_URL}/cambiar-password`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                adminId,
-                passwordActual: currentPassword,
-                nuevaPassword: newPassword
-            })
-        });
-
-        if (response.ok) {
-            showAdminSuccess('Contraseña cambiada exitosamente');
-            await loadAdminsList();
-        } else {
-            const data = await response.json();
-            throw new Error(data.message || 'Error al cambiar contraseña');
+        if (password !== passwordConfirm) {
+            showError('Las contraseñas no coinciden');
+            return;
         }
 
-    } catch (error) {
-        console.error('Error cambiando contraseña:', error);
-        showAdminError('Error: ' + error.message);
-    } finally {
-        showAdminLoading(false);
+        if (!validatePassword(password)) {
+            showError('La contraseña no cumple con los requisitos de seguridad');
+            return;
+        }
+
+        const currentUser = getCurrentUsername();
+        console.log('👤 Usuario actual:', currentUser);
+
+        const adminData = {
+            username: username,
+            email: email,
+            password: password,
+            nombreCompleto: nombreCompleto || null
+        };
+
+        console.log('📦 Datos a enviar:', {
+            ...adminData,
+            password: '***OCULTO***'
+        });
+
+        try {
+            showLoading(true);
+
+            const response = await fetch(`${ADMIN_API_URL}/crear`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(adminData)
+            });
+
+            const responseText = await response.text();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (parseError) {
+                result = { message: responseText };
+            }
+
+            if (response.ok) {
+                const emailEnviado = result.emailEnviado || false;
+
+                if (emailEnviado) {
+                    showSuccessMessage(`✅ Administrador creado exitosamente\n\n📧 Se han enviado las credenciales al correo:\n${email}\n\nEl nuevo administrador recibirá un email con:\n• Usuario de acceso\n• Contraseña temporal\n• Instrucciones de primer inicio de sesión`);
+                } else {
+                    showSuccessMessage('✅ Administrador creado exitosamente\n\n⚠️ Nota: No se pudo enviar el email automático con las credenciales.\nDeberás compartir las credenciales manualmente.');
+                }
+
+                setTimeout(() => loadAdminsList(), 2500);
+            } else {
+                let errorMessage = 'Error al crear administrador';
+
+                if (result.message) {
+                    errorMessage = result.message;
+                } else if (result.errors) {
+                    const errorMessages = [];
+                    Object.keys(result.errors).forEach(field => {
+                        const fieldErrors = result.errors[field];
+                        if (Array.isArray(fieldErrors)) {
+                            fieldErrors.forEach(err => {
+                                errorMessages.push(`${field}: ${err}`);
+                            });
+                        }
+                    });
+                    errorMessage = errorMessages.join('\n');
+                } else if (result.title) {
+                    errorMessage = result.title;
+                }
+
+                console.error('❌ Error del servidor:', errorMessage);
+                throw new Error(errorMessage);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            showError(error.message);
+        } finally {
+            showLoading(false);
+        }
     }
 
-    return false;
-};
+    async function handleEditAdmin(e) {
+        e.preventDefault();
+        console.log('📤 Actualizando administrador...');
 
-// Validar fortaleza de contraseña
-function validatePasswordStrength(password) {
-    const strengthDiv = document.getElementById('passwordStrength');
-    if (!strengthDiv) return;
+        if (!currentEditingAdminId) {
+            showError('ID de administrador no definido');
+            return;
+        }
 
-    let strength = 0;
-    let messages = [];
+        const username = document.getElementById('editAdminUsername').value.trim();
+        const email = document.getElementById('editAdminEmail').value.trim();
+        const nombreCompleto = document.getElementById('editAdminNombreCompleto').value.trim();
+        const activo = document.getElementById('editAdminActivo').checked;
+        const password = document.getElementById('editAdminPassword').value;
+        const passwordConfirm = document.getElementById('editAdminPasswordConfirm').value;
 
-    if (password.length >= 8) strength++;
-    else messages.push('Mínimo 8 caracteres');
+        if (password || passwordConfirm) {
+            if (password !== passwordConfirm) {
+                showError('Las contraseñas no coinciden');
+                return;
+            }
+            if (!validatePassword(password)) {
+                showError('La contraseña no cumple con los requisitos de seguridad');
+                return;
+            }
+        }
 
-    if (/[a-z]/.test(password)) strength++;
-    else messages.push('Una minúscula');
+        try {
+            showLoading(true);
 
-    if (/[A-Z]/.test(password)) strength++;
-    else messages.push('Una mayúscula');
+            const updateDatosData = {
+                username: username,
+                email: email,
+                nombreCompleto: nombreCompleto || null,
+                activo: activo,
+                usuarioMod: getCurrentUsername()
+            };
 
-    if (/[0-9]/.test(password)) strength++;
-    else messages.push('Un número');
+            console.log('📝 Actualizando datos básicos...');
 
-    if (/[^a-zA-Z0-9]/.test(password)) strength++;
-    else messages.push('Un carácter especial');
+            const updateDatosResponse = await fetch(`${ADMIN_API_URL}/${currentEditingAdminId}/datos`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateDatosData)
+            });
 
-    const levels = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Fuerte', 'Muy fuerte'];
-    const colors = ['#ff4444', '#ff8800', '#ffbb00', '#88cc00', '#00cc44', '#00aa00'];
+            if (!updateDatosResponse.ok) {
+                const errorData = await updateDatosResponse.json();
+                throw new Error(errorData.message || 'Error al actualizar datos');
+            }
 
-    strengthDiv.innerHTML = `
-        <div class="strength-bar">
-            <div class="strength-fill" style="width: ${(strength / 5) * 100}%; background: ${colors[strength]}"></div>
-        </div>
-        <span style="color: ${colors[strength]}">${levels[strength]}</span>
-        ${messages.length > 0 ? `<small>Falta: ${messages.join(', ')}</small>` : ''}
+            console.log('✅ Datos básicos actualizados');
+
+            if (password) {
+                console.log('🔐 Actualizando contraseña...');
+
+                const passwordData = {
+                    nuevaPassword: password,
+                    usuarioMod: getCurrentUsername()
+                };
+
+                const passwordResponse = await fetch(
+                    `${ADMIN_API_URL}/${currentEditingAdminId}/reset-password`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(passwordData)
+                    }
+                );
+
+                if (!passwordResponse.ok) {
+                    const errorData = await passwordResponse.json();
+                    console.warn('⚠️ No se pudo cambiar la contraseña:', errorData);
+                    showSuccessMessage('✅ Datos actualizados pero hubo un error al cambiar la contraseña.');
+                } else {
+                    console.log('✅ Contraseña actualizada');
+                    showSuccessMessage('✅ Administrador y contraseña actualizados exitosamente');
+                }
+            } else {
+                showSuccessMessage('✅ Administrador actualizado exitosamente');
+            }
+
+            setTimeout(() => loadAdminsList(), 1500);
+
+        } catch (error) {
+            console.error('Error:', error);
+            showError(error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function confirmToggleAdmin(adminId) {
+        const admin = adminsData.find(a => a.id === adminId);
+        if (!admin) return;
+
+        const action = admin.activo ? 'desactivar' : 'activar';
+        const title = `${action.charAt(0).toUpperCase() + action.slice(1)} Administrador`;
+        const message = `¿Estás seguro de que deseas ${action} al usuario "${admin.username}"?`;
+
+        if (window.showConfirmModal) {
+            window.showConfirmModal(
+                title,
+                message,
+                () => toggleAdminStatus(adminId),
+                `Sí, ${action}`,
+                'Cancelar',
+                admin.activo ? 'warning' : 'success'
+            );
+        } else {
+            if (confirm(message)) {
+                toggleAdminStatus(adminId);
+            }
+        }
+    }
+
+    async function toggleAdminStatus(adminId) {
+        const admin = adminsData.find(a => a.id === adminId);
+        if (!admin) return;
+
+        const currentUser = getCurrentUsername();
+        console.log('👤 Usuario que modifica estado:', currentUser);
+
+        try {
+            showLoading(true);
+
+            const statusData = {
+                activo: !admin.activo
+            };
+
+            const response = await fetch(`${ADMIN_API_URL}/${adminId}/estado`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(statusData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al cambiar el estado');
+            }
+
+            showSuccessMessage(`✅ Estado actualizado correctamente`);
+            await loadAdminsList();
+
+        } catch (error) {
+            console.error('Error:', error);
+            showError(error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ============================================
+    // VALIDACIONES Y UTILIDADES
+    // ============================================
+
+    function validatePassword(password) {
+        if (password.length < 8) return false;
+        if (!/[a-z]/.test(password)) return false;
+        if (!/[A-Z]/.test(password)) return false;
+        if (!/[0-9]/.test(password)) return false;
+        if (!/[^a-zA-Z0-9]/.test(password)) return false;
+        return true;
+    }
+
+    function setupPasswordValidation() {
+        const passwordInput = document.getElementById('adminPassword');
+        const passwordHelp = document.getElementById('passwordHelp');
+
+        if (passwordInput && passwordHelp) {
+            passwordInput.addEventListener('input', function () {
+                const password = this.value;
+                const requirements = [
+                    { test: password.length >= 8, text: 'Mínimo 8 caracteres' },
+                    { test: /[a-z]/.test(password), text: 'Una minúscula' },
+                    { test: /[A-Z]/.test(password), text: 'Una mayúscula' },
+                    { test: /[0-9]/.test(password), text: 'Un número' },
+                    { test: /[^a-zA-Z0-9]/.test(password), text: 'Un carácter especial' }
+                ];
+
+                const html = requirements.map(req =>
+                    `<span style="display: inline-block; margin-right: 12px; color: ${req.test ? '#10b981' : '#ef4444'}; font-weight: 500;">
+                        ${req.test ? '✓' : '✗'} ${req.text}
+                    </span>`
+                ).join('');
+
+                passwordHelp.innerHTML = html;
+            });
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showError(message) {
+        if (window.showError && typeof window.showError === 'function') {
+            if (window.showError !== showError) {
+                window.showError(message);
+                return;
+            }
+        }
+
+        const errorDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        if (errorDiv && errorText) {
+            errorText.textContent = message;
+            errorDiv.style.display = 'flex';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 8000);
+        } else {
+            alert('Error: ' + message);
+        }
+        console.error('Error:', message);
+    }
+
+    function showSuccessMessage(message) {
+        if (window.showSuccessMessage && typeof window.showSuccessMessage === 'function') {
+            if (window.showSuccessMessage !== showSuccessMessage) {
+                window.showSuccessMessage(message);
+                return;
+            }
+        }
+
+        const successDiv = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
+        if (successDiv && successText) {
+            successText.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 4000);
+        } else {
+            alert(message);
+        }
+    }
+
+    function showLoading(show) {
+        if (window.showLoading && typeof window.showLoading === 'function') {
+            if (window.showLoading !== showLoading) {
+                window.showLoading(show);
+                return;
+            }
+        }
+
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    // ============================================
+    // ESTILOS ADICIONALES
+    // ============================================
+
+    // Agregar estilos dinámicos para animaciones y hover effects
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        table tr:hover {
+            background: #f8f9fa !important;
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
     `;
-}
+    document.head.appendChild(styleSheet);
 
-// Validar requisitos de contraseña
-function validatePasswordRequirements(password) {
-    return password.length >= 8 &&
-        /[a-z]/.test(password) &&
-        /[A-Z]/.test(password) &&
-        /[0-9]/.test(password) &&
-        /[^a-zA-Z0-9]/.test(password);
-}
+    // ============================================
+    // EXPORTAR FUNCIONES GLOBALES
+    // ============================================
 
-// Toggle visibility de campo de contraseña
-window.togglePasswordField = function (fieldId) {
-    const input = document.getElementById(fieldId);
-    const icon = input.nextElementSibling.querySelector('span');
+    window.loadAdminsList = loadAdminsList;
+    window.showCreateAdminForm = showCreateAdminForm;
+    window.showEditAdminForm = showEditAdminForm;
+    window.confirmToggleAdmin = confirmToggleAdmin;
+    window.getCurrentUsername = getCurrentUsername;
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        icon.textContent = '👁️';
-    }
-};
+    window.showAdminManager = function () {
+        console.log('👥 Abriendo gestión de administradores...');
 
-// Cerrar formulario
-window.closeAdminForm = function () {
-    loadAdminsList();
-};
+        const modal = document.getElementById('adminModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => loadAdminsList(), 100);
+        } else {
+            console.error('Modal adminModal no encontrado');
+        }
+    };
 
-// Utilidades UI
-function showAdminLoading(show) {
-    let overlay = document.getElementById('adminLoadingOverlay');
+    // Prevenir autocompletado agresivo del navegador
+    document.addEventListener('DOMContentLoaded', function () {
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1 && node.id === 'adminUserForm') {
+                        const inputs = node.querySelectorAll('input');
+                        inputs.forEach(input => {
+                            input.setAttribute('autocomplete', 'off');
+                            input.value = '';
+                        });
+                    }
+                });
+            });
+        });
 
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'adminLoadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = '<div class="spinner"></div><p>Procesando...</p>';
-        document.body.appendChild(overlay);
-    }
-
-    overlay.style.display = show ? 'flex' : 'none';
-}
-
-function showAdminError(message) {
-    const errorDiv = document.getElementById('errorMessage');
-    const errorText = document.getElementById('errorText');
-
-    if (errorDiv && errorText) {
-        errorText.textContent = message;
-        errorDiv.style.display = 'flex';
-        setTimeout(() => errorDiv.style.display = 'none', 5000);
-    }
-}
-
-function showAdminSuccess(message) {
-    const successDiv = document.getElementById('successMessage');
-    const successText = document.getElementById('successText');
-
-    if (successDiv && successText) {
-        successText.textContent = message;
-        successDiv.style.display = 'flex';
-        setTimeout(() => successDiv.style.display = 'none', 3000);
-    }
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'Nunca';
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) return 'Hoy';
-    if (days === 1) return 'Ayer';
-    if (days < 7) return `Hace ${days} días`;
-
-    return date.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     });
+
+    console.log('✅ Módulo de gestión de administradores cargado correctamente');
 }
 
-console.log('✅ Módulo de gestión de administradores cargado');
+console.log('✅ admin-users.js CARGADO COMPLETAMENTE');
+console.log('✅ Funciones exportadas:', {
+    loadAdminsList: typeof window.loadAdminsList,
+    showCreateAdminForm: typeof window.showCreateAdminForm,
+    showEditAdminForm: typeof window.showEditAdminForm,
+    confirmToggleAdmin: typeof window.confirmToggleAdmin
+});

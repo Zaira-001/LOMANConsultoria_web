@@ -9,6 +9,268 @@ window.currentSort = { field: 'fechaAlta', order: 'desc' }; // NUEVO: Ordenamien
 // Marcar como inicializado
 window.adminCotizacionesInitialized = true;
 
+// ==================== SISTEMA DE NOTIFICACIONES ====================
+
+// Crear contenedor de notificaciones si no existe
+function initNotificationContainer() {
+    if (!document.getElementById('notificationContainer')) {
+        const container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        `;
+        document.body.appendChild(container);
+    }
+}
+
+// Mostrar notificación toast moderna
+function showNotification(message, type = 'info', duration = 4000) {
+    initNotificationContainer();
+
+    const container = document.getElementById('notificationContainer');
+    const notification = document.createElement('div');
+    const id = 'notif-' + Date.now();
+    notification.id = id;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️',
+        loading: '⏳'
+    };
+
+    const colors = {
+        success: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+        error: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+        warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+        info: { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' },
+        loading: { bg: '#e3f2fd', border: '#2196F3', text: '#0d47a1' }
+    };
+
+    const color = colors[type] || colors.info;
+
+    notification.style.cssText = `
+        background: ${color.bg};
+        border-left: 4px solid ${color.border};
+        color: ${color.text};
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 300px;
+    `;
+
+    notification.innerHTML = `
+        <span style="font-size: 24px; flex-shrink: 0;">${icons[type]}</span>
+        <div style="flex: 1;">
+            <div style="font-weight: 600; margin-bottom: 4px;">${type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Información'}</div>
+            <div style="font-size: 13px; opacity: 0.9;">${message}</div>
+        </div>
+        <button onclick="document.getElementById('${id}').remove()" style="background: none; border: none; color: ${color.text}; font-size: 20px; cursor: pointer; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+            ×
+        </button>
+    `;
+
+    // Agregar animación
+    if (!document.getElementById('notificationStyles')) {
+        const style = document.createElement('style');
+        style.id = 'notificationStyles';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Hover effect
+    notification.addEventListener('mouseenter', () => {
+        notification.style.transform = 'translateX(-5px)';
+        notification.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
+    });
+
+    notification.addEventListener('mouseleave', () => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+    });
+
+    container.appendChild(notification);
+
+    // Auto-remover después de duration (si no es loading)
+    if (type !== 'loading' && duration > 0) {
+        setTimeout(() => {
+            if (document.getElementById(id)) {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, duration);
+    }
+
+    return id; // Retornar ID para poder remover notificaciones loading
+}
+
+// Diálogo de confirmación moderno
+function showConfirmDialog(title, message, onConfirm, type = 'info') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            animation: fadeIn 0.2s ease-out;
+        `;
+
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️',
+            question: '❓'
+        };
+
+        const colors = {
+            success: '#28a745',
+            error: '#dc3545',
+            warning: '#ffc107',
+            info: '#2196F3',
+            question: '#667eea'
+        };
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: scaleIn 0.3s ease-out;
+        `;
+
+        const color = colors[type] || colors.info;
+
+        dialog.innerHTML = `
+            <div style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 12px;">${icons[type] || icons.question}</div>
+                <h3 style="margin: 0; font-size: 22px; font-weight: 600;">${title}</h3>
+            </div>
+            <div style="padding: 24px;">
+                <p style="margin: 0 0 24px 0; color: #555; line-height: 1.6; white-space: pre-line;">${message}</p>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button id="cancelBtn" style="
+                        padding: 12px 24px;
+                        border: 2px solid #ddd;
+                        background: white;
+                        color: #666;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 14px;
+                    " onmouseover="this.style.background='#f5f5f5'; this.style.borderColor='#ccc';" onmouseout="this.style.background='white'; this.style.borderColor='#ddd';">
+                        Cancelar
+                    </button>
+                    <button id="confirmBtn" style="
+                        padding: 12px 24px;
+                        border: none;
+                        background: ${color};
+                        color: white;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 14px;
+                    " onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)';" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Agregar animaciones
+        if (!document.getElementById('dialogStyles')) {
+            const style = document.createElement('style');
+            style.id = 'dialogStyles';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes scaleIn {
+                    from {
+                        transform: scale(0.9);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        const close = (confirmed) => {
+            overlay.style.animation = 'fadeIn 0.2s ease-in reverse';
+            setTimeout(() => {
+                overlay.remove();
+                resolve(confirmed);
+                if (confirmed && onConfirm) onConfirm();
+            }, 200);
+        };
+
+        dialog.querySelector('#confirmBtn').onclick = () => close(true);
+        dialog.querySelector('#cancelBtn').onclick = () => close(false);
+        overlay.onclick = (e) => {
+            if (e.target === overlay) close(false);
+        };
+    });
+}
+
+// ==================== FUNCIONES PRINCIPALES ====================
+
 // Función principal de inicialización
 window.initAdminCotizaciones = function () {
     console.log('🚀 Inicializando AdminCotizaciones...');
@@ -284,7 +546,7 @@ window.showCotizacionDetails = function (id) {
     window.selectedCotizacion = window.cotizacionesData.find(c => c.id === id);
 
     if (!window.selectedCotizacion) {
-        console.error('❌ Cotización no encontrada');
+        showNotification('Cotización no encontrada', 'error');
         return;
     }
 
@@ -292,8 +554,7 @@ window.showCotizacionDetails = function (id) {
     const modalContent = document.getElementById('modalContent');
 
     if (!modal || !modalContent) {
-        console.error('❌ Modal no encontrado');
-        alert('Error: Modal no encontrado. Recarga la página.');
+        showNotification('Error: Modal no encontrado. Recarga la página.', 'error');
         return;
     }
 
@@ -488,7 +749,7 @@ window.handleFileSelect = function (event) {
 
     // Validar que sea PDF
     if (file.type !== 'application/pdf') {
-        alert('⚠️ Solo se permiten archivos PDF');
+        showNotification('Solo se permiten archivos PDF', 'error');
         event.target.value = '';
         return;
     }
@@ -496,7 +757,7 @@ window.handleFileSelect = function (event) {
     // Validar tamaño (10MB máximo)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-        alert('⚠️ El archivo es muy grande. Máximo 10MB');
+        showNotification('El archivo es muy grande. Máximo 10MB', 'error');
         event.target.value = '';
         return;
     }
@@ -518,12 +779,16 @@ window.handleFileSelect = function (event) {
         </div>
     `;
 
+    showNotification(`PDF cargado: ${file.name} (${sizeInMB} MB)`, 'success');
     console.log('✅ Archivo validado y listo para enviar');
 };
 
-// MEJORADO: Enviar cotización con PDF
+// MEJORADO: Enviar cotización con CONFIRMACIÓN
 window.enviarCotizacionCliente = async function () {
-    if (!window.selectedCotizacion) return;
+    if (!window.selectedCotizacion) {
+        showNotification('No hay cotización seleccionada', 'error');
+        return;
+    }
 
     const respuesta = document.getElementById('respuestaAdmin').value.trim();
     const montoInput = document.getElementById('montoEstimado').value;
@@ -533,54 +798,52 @@ window.enviarCotizacionCliente = async function () {
 
     // Validaciones
     if (!respuesta) {
-        alert('⚠️ Por favor escribe una respuesta antes de enviar');
+        showNotification('Por favor escribe una respuesta antes de enviar', 'warning');
         document.getElementById('respuestaAdmin').focus();
         return;
     }
 
     if (respuesta.length < 50) {
-        alert('⚠️ La respuesta debe ser más detallada (mínimo 50 caracteres)\n\nActualmente tienes: ' + respuesta.length + ' caracteres');
+        showNotification(
+            `La respuesta debe ser más detallada (mínimo 50 caracteres)\n\nActualmente: ${respuesta.length} caracteres`,
+            'warning',
+            6000
+        );
         document.getElementById('respuestaAdmin').focus();
         return;
     }
 
     if (monto !== null && monto <= 0) {
-        alert('⚠️ El monto debe ser mayor a 0');
+        showNotification('El monto debe ser mayor a 0', 'warning');
         document.getElementById('montoEstimado').focus();
         return;
     }
 
-    // Confirmar envío
-    const mensajeConfirmacion = archivoPDF
-        ? `📨 ¿Enviar cotización a ${window.selectedCotizacion.nombre}?\n\n` +
+    // CONFIRMACIÓN MEJORADA
+    const mensajeConfirmacion = `📨 Enviar cotización a ${window.selectedCotizacion.nombre}\n\n` +
         `📧 Email: ${window.selectedCotizacion.correo}\n` +
         `💰 Monto: ${monto ? '$' + monto.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' MXN' : 'A consultar'}\n` +
-        `📄 PDF adjunto: ${archivoPDF.name} (${(archivoPDF.size / 1024).toFixed(2)} KB)\n\n` +
-        `¿Deseas continuar?`
-        : `📨 ¿Enviar cotización a ${window.selectedCotizacion.nombre}?\n\n` +
-        `📧 Email: ${window.selectedCotizacion.correo}\n` +
-        `💰 Monto: ${monto ? '$' + monto.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' MXN' : 'A consultar'}\n` +
-        `📄 Sin PDF adjunto\n\n` +
-        `¿Deseas continuar?`;
+        `📄 ${archivoPDF ? `PDF adjunto: ${archivoPDF.name} (${(archivoPDF.size / 1024).toFixed(2)} KB)` : 'Sin PDF adjunto'}`;
 
-    if (!confirm(mensajeConfirmacion)) return;
+    const confirmed = await showConfirmDialog(
+        '📨 Enviar Cotización',
+        mensajeConfirmacion,
+        null,
+        'question'
+    );
 
-    console.log('📨 Enviando cotización...', {
-        id: window.selectedCotizacion.id,
-        respuesta: respuesta.substring(0, 50) + '...',
-        monto,
-        tienePDF: !!archivoPDF,
-        nombrePDF: archivoPDF?.name
-    });
+    if (!confirmed) return;
 
-    // Mostrar indicador de carga
+    // Envío con notificación de loading
+    const loadingId = showNotification('Enviando cotización y email...', 'loading', 0);
+
+    // Deshabilitar botón durante el envío
     const btnEnviar = document.querySelector('.btn-enviar-cotizacion');
     const textoOriginal = btnEnviar.innerHTML;
     btnEnviar.disabled = true;
-    btnEnviar.innerHTML = '⏳ Enviando cotización...';
+    btnEnviar.innerHTML = '⏳ Enviando...';
 
     try {
-        // Crear FormData para enviar archivo
         const formData = new FormData();
         formData.append('Respuesta', respuesta);
         if (monto !== null) {
@@ -588,9 +851,9 @@ window.enviarCotizacionCliente = async function () {
         }
         if (archivoPDF) {
             formData.append('ArchivoPDF', archivoPDF);
-            console.log('📎 PDF adjuntado al FormData:', archivoPDF.name);
         }
 
+        console.log('📤 Enviando cotización al servidor...');
         const response = await fetch(
             `http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${window.selectedCotizacion.id}/enviar-cotizacion`,
             {
@@ -599,18 +862,16 @@ window.enviarCotizacionCliente = async function () {
             }
         );
 
+        // Remover notificación de loading
+        document.getElementById(loadingId)?.remove();
+
         if (response.ok) {
             const result = await response.json();
-            console.log('✅ Cotización enviada:', result);
 
-            alert(
-                '✅ ¡Cotización enviada exitosamente!\n\n' +
-                `📧 Email enviado a: ${window.selectedCotizacion.correo}\n` +
-                (archivoPDF ? `📄 PDF adjunto: ${archivoPDF.name}\n` : '📄 Sin PDF adjunto\n') +
-                `💰 Monto: ${monto ? '$' + monto.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' MXN' : 'A consultar'}\n\n` +
-                (result.emailEnviado
-                    ? '✅ El cliente ya recibió el email'
-                    : '⚠️ La cotización se guardó pero el email no pudo enviarse')
+            showNotification(
+                `Cotización enviada exitosamente a ${window.selectedCotizacion.correo}${archivoPDF ? ' con PDF adjunto' : ''}`,
+                'success',
+                5000
             );
 
             // Actualizar datos locales
@@ -622,15 +883,10 @@ window.enviarCotizacionCliente = async function () {
                 window.selectedCotizacion.nombreArchivoPDF = archivoPDF.name;
             }
 
+            // Actualizar en la lista principal
             const cotizacion = window.cotizacionesData.find(c => c.id === window.selectedCotizacion.id);
             if (cotizacion) {
-                cotizacion.respuestaAdmin = respuesta;
-                cotizacion.montoEstimado = monto;
-                cotizacion.estado = 'Enviada';
-                cotizacion.fechaCotizacion = new Date().toISOString();
-                if (archivoPDF) {
-                    cotizacion.nombreArchivoPDF = archivoPDF.name;
-                }
+                Object.assign(cotizacion, window.selectedCotizacion);
             }
 
             // Cerrar modal y refrescar
@@ -640,18 +896,27 @@ window.enviarCotizacionCliente = async function () {
         } else {
             const errorData = await response.text();
             console.error('❌ Error del servidor:', response.status, errorData);
-            alert(`❌ Error al enviar cotización (${response.status})\n\nDetalles: ${errorData}`);
+            showNotification(
+                `Error al enviar cotización (${response.status})`,
+                'error',
+                6000
+            );
 
-            // Restaurar botón
+            // Rehabilitar botón
             btnEnviar.disabled = false;
             btnEnviar.innerHTML = textoOriginal;
         }
 
     } catch (error) {
+        document.getElementById(loadingId)?.remove();
         console.error('❌ Error:', error);
-        alert('❌ Error de conexión. Verifica tu conexión a internet e intenta nuevamente.');
+        showNotification(
+            'Error de conexión. Verifica tu conexión a internet',
+            'error',
+            5000
+        );
 
-        // Restaurar botón
+        // Rehabilitar botón
         btnEnviar.disabled = false;
         btnEnviar.innerHTML = textoOriginal;
     }
@@ -666,24 +931,25 @@ window.closeCotizacionModal = function () {
     window.selectedCotizacion = null;
 };
 
-// Guardar notas
+// MEJORADO: Guardar notas con NOTIFICACIONES
 window.saveNotas = async function () {
     if (!window.selectedCotizacion) return;
 
     const notas = document.getElementById('adminNotes').value;
     const id = window.selectedCotizacion.id;
 
-    console.log('💾 Guardando notas para ID:', id);
+    const loadingId = showNotification('Guardando notas...', 'loading', 0);
 
     try {
+        // Intentar con endpoint específico primero
         let response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}/notas`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ NotasInternas: notas })
         });
 
+        // Si falla, intentar con endpoint general
         if (!response.ok) {
-            console.log('⚠️ Intentando endpoint alternativo...');
             response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -694,41 +960,57 @@ window.saveNotas = async function () {
             });
         }
 
-        if (response.ok) {
-            console.log('✅ Notas guardadas');
-            alert('✅ Notas guardadas correctamente');
+        document.getElementById(loadingId)?.remove();
 
+        if (response.ok) {
+            showNotification('Notas guardadas correctamente', 'success');
+
+            // Actualizar datos locales
             const cotizacion = window.cotizacionesData.find(c => c.id === id);
             if (cotizacion) {
                 cotizacion.notasInternas = notas;
             }
-            window.selectedCotizacion.notasInternas = notas;
+            if (window.selectedCotizacion) {
+                window.selectedCotizacion.notasInternas = notas;
+            }
 
+            // Refrescar vista
             aplicarFiltros();
         } else {
             const errorText = await response.text();
             console.error('❌ Error guardando notas:', response.status, errorText);
-            alert(`❌ Error al guardar notas (${response.status})`);
+            showNotification(`Error al guardar notas (${response.status})`, 'error');
         }
     } catch (error) {
+        document.getElementById(loadingId)?.remove();
         console.error('❌ Error:', error);
-        alert('❌ Error al guardar notas. Verifica tu conexión.');
+        showNotification('Error al guardar notas. Verifica tu conexión.', 'error');
     }
 };
 
-// Actualizar estado (desde card)
+// MEJORADO: Actualizar estado con CONFIRMACIÓN
 window.updateEstado = async function (id, nuevoEstado) {
-    console.log('🔄 Actualizando estado:', { id, nuevoEstado });
+    const confirmed = await showConfirmDialog(
+        '🔄 Cambiar Estado',
+        `¿Cambiar el estado de esta cotización a "${nuevoEstado}"?`,
+        null,
+        'question'
+    );
+
+    if (!confirmed) return;
+
+    const loadingId = showNotification('Actualizando estado...', 'loading', 0);
 
     try {
+        // Intentar con endpoint específico primero
         let response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}/estado`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ Estado: nuevoEstado })
         });
 
+        // Si falla, intentar con endpoint general
         if (!response.ok) {
-            console.log('⚠️ Intentando formato alternativo del API...');
             response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -739,10 +1021,12 @@ window.updateEstado = async function (id, nuevoEstado) {
             });
         }
 
-        if (response.ok) {
-            console.log('✅ Estado actualizado');
-            alert(`✅ Estado actualizado a: ${nuevoEstado}`);
+        document.getElementById(loadingId)?.remove();
 
+        if (response.ok) {
+            showNotification(`Estado actualizado a: ${nuevoEstado}`, 'success');
+
+            // Actualizar datos locales
             const cotizacion = window.cotizacionesData.find(c => c.id === id);
             if (cotizacion) {
                 cotizacion.estado = nuevoEstado;
@@ -751,15 +1035,17 @@ window.updateEstado = async function (id, nuevoEstado) {
                 window.selectedCotizacion.estado = nuevoEstado;
             }
 
+            // Refrescar vista
             await window.refreshCotizaciones();
         } else {
             const errorText = await response.text();
             console.error('❌ Error actualizando estado:', response.status, errorText);
-            alert(`❌ Error al actualizar estado (${response.status}). Verifica la consola para detalles.`);
+            showNotification(`Error al actualizar estado (${response.status})`, 'error');
         }
     } catch (error) {
+        document.getElementById(loadingId)?.remove();
         console.error('❌ Error:', error);
-        alert('❌ Error al actualizar estado. Verifica tu conexión.');
+        showNotification('Error al actualizar estado. Verifica tu conexión.', 'error');
     }
 };
 
@@ -776,27 +1062,25 @@ window.openWhatsApp = function (id) {
     const cotizacion = window.cotizacionesData.find(c => c.id === id);
 
     if (!cotizacion) {
-        console.error('❌ Cotización no encontrada');
+        showNotification('Cotización no encontrada', 'error');
         return;
     }
-
-    console.log('💬 Abriendo WhatsApp para:', cotizacion.nombre);
 
     let phone = cotizacion.telefono || '';
     phone = phone.replace(/[\s\-\(\)]/g, '');
 
+    // Asegurar formato internacional
     if (!phone.startsWith('+') && !phone.startsWith('52')) {
         phone = '52' + phone;
     }
 
     phone = phone.replace(/^\+/, '');
 
-    console.log('📱 Teléfono formateado:', phone);
-
     const message = `Hola ${cotizacion.nombre}, te contacto desde Consultoría Integral sobre tu solicitud de ${cotizacion.tipoConsulta} (Folio #${String(cotizacion.id).padStart(6, '0')}).`;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
     window.open(url, '_blank');
+    showNotification(`Abriendo WhatsApp con ${cotizacion.nombre}`, 'info', 3000);
 };
 
 // Refrescar cotizaciones
@@ -814,15 +1098,16 @@ window.refreshCotizaciones = async function () {
             aplicarFiltros();
         } else {
             console.error('❌ Error HTTP:', response.status);
-            alert('❌ Error al actualizar cotizaciones');
+            showNotification('Error al actualizar cotizaciones', 'error');
         }
     } catch (error) {
         console.error('❌ Error:', error);
-        alert('❌ Error al actualizar cotizaciones');
+        showNotification('Error al actualizar cotizaciones', 'error');
     }
 };
 
-// Utilidades
+// ==================== FUNCIONES AUXILIARES ====================
+
 function getEstadoIcon(estado) {
     switch (estado) {
         case 'Pendiente': return '⏳';
@@ -866,7 +1151,7 @@ function formatearFecha(fecha) {
     return `${dia}/${mes}/${año} ${hora}:${min}`;
 }
 
-// Cerrar modal al hacer clic fuera
+// Event listeners
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('cotizacionModal');
 
