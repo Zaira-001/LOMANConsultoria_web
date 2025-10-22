@@ -96,6 +96,17 @@ namespace DAL
             }
         }
 
+        public IDB<SolicitudCV> SolicitudCVRepository()
+        {
+            switch (_tipo)
+            {
+                case TipoBD.SQLServer:
+                    return new DBSqlServer<SolicitudCV>(_cadenaConexion, new SolicitudCVValidator(), "Id", true);
+                default:
+                    return null;
+            }
+        }
+
         public enum TipoBD
         {
             SQLServer,

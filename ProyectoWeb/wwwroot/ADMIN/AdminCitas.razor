@@ -29,8 +29,15 @@ else
             <p style="margin: 5px 0 0 0;">Panel de administración</p>
         </div>
         <div class="header-actions">
-            <button type="button" class="nav-btn" onclick="window.location.href='/admin'">← Volver al Panel</button>
-            <button type="button" class="nav-btn" onclick="window.refreshCitas ? window.refreshCitas() : location.reload()">🔄 Actualizar</button>
+            <button type="button" class="nav-btn" onclick="window.location.href='/admin'">
+                ← Volver al Panel
+              </button>
+            <button type="button" class="nav-btn" onclick="window.refreshCitas ? window.refreshCitas() : location.reload()">
+                🔄 Actualizar
+             </button>
+            <button type="button" class="nav-btn" onclick="logout()">
+                        🚪 Cerrar Sesión
+            </button>
         </div>
     </div>
 
@@ -43,24 +50,6 @@ else
     }
     else
     {
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total de Citas</div>
-                <div class="stat-number">@(todasCitas?.Count ?? 0)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Pendientes</div>
-                <div class="stat-number" style="color: #ff9800;">@(todasCitas?.Count(c => c.Estado == "Pendiente") ?? 0)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Confirmadas</div>
-                <div class="stat-number" style="color: #4caf50;">@(todasCitas?.Count(c => c.Estado == "Confirmada") ?? 0)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Este Mes</div>
-                <div class="stat-number" style="color: #2196F3;">@(todasCitas?.Count(c => c.FechaHora.Month == currentDate.Month) ?? 0)</div>
-            </div>
-        </div>
 
         <div class="calendar-controls">
             <div class="month-navigation">

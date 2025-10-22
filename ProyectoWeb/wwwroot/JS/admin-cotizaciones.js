@@ -30,6 +30,19 @@ function initNotificationContainer() {
     }
 }
 
+function logout() {
+    try {
+        window.adminSession = null;
+        localStorage.removeItem('adminSession');
+        sessionStorage.removeItem('adminSession');
+        document.cookie = 'adminSession=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+        window.location.href = '/login';
+    } catch (e) {
+        console.error('Error en logout:', e);
+        window.location.href = '/login';
+    }
+}
+
 // Mostrar notificación toast moderna
 function showNotification(message, type = 'info', duration = 4000) {
     initNotificationContainer();
@@ -283,40 +296,63 @@ window.initAdminCotizaciones = function () {
 };
 
 // Actualizar estadísticas
+// Al inicio de la función actualizarEstadisticas(), reemplaza con esto:
+
 function actualizarEstadisticas() {
+    console.log('📊 Actualizando estadísticas...');
+    console.log('📊 Total de cotizaciones:', window.cotizacionesData.length);
+
     const total = window.cotizacionesData.length;
     const pendientes = window.cotizacionesData.filter(c => c.estado === 'Pendiente').length;
     const enProceso = window.cotizacionesData.filter(c => c.estado === 'En Proceso').length;
     const enviadas = window.cotizacionesData.filter(c => c.estado === 'Enviada').length;
 
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statPendientes').textContent = pendientes;
-    document.getElementById('statEnProceso').textContent = enProceso;
-    document.getElementById('statEnviadas').textContent = enviadas;
+    console.log('📊 Estadísticas calculadas:', {
+        total,
+        pendientes,
+        enProceso,
+        enviadas
+    });
+
+    // Verificar que existan los elementos
+    const elemTotal = document.getElementById('statTotal');
+    const elemPendientes = document.getElementById('statPendientes');
+    const elemEnProceso = document.getElementById('statEnProceso');
+    const elemEnviadas = document.getElementById('statEnviadas');
+
+    console.log('🔍 Elementos encontrados:', {
+        statTotal: !!elemTotal,
+        statPendientes: !!elemPendientes,
+        statEnProceso: !!elemEnProceso,
+        statEnviadas: !!elemEnviadas
+    });
+
+    if (elemTotal) elemTotal.textContent = total;
+    if (elemPendientes) elemPendientes.textContent = pendientes;
+    if (elemEnProceso) elemEnProceso.textContent = enProceso;
+    if (elemEnviadas) elemEnviadas.textContent = enviadas;
+
+    if (!elemTotal || !elemPendientes || !elemEnProceso || !elemEnviadas) {
+        console.error('❌ Faltan elementos de estadísticas en el DOM');
+    } else {
+        console.log('✅ Estadísticas actualizadas correctamente');
+    }
 }
 
-// NUEVA FUNCIÓN: Ordenar cotizaciones
-window.ordenarCotizaciones = function (campo) {
-    console.log('🔄 Ordenando por:', campo);
-
-    // Cambiar dirección si es el mismo campo
-    if (window.currentSort.field === campo) {
-        window.currentSort.order = window.currentSort.order === 'asc' ? 'desc' : 'asc';
-    } else {
-        window.currentSort.field = campo;
-        window.currentSort.order = 'desc';
-    }
-
-    aplicarFiltros();
-};
-
-// Aplicar filtros Y ORDENAMIENTO
+// Y al inicio de aplicarFiltros(), agrega esto:
 window.aplicarFiltros = function () {
     console.log('🔍 Aplicando filtros...');
+    console.log('📊 window.cotizacionesData:', window.cotizacionesData?.length || 0);
 
-    const estadoFilter = document.getElementById('estadoFilter').value;
-    const prioridadFilter = document.getElementById('prioridadFilter').value;
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const estadoFilter = document.getElementById('estadoFilter')?.value;
+    const prioridadFilter = document.getElementById('prioridadFilter')?.value;
+    const searchTerm = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+
+    console.log('🔍 Filtros activos:', {
+        estado: estadoFilter || 'ninguno',
+        prioridad: prioridadFilter || 'ninguna',
+        busqueda: searchTerm || 'ninguna'
+    });
 
     // FILTRAR
     window.cotizacionesFiltradas = window.cotizacionesData.filter(cotizacion => {
@@ -339,6 +375,8 @@ window.aplicarFiltros = function () {
 
         return true;
     });
+
+    console.log(`✅ ${window.cotizacionesFiltradas.length} cotizaciones después de filtrar`);
 
     // ORDENAR
     window.cotizacionesFiltradas.sort((a, b) => {
@@ -372,7 +410,9 @@ window.aplicarFiltros = function () {
         return 0;
     });
 
-    console.log(`✅ ${window.cotizacionesFiltradas.length} cotizaciones después de filtrar y ordenar`);
+    console.log(`🔄 ${window.cotizacionesFiltradas.length} cotizaciones después de ordenar`);
+    console.log('🎨 Llamando a renderizarCotizaciones()...');
+
     renderizarCotizaciones();
 };
 

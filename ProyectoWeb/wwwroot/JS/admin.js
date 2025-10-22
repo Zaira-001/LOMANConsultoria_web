@@ -2678,6 +2678,240 @@ window.openAdministradoresModal = function () {
 };
 
 // ============================================
+// AGREGAR AL FINAL DE admin.js
+// ============================================
+
+// Función de navegación mejorada para Solicitudes
+window.navigateToSolicitudes = function () {
+    console.log('🔄 Navegando a /admin/solicitudes preservando sesión...');
+
+    // 1. Cerrar cualquier modal abierto primero
+    if (window.EmojiPicker && window.EmojiPicker.isOpen) {
+        window.EmojiPicker.close();
+    }
+    if (window.closeAllModals) {
+        window.closeAllModals();
+    }
+
+    // 2. Verificar que la sesión esté activa
+    if (!window.isLoggedIn || !window.isLoggedIn()) {
+        console.log('❌ No hay sesión activa');
+        window.location.href = '/login';
+        return;
+    }
+
+    // 3. Obtener datos de sesión
+    const sessionData = window.getSessionData();
+    if (!sessionData) {
+        console.log('❌ No se pudo obtener datos de sesión');
+        window.location.href = '/login';
+        return;
+    }
+
+    console.log('✅ Sesión válida encontrada:', sessionData.username);
+
+    // 4. CRÍTICO: Guardar en TODOS los lugares posibles
+    try {
+        const sessionJson = JSON.stringify(sessionData);
+
+        // a) localStorage (principal)
+        localStorage.setItem('adminSession', sessionJson);
+
+        // b) sessionStorage (respaldo)
+        sessionStorage.setItem('adminSession', sessionJson);
+        sessionStorage.setItem('sessionTimestamp', Date.now().toString());
+
+        // c) Mantener en memoria
+        window.adminSession = sessionData;
+
+        // d) Cookie como último respaldo
+        const expirationDate = new Date(sessionData.expiresAt);
+        document.cookie = `adminSession=${btoa(sessionJson)}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+
+        console.log('✅ Sesión guardada en todos los lugares');
+
+        // 5. NUEVO: Marcar que venimos de navegación interna
+        sessionStorage.setItem('navigatedFrom', 'admin');
+        sessionStorage.setItem('navigationTimestamp', Date.now().toString());
+
+        // 6. Pequeño delay para asegurar que todo se guardó
+        setTimeout(() => {
+            console.log('🚀 Navegando a /admin/solicitudes...');
+            window.location.href = '/admin/solicitudes';
+        }, 100);
+
+    } catch (e) {
+        console.error('❌ Error guardando sesión:', e);
+        alert('Error al guardar la sesión. Intenta recargar la página.');
+        return;
+    }
+};
+
+// MEJORAR: Función de verificación de sesión más robusta
+window.verifySessionForNavigation = function () {
+    console.log('🔍 Verificando sesión para navegación...');
+
+    // Intentar desde múltiples fuentes
+    let session = null;
+
+    // 1. Primero desde memoria
+    if (window.adminSession && window.adminSession.expiresAt > Date.now()) {
+        console.log('✅ Sesión encontrada en memoria');
+        session = window.adminSession;
+    }
+
+    // 2. Luego desde localStorage
+    if (!session) {
+        try {
+            const stored = localStorage.getItem('adminSession');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed && parsed.expiresAt > Date.now()) {
+                    console.log('✅ Sesión encontrada en localStorage');
+                    session = parsed;
+                    window.adminSession = session; // Sincronizar a memoria
+                }
+            }
+        } catch (e) {
+            console.warn('Error parseando localStorage:', e);
+        }
+    }
+
+    // 3. Luego desde sessionStorage
+    if (!session) {
+        try {
+            const stored = sessionStorage.getItem('adminSession');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed && parsed.expiresAt > Date.now()) {
+                    console.log('✅ Sesión encontrada en sessionStorage');
+                    session = parsed;
+                    window.adminSession = session; // Sincronizar a memoria
+                }
+            }
+        } catch (e) {
+            console.warn('Error parseando sessionStorage:', e);
+        }
+    }
+
+    // 4. Como último recurso, desde cookie
+    if (!session) {
+        try {
+            const cookies = document.cookie.split(';');
+            const adminCookie = cookies.find(c => c.trim().startsWith('adminSession='));
+            if (adminCookie) {
+                const encoded = adminCookie.split('=')[1];
+                const decoded = atob(encoded);
+                const parsed = JSON.parse(decoded);
+                if (parsed && parsed.expiresAt > Date.now()) {
+                    console.log('✅ Sesión encontrada en cookie');
+                    session = parsed;
+                    window.adminSession = session; // Sincronizar a memoria
+                }
+            }
+        } catch (e) {
+            console.warn('Error parseando cookie:', e);
+        }
+    }
+
+    if (session) {
+        console.log('✅ Sesión válida:', {
+            username: session.username,
+            expiresIn: Math.round((session.expiresAt - Date.now()) / 60000) + ' minutos'
+        });
+        return session;
+    } else {
+        console.log('❌ No se encontró sesión válida');
+        return null;
+    }
+};
+
+console.log('✅ Funciones de navegación a Solicitudes configuradas');
+
+// ==================== DIAGNÓSTICO DE SESIÓN ====================
+// Agregar esto TEMPORALMENTE al final de admin.js para ver qué está pasando
+
+function diagnosticarSesion() {
+    console.log('🔍 ==================== DIAGNÓSTICO DE SESIÓN ====================');
+
+    // 1. Verificar localStorage
+    console.log('📦 localStorage:');
+    const localSession = localStorage.getItem('adminSession');
+    if (localSession) {
+        try {
+            const parsed = JSON.parse(localSession);
+            console.log('  ✅ Existe en localStorage');
+            console.log('  - Username:', parsed.username);
+            console.log('  - ExpiresAt:', new Date(parsed.expiresAt).toLocaleString());
+            console.log('  - Tiempo restante:', Math.round((parsed.expiresAt - Date.now()) / 60000), 'minutos');
+            console.log('  - ¿Válida?', parsed.expiresAt > Date.now() ? 'SÍ ✅' : 'NO ❌ (EXPIRADA)');
+        } catch (e) {
+            console.error('  ❌ Error parseando:', e);
+        }
+    } else {
+        console.log('  ❌ NO existe en localStorage');
+    }
+
+    // 2. Verificar sessionStorage
+    console.log('📦 sessionStorage:');
+    const sessionSession = sessionStorage.getItem('adminSession');
+    if (sessionSession) {
+        console.log('  ✅ Existe en sessionStorage');
+    } else {
+        console.log('  ❌ NO existe en sessionStorage');
+    }
+
+    // 3. Verificar window.adminSession
+    console.log('🪟 window.adminSession:');
+    if (window.adminSession) {
+        console.log('  ✅ Existe en memoria');
+        console.log('  - Username:', window.adminSession.username);
+    } else {
+        console.log('  ❌ NO existe en memoria');
+    }
+
+    // 4. Verificar cookies
+    console.log('🍪 Cookies:');
+    const cookies = document.cookie.split(';');
+    const adminCookie = cookies.find(c => c.trim().startsWith('adminSession='));
+    if (adminCookie) {
+        console.log('  ✅ Cookie adminSession existe');
+    } else {
+        console.log('  ❌ Cookie adminSession NO existe');
+    }
+
+    // 5. Verificar función isLoggedIn
+    console.log('🔐 Estado de autenticación:');
+    if (typeof window.isLoggedIn === 'function') {
+        const loggedIn = window.isLoggedIn();
+        console.log('  - isLoggedIn():', loggedIn ? '✅ SÍ' : '❌ NO');
+    } else {
+        console.log('  ❌ Función isLoggedIn no existe');
+    }
+
+    // 6. Verificar getSessionData
+    if (typeof window.getSessionData === 'function') {
+        const sessionData = window.getSessionData();
+        console.log('  - getSessionData():', sessionData ? '✅ Retorna datos' : '❌ Retorna null');
+    } else {
+        console.log('  ❌ Función getSessionData no existe');
+    }
+
+    console.log('🔍 ============================================================');
+}
+
+// Ejecutar diagnóstico automáticamente
+setTimeout(() => {
+    console.log('🚀 Ejecutando diagnóstico automático...');
+    diagnosticarSesion();
+}, 2000);
+
+// Hacer función global para llamarla manualmente
+window.diagnosticarSesion = diagnosticarSesion;
+
+console.log('💡 Puedes ejecutar diagnosticarSesion() en la consola en cualquier momento');
+
+// ============================================
 // EXPORTAR FUNCIONES GLOBALES
 // ============================================
 window.esAdminPrincipal = esAdminPrincipal;

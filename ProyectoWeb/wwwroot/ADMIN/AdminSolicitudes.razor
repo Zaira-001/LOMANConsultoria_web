@@ -1,0 +1,250 @@
+﻿@page "/admin/solicitudes"
+@using Microsoft.JSInterop
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<link href="css/admin.css" rel="stylesheet" />
+<link href="css/admin-solicitudes.css" rel="stylesheet" />
+
+@if (isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+        <div class="spinner"></div>
+        <p>Verificando autenticación...</p>
+    </div>
+}
+else if (!isAuthenticated)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+        <p>Redirigiendo al login...</p>
+    </div>
+}
+else
+{
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="header-title">
+                <h1 style="margin: 0;">📋 Gestión de Solicitudes de CV</h1>
+                <p style="margin: 5px 0 0 0;">Administra las solicitudes de residencias y oportunidades laborales</p>
+            </div>
+
+            <div class="admin-info">
+                <div class="admin-actions-header">
+                    <button type="button" class="nav-btn" onclick="window.location.href='/admin'">
+                        ← Volver al Panel
+                    </button>
+                    <button type="button" class="nav-btn" onclick="window.refreshCitas ? window.refreshCitas() : location.reload()">
+                        🔄 Actualizar
+                    </button>
+                    <button type="button" class="nav-btn" onclick="logout()">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p>Cargando...</p>
+        </div>
+
+        <!-- Error message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <p id="errorText"></p>
+            <button type="button" onclick="hideError()">Cerrar</button>
+        </div>
+
+        <!-- Success message -->
+        <div class="success-message" id="successMessage" style="display: none;">
+            <p id="successText"></p>
+        </div>
+
+        <!-- Acciones y Filtros -->
+        <div class="filters-section">
+            <!-- Filtro por estado -->
+            <div class="filter-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado" class="filter-select" onchange="filterSolicitudes()">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente">⏳ Pendientes</option>
+                    <option value="procesado">✅ Procesados</option>
+                </select>
+            </div>
+
+            <!-- Búsqueda -->
+            <div class="filter-group">
+                <label for="searchInput">Buscar</label>
+                <input type="text"
+                       id="searchInput"
+                       placeholder="🔍 Buscar por nombre, email..."
+                       onkeyup="searchSolicitudes()"
+                       class="search-input">
+            </div>
+        </div>
+
+        <!-- Navegación por Tabs -->
+        <div class="tabs-navigation">
+            <button type="button" class="tab-button residencias" onclick="switchTab('residencias')" id="tabResidencias">
+                <span class="tab-icon">🎓</span>
+                <span>Residencias</span>
+                <span class="tab-count" id="countTabResidencias">0</span>
+            </button>
+
+            <button type="button" class="tab-button trabajos" onclick="switchTab('trabajos')" id="tabTrabajos">
+                <span class="tab-icon">💼</span>
+                <span>Trabajos</span>
+                <span class="tab-count" id="countTabTrabajos">0</span>
+            </button>
+        </div>
+
+        <!-- Container Principal -->
+        <div class="solicitudes-container" id="kanbanContainer">
+            <!-- Las solicitudes se renderizarán aquí dinámicamente -->
+        </div>
+
+    </div>
+
+    <!-- ========== MODALES FUERA DEL ADMIN-CONTAINER ========== -->
+    <!-- Modal de detalle -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-large">
+            <div class="modal-header">
+                <h2 id="detailModalTitle">Detalle de Solicitud</h2>
+                <button type="button" class="close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="detailModalBody">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal-overlay confirm-overlay" id="confirmModal">
+        <div class="confirm-modal">
+            <h3 id="confirmTitle">Confirmar acción</h3>
+            <p id="confirmMessage">¿Estás seguro?</p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+                <button type="button" class="btn-confirm" id="confirmButton" onclick="executeConfirmedAction()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private bool isLoading = true;
+    private bool isAuthenticated = false;
+    private bool scriptLoaded = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !scriptLoaded)
+        {
+            try
+            {
+                Console.WriteLine("🔐 [AdminSolicitudes] Iniciando verificación...");
+                await Task.Delay(300);
+
+                int attempts = 0;
+                int maxAttempts = 5;
+                bool authVerified = false;
+
+                while (attempts < maxAttempts && !authVerified)
+                {
+                    attempts++;
+                    Console.WriteLine($"🔍 [AdminSolicitudes] Intento {attempts}/{maxAttempts}...");
+                    isAuthenticated = await CheckAuthentication();
+
+                    if (isAuthenticated)
+                    {
+                        authVerified = true;
+                        Console.WriteLine($"✅ [AdminSolicitudes] Autenticado en intento {attempts}");
+                    }
+                    else if (attempts < maxAttempts)
+                    {
+                        Console.WriteLine($"⏳ No autenticado, reintentando...");
+                        await Task.Delay(200);
+                    }
+                }
+
+                if (!isAuthenticated)
+                {
+                    isLoading = false;
+                    StateHasChanged();
+                    await Task.Delay(500);
+                    Navigation.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+
+                isLoading = false;
+                StateHasChanged();
+
+                scriptLoaded = true;
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (!window.adminSolicitudesScriptLoaded) {
+                        window.adminSolicitudesScriptLoaded = true;
+                        const possiblePaths = [
+                            'JS/admin-solicitudes.js',
+                            'js/admin-solicitudes.js',
+                            '/JS/admin-solicitudes.js',
+                            '/js/admin-solicitudes.js'
+                        ];
+
+                        function tryLoadScript(index) {
+                            if (index >= possiblePaths.length) {
+                                alert('No se pudo cargar admin-solicitudes.js');
+                                return;
+                            }
+                            const path = possiblePaths[index] + '?v=' + Date.now();
+                            const s = document.createElement('script');
+                            s.src = path;
+                            s.async = true;
+                            s.onload = () => { if (typeof window.loadSolicitudes === 'function') window.loadSolicitudes(); };
+                            s.onerror = () => tryLoadScript(index + 1);
+                            document.head.appendChild(s);
+                        }
+                        tryLoadScript(0);
+                    } else {
+                        if (typeof window.loadSolicitudes === 'function') window.loadSolicitudes();
+                    }
+                ");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en OnAfterRenderAsync: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+            }
+        }
+    }
+
+    private async Task<bool> CheckAuthentication()
+    {
+        try
+        {
+            Console.WriteLine("🔍 Verificando sesión...");
+            var isValid = await JSRuntime.InvokeAsync<bool>("eval", @"
+                (function() {
+                    if (window.adminSession && window.adminSession.expiresAt > Date.now()) return true;
+                    const s = localStorage.getItem('adminSession');
+                    if (s) {
+                        const parsed = JSON.parse(s);
+                        if (parsed && parsed.expiresAt > Date.now()) {
+                            window.adminSession = parsed;
+                            return true;
+                        }
+                    }
+                    return false;
+                })()
+            ");
+            return isValid;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error autenticación: {ex.Message}");
+            return false;
+        }
+    }
+}

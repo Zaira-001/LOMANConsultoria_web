@@ -36,6 +36,19 @@ if (window.adminCitasInitialized) {
         }
     }
 
+    function logout() {
+        try {
+            window.adminSession = null;
+            localStorage.removeItem('adminSession');
+            sessionStorage.removeItem('adminSession');
+            document.cookie = 'adminSession=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+            window.location.href = '/login';
+        } catch (e) {
+            console.error('Error en logout:', e);
+            window.location.href = '/login';
+        }
+    }
+
     function showNotification(message, type = 'info', duration = 4000) {
         initNotificationContainer();
 

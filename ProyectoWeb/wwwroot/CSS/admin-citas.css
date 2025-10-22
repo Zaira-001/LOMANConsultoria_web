@@ -37,7 +37,7 @@
     max-width: 1600px;
     margin: 0 auto;
     padding: 24px;
-    transform: translateY(-70px);
+    transform: translateY(-100px);
     background: var(--bg);
 }
 

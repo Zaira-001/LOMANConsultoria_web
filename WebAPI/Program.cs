@@ -80,22 +80,34 @@ namespace WebAPI
                 return fabric.CotizacionRepository();
             });
 
+            builder.Services.AddScoped<IDB<SolicitudCV>>(provider =>
+            {
+                var fabric = provider.GetRequiredService<FabricRepository>();
+                return fabric.SolicitudCVRepository();
+            });
+
             // Registrar validadores
             builder.Services.AddScoped<AbstractValidator<Cita>, CitaValidator>();
             builder.Services.AddScoped<AbstractValidator<Cotizacion>, CotizacionValidator>();
+            builder.Services.AddScoped<AbstractValidator<SolicitudCV>, SolicitudCVValidator>();
 
             builder.Services.AddHttpContextAccessor();
 
-            // CONFIGURAR CORS
+            // ============================================
+            // 🔧 CONFIGURAR CORS - SOLUCIÓN COMPLETA
+            // ============================================
             builder.Services.AddCors(options =>
             {
+                // Política permisiva para desarrollo y producción
                 options.AddPolicy("AllowAll", policy =>
                 {
                     policy.AllowAnyOrigin()
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .WithExposedHeaders("*");
                 });
 
+                // Política específica para Blazor
                 options.AddPolicy("AllowBlazorClient", policy =>
                 {
                     policy.WithOrigins(
@@ -104,11 +116,14 @@ namespace WebAPI
                             "http://localhost:5000",
                             "https://localhost:5001",
                             "http://www.consultoriaintegralsc.somee.com",
-                            "https://www.consultoriaintegralsc.somee.com"
+                            "https://www.consultoriaintegralsc.somee.com",
+                            "http://consultoriaintegralsc.somee.com",
+                            "https://consultoriaintegralsc.somee.com"
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader()
-                        .AllowCredentials();
+                        .AllowCredentials()
+                        .WithExposedHeaders("*");
                 });
             });
 
@@ -120,13 +135,13 @@ namespace WebAPI
             var app = builder.Build();
 
             // ============================================
-            // ORDEN CORRECTO DE MIDDLEWARES - CRÍTICO
+            // ⚠️ ORDEN CRÍTICO DE MIDDLEWARES
             // ============================================
 
-            // 1. CORS PRIMERO (ANTES que todo)
+            // 1. CORS DEBE SER LO PRIMERO
             app.UseCors("AllowAll");
 
-            // 2. Manejo de errores
+            // 2. Exception Handling
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -139,43 +154,59 @@ namespace WebAPI
                 app.UseHsts();
             }
 
-            // 3. HTTPS
+            // 3. HTTPS Redirection
             app.UseHttpsRedirection();
 
-            // 4. Archivos estáticos
+            // 4. Static Files
             app.UseStaticFiles();
 
             // 5. Routing
             app.UseRouting();
 
-            // 6. Autenticación y Autorización
+            // 6. Authorization
             app.UseAuthorization();
 
-            // 7. Antiforgery ANTES de MapControllers
+            // 7. Antiforgery
             app.UseAntiforgery();
 
-            // 8. Middleware personalizado si existe
-            if (typeof(Program).Assembly.GetTypes().Any(t => t.Name == "AuthMiddleware"))
-            {
-                app.UseAuthMiddleware();
-            }
-
-            // 9. Mapeo de controladores DESPUÉS de todos los middlewares
+            // 8. Controllers
             app.MapControllers();
 
-            // 10. ENDPOINT DE PRUEBA
+
+            // ============================================
+            // 🧪 ENDPOINT DE PRUEBA CORS
+            // ============================================
             app.MapGet("/api/test/ping", () => Results.Ok(new
             {
                 message = "API funcionando",
                 timestamp = DateTime.Now,
-                version = "2.0-Simplified",
+                version = "3.0-CORS-Fixed",
                 corsEnabled = true
             }));
 
+            app.MapGet("/api/test/cors", (HttpContext context) =>
+            {
+                var origin = context.Request.Headers["Origin"].ToString();
+                return Results.Ok(new
+                {
+                    message = "CORS Test OK",
+                    yourOrigin = origin,
+                    allowedOrigins = new[]
+                    {
+                        "http://localhost:5067",
+                        "http://consultoriaintegralsc.somee.com"
+                    },
+                    timestamp = DateTime.Now
+                });
+            });
+
             Console.WriteLine("===========================================");
-            Console.WriteLine("API Simplificada - Sin Google Calendar");
-            Console.WriteLine("Sistema de citas con gestión administrativa");
-            Console.WriteLine("CORS HABILITADO - AllowAll");
+            Console.WriteLine("✅ API Iniciada con CORS Habilitado");
+            Console.WriteLine("✅ Política: AllowAll (todos los orígenes)");
+            Console.WriteLine("✅ Métodos: GET, POST, PUT, DELETE, OPTIONS");
+            Console.WriteLine("✅ Headers: Todos permitidos");
+            Console.WriteLine("===========================================");
+            Console.WriteLine($"🌐 Escuchando en: {string.Join(", ", builder.WebHost.GetSetting("urls")?.Split(';') ?? new[] { "http://localhost:5067" })}");
             Console.WriteLine("===========================================");
 
             app.Run();

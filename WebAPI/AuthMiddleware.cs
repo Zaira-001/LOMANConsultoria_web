@@ -102,7 +102,7 @@ namespace WebAPI
                 if (referer.Contains("/admin") && !referer.Contains("/login"))
                 {
                     _logger.LogInformation("[AUTH] ⏳ Petición desde /admin, esperando sincronización...");
-                    await Task.Delay(500); // ← AUMENTAR de 200ms a 500ms
+                    await Task.Delay(500);
 
                     // Verificar de nuevo
                     if (context.Request.Cookies.TryGetValue("adminSession", out string retryCookie))
