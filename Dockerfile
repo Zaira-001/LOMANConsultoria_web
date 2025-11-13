@@ -1,4 +1,4 @@
-# Stage 1: Build
+﻿# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
@@ -12,7 +12,7 @@ COPY ["ProyectoWeb/ProyectoWeb.csproj", "ProyectoWeb/"]
 # Restaurar dependencias
 RUN dotnet restore "WebAPI/WebAPI.csproj"
 
-# Copiar todo el c�digo
+# Copiar todo el código
 COPY . .
 
 # Build
@@ -37,4 +37,3 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Comando de inicio
 ENTRYPOINT ["dotnet", "WebAPI.dll"]
-```
