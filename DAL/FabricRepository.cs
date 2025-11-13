@@ -19,48 +19,45 @@ namespace DAL
             _cadenaConexion = cadenaConexion;
             _tipo = tipo;
         }
-       
+
         public IDB<Admin> AdminRepository()
         {
             switch (_tipo)
             {
                 case TipoBD.SQLServer:
-
                     return new DBSqlServer<Admin>(_cadenaConexion, new AdminValidator(), "Id", true);
-                    break;
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<Admin>(_cadenaConexion, new AdminValidator(), "Id", true);
                 default:
                     return null;
-                    break;
             }
         }
+
         public IDB<DispositivoConfiable> DispositivoConfiableRepository()
         {
             switch (_tipo)
             {
                 case TipoBD.SQLServer:
-
                     return new DBSqlServer<DispositivoConfiable>(_cadenaConexion, new DispositivoConfiableValidator(), "Id", true);
-                    break;
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<DispositivoConfiable>(_cadenaConexion, new DispositivoConfiableValidator(), "Id", true);
                 default:
                     return null;
-                    break;
             }
         }
-       
-       
+
         public IDB<EstudiantesResidencias> EstudiantesResidenciasRepository()
         {
             switch (_tipo)
             {
                 case TipoBD.SQLServer:
                     return new DBSqlServer<EstudiantesResidencias>(_cadenaConexion, new EstudiantesResidenciasValidator(), "EstuadianteID", true);
-                    break;
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<EstudiantesResidencias>(_cadenaConexion, new EstudiantesResidenciasValidator(), "EstuadianteID", true);
                 default:
                     return null;
-                    break;
             }
         }
-       
 
         public IDB<Cita> CitaRepository()
         {
@@ -68,31 +65,36 @@ namespace DAL
             {
                 case TipoBD.SQLServer:
                     return new DBSqlServer<Cita>(_cadenaConexion, new CitaValidator(), "Id", true);
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<Cita>(_cadenaConexion, new CitaValidator(), "Id", true);
                 default:
                     return null;
-                    break;
             }
         }
+
         public IDB<Empleo> EmpleoRepository()
         {
             switch (_tipo)
             {
                 case TipoBD.SQLServer:
                     return new DBSqlServer<Empleo>(_cadenaConexion, new EmpleoValidator(), "Id", true);
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<Empleo>(_cadenaConexion, new EmpleoValidator(), "Id", true);
                 default:
                     return null;
-                    break;
             }
         }
+
         public IDB<Cotizacion> CotizacionRepository()
         {
             switch (_tipo)
             {
                 case TipoBD.SQLServer:
                     return new DBSqlServer<Cotizacion>(_cadenaConexion, new CotizacionValidator(), "Id", true);
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<Cotizacion>(_cadenaConexion, new CotizacionValidator(), "Id", true);
                 default:
                     return null;
-                    break;
             }
         }
 
@@ -102,6 +104,8 @@ namespace DAL
             {
                 case TipoBD.SQLServer:
                     return new DBSqlServer<SolicitudCV>(_cadenaConexion, new SolicitudCVValidator(), "Id", true);
+                case TipoBD.PostgreSQL:
+                    return new DBPostgreSQL<SolicitudCV>(_cadenaConexion, new SolicitudCVValidator(), "Id", true);
                 default:
                     return null;
             }
@@ -111,8 +115,8 @@ namespace DAL
         {
             SQLServer,
             MySql,
-            Oracle
-
+            Oracle,
+            PostgreSQL
         }
     }
 }
