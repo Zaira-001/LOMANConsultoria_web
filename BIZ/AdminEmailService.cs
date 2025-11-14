@@ -1,51 +1,46 @@
 ﻿using System;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BIZ
 {
     public class AdminEmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 465;
-        private readonly string _smtpUsername = "zaira7731479269@gmail.com";
-        private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
+        // ============================================
+        // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
+        // ============================================
+        private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromName = "Consultoría Integral SC - Sistema";
 
-        // 🆕 La URL base se pasa como parámetro cuando se envía el email
+        private static readonly HttpClient _httpClient = new HttpClient();
+
         public async Task<bool> EnviarCredencialesNuevoAdmin(
             DatosCredencialesAdmin datos,
-            string baseUrl) // 👈 URL dinámica del servidor actual
+            string baseUrl)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("📧 === ENVIANDO CREDENCIAS DE ADMIN ===");
+                System.Diagnostics.Debug.WriteLine("📧 === ENVIANDO CREDENCIALES DE ADMIN ===");
                 System.Diagnostics.Debug.WriteLine($"📧 Para: {datos.Email}");
                 System.Diagnostics.Debug.WriteLine($"📧 Usuario: {datos.Username}");
                 System.Diagnostics.Debug.WriteLine($"📧 URL Base: {baseUrl}");
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
 
                 var emailBody = GenerarEmailCredenciales(datos, baseUrl);
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, "Consultoría Integral SC - Sistema"),
-                    Subject = "🔐 Credenciales de Acceso al Panel de Administración",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(datos.Email);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                await smtpClient.SendMailAsync(mailMessage);
-                mailMessage.Dispose();
+                await EnviarEmailViaBravo(
+                    destinatario: datos.Email,
+                    asunto: "🔐 Credenciales de Acceso al Panel de Administración",
+                    htmlContent: emailBody
+                );
 
                 System.Diagnostics.Debug.WriteLine("✅ Email de credenciales enviado correctamente");
                 return true;
@@ -58,9 +53,53 @@ namespace BIZ
             }
         }
 
+        // ============================================
+        // MÉTODO PRIVADO PARA ENVIAR VÍA BREVO API
+        // ============================================
+
+        private async Task EnviarEmailViaBravo(string destinatario, string asunto, string htmlContent)
+        {
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine("📤 Enviando credenciales de admin vía Brevo API...");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email enviado exitosamente vía Brevo");
+        }
+
+        // ============================================
+        // GENERADOR DE HTML (Sin cambios en estructura)
+        // ============================================
+
         private string GenerarEmailCredenciales(DatosCredencialesAdmin datos, string baseUrl)
         {
-            // 🆕 Construir URL de login dinámica
             var loginUrl = $"{baseUrl}/login";
 
             var emailBody = new StringBuilder();
@@ -309,8 +348,7 @@ namespace BIZ
                                 </a>
                             </div>
                             
-                            
-                             <div style='background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; margin-top: 20px;'>
+                            <div style='background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50; margin-top: 20px;'>
                                 <p style='margin: 0; color: #2e7d32;'>
                                     <strong>💡 Consejo:</strong> Mantén tus credenciales en un lugar seguro y no las compartas con nadie.
                                 </p>

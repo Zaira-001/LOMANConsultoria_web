@@ -1,25 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BIZ
 {
     public class CitaEmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 465;
-        private readonly string _smtpUsername = "zaira7731479269@gmail.com";
-        private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
+        // ============================================
+        // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
+        // ============================================
+        private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromName = "Consultoría Integral SC";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
+        private readonly string _meetLinkEmpresa = "https://meet.google.com/fcn-ecqy-ebz";
 
-        // Enlaces de Meet genéricos (se pueden personalizar por empresa)
-        private readonly string _meetLinkEmpresa = "https://meet.google.com/fcn-ecqy-ebz"; // Crear uno fijo para la empresa
+        private static readonly HttpClient _httpClient = new HttpClient();
 
         public async Task<bool> EnviarNotificacionCita(NotificacionCita datos)
         {
@@ -32,7 +31,36 @@ namespace BIZ
                 System.Diagnostics.Debug.WriteLine($"📧 Modalidad: {datos.Modalidad}");
                 System.Diagnostics.Debug.WriteLine($"📧 Fecha: {datos.FechaHora}");
 
-                await EnviarEmailNotificacion(datos);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailNotificacion(datos);
+
+                string estadoIcono = datos.Estado.ToLower() switch
+                {
+                    "confirmada" => "✅",
+                    "cancelada" => "❌",
+                    "completada" => "✔️",
+                    _ => "⏳"
+                };
+
+                string estadoTexto = datos.Estado.ToLower() switch
+                {
+                    "confirmada" => "confirmada",
+                    "cancelada" => "cancelada",
+                    "completada" => "completada",
+                    _ => "pendiente"
+                };
+
+                await EnviarEmailViaBravo(
+                    destinatario: datos.EmailCliente,
+                    asunto: $"{estadoIcono} Tu cita {datos.Modalidad.ToLower()} ha sido {estadoTexto} - Consultoría Integral SC",
+                    htmlContent: emailBody
+                );
+
                 System.Diagnostics.Debug.WriteLine("✅ Email de notificación enviado correctamente");
                 return true;
             }
@@ -44,12 +72,53 @@ namespace BIZ
             }
         }
 
-        private async Task EnviarEmailNotificacion(NotificacionCita datos)
-        {
-            using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-            smtpClient.EnableSsl = true;
-            smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+        // ============================================
+        // MÉTODO PRIVADO PARA ENVIAR VÍA BREVO API
+        // ============================================
 
+        private async Task EnviarEmailViaBravo(string destinatario, string asunto, string htmlContent)
+        {
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine("📤 Enviando notificación de cita vía Brevo API...");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email enviado exitosamente vía Brevo");
+        }
+
+        // ============================================
+        // GENERADOR DE HTML (Sin cambios en estructura)
+        // ============================================
+
+        private string GenerarEmailNotificacion(NotificacionCita datos)
+        {
             string estadoColor = datos.Estado.ToLower() switch
             {
                 "confirmada" => "#28a745",
@@ -85,7 +154,6 @@ namespace BIZ
             string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
             fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
 
-            // NUEVO: Generar contenido específico según modalidad
             string modalidadContenido = GenerarContenidoModalidad(datos);
 
             string mensajeWhatsApp = $"Hola, deseo reagendar mi cita del {fechaFormateada} para el servicio de {datos.ServicioInteres}.";
@@ -342,16 +410,16 @@ namespace BIZ
                             {(datos.Estado.ToLower() == "confirmada" ? $@"
                             <div style='text-align: center; padding: 20px 0;'>
                                 <p style='color: #666; margin-bottom: 15px;'>¿Necesitas hacer cambios o tienes alguna duda?</p>
-                                <a href='tel:5659644304' class='cta-button'>📞 Llamar</a>
-                                <a href='{whatsappLink}' class='whatsapp-button'>💬 WhatsApp</a>
+                                <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar</a>
+                                <a href='{whatsappLink}' class='whatsapp-button' style='color: white;'>💬 WhatsApp</a>
                             </div>
                             " : "")}
                             
                             {(datos.Estado.ToLower() == "cancelada" ? $@"
                             <div style='text-align: center; padding: 20px 0;'>
                                 <p style='color: #666; margin-bottom: 15px;'>¿Deseas agendar una nueva cita?</p>
-                                <a href='{whatsappLink}' class='whatsapp-button'>💬 Reagendar por WhatsApp</a>
-                                <a href='tel:5659644304' class='cta-button'>📞 Llamar</a>
+                                <a href='{whatsappLink}' class='whatsapp-button' style='color: white;'>💬 Reagendar por WhatsApp</a>
+                                <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar</a>
                             </div>
                             " : "")}
                         </div>
@@ -367,7 +435,7 @@ namespace BIZ
                             
                             <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>
                                 Este correo fue enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}<br>
-                                Sistema automatizado de notificaciones - No responder a este correo
+                                Sistema automatizado de notificaciones
                             </p>
                         </div>
                     </div>
@@ -375,20 +443,7 @@ namespace BIZ
                 </html>
             ");
 
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
-                Subject = $"{estadoIcono} Tu cita {datos.Modalidad.ToLower()} ha sido {estadoTexto.ToLower()} - Consultoría Integral SC",
-                Body = emailBody.ToString(),
-                IsBodyHtml = true
-            };
-
-            mailMessage.To.Add(datos.EmailCliente);
-            mailMessage.BodyEncoding = Encoding.UTF8;
-            mailMessage.SubjectEncoding = Encoding.UTF8;
-
-            await smtpClient.SendMailAsync(mailMessage);
-            mailMessage.Dispose();
+            return emailBody.ToString();
         }
 
         private string GenerarContenidoModalidad(NotificacionCita datos)
@@ -400,7 +455,6 @@ namespace BIZ
 
             if (modalidadLower.Contains("virtual"))
             {
-                // Usar el enlace personalizado o el genérico de la empresa
                 string enlaceMeet = !string.IsNullOrWhiteSpace(datos.EnlaceMeet)
                     ? datos.EnlaceMeet
                     : _meetLinkEmpresa;
@@ -442,7 +496,6 @@ namespace BIZ
             else if (modalidadLower.Contains("telefon") || modalidadLower.Contains("teléfon"))
             {
                 string telefonoFormateado = datos.TelefonoCliente ?? "tu número registrado";
-                string telefonoLink = datos.TelefonoCliente?.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "") ?? "";
 
                 return $@"
                     <div class='modalidad-box'>
@@ -526,20 +579,15 @@ namespace BIZ
         public string Estado { get; set; } = "";
         public string NotasAdmin { get; set; } = "";
         public string ReferenciaCita { get; set; } = "";
-        public string EnlaceMeet { get; set; } = ""; // Para pasar enlace personalizado
+        public string EnlaceMeet { get; set; } = "";
     }
 
-    // Clase helper para generar enlaces de Meet únicos (opcional)
     public static class MeetLinkGenerator
     {
-        // Enlace genérico de la empresa (reemplazar con el tuyo)
         public const string MEET_LINK_EMPRESA = "https://meet.google.com/fcn-ecqy-ebz";
 
-        // Si quieres generar enlaces únicos por cita (futuro)
         public static string GenerarEnlaceMeet(int citaId)
         {
-            // Por ahora retorna el enlace fijo
-            // En el futuro podrías integrar con Google Calendar API
             return MEET_LINK_EMPRESA;
         }
     }

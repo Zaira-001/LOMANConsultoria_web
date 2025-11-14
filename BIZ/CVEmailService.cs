@@ -1,52 +1,48 @@
 ﻿using COMMON.Entidades;
 using System;
 using System.Globalization;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BIZ
 {
     public class CVEmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 465;
-        private readonly string _smtpUsername = "zaira7731479269@gmail.com";
-        private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
+        // ============================================
+        // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
+        // ============================================
+        private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
+        private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromName = "Consultoría Integral SC - RH";
         private readonly string _rhEmail = "zaira7731479269@gmail.com";
-        private readonly string _empresaTelefono = "56-5964-4304"; // 🆕 Número de la empresa
+        private readonly string _empresaTelefono = "56-5964-4304";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
 
-        // 🆕 Email de confirmación con las 3 modalidades
+        private static readonly HttpClient _httpClient = new HttpClient();
+
+        // Email de confirmación con las 3 modalidades
         public async Task<bool> EnviarConfirmacionEntrevista(SolicitudCV solicitud)
         {
             try
             {
                 System.Diagnostics.Debug.WriteLine($"📧 Enviando confirmación de entrevista a: {solicitud.Email}");
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
 
                 var emailBody = GenerarEmailConfirmacionEntrevista(solicitud);
-
                 var tipoSolicitud = solicitud.TipoSolicitud == "residencia" ? "Residencia" : "Oportunidad Laboral";
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_smtpUsername, "Consultoría Integral SC - RH"),
-                    Subject = $"✅ ¡Entrevista Agendada! - {tipoSolicitud} - Elige tu Modalidad",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(solicitud.Email);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                await smtpClient.SendMailAsync(mailMessage);
-                mailMessage.Dispose();
+                await EnviarEmailViaBravo(
+                    destinatario: solicitud.Email,
+                    asunto: $"✅ ¡Entrevista Agendada! - {tipoSolicitud} - Elige tu Modalidad",
+                    htmlContent: emailBody
+                );
 
                 System.Diagnostics.Debug.WriteLine("✅ Email de confirmación enviado");
                 return true;
@@ -58,13 +54,163 @@ namespace BIZ
             }
         }
 
+        // Email con CV al administrador
+        public async Task<bool> EnviarCV(SolicitudCV datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("📄 === DATOS DE CV RECIBIDOS ===");
+                System.Diagnostics.Debug.WriteLine($"📄 Nombre: {datos.NombreCompleto}");
+                System.Diagnostics.Debug.WriteLine($"📄 Email: {datos.Email}");
+                System.Diagnostics.Debug.WriteLine($"📄 Teléfono: {datos.Telefono}");
+                System.Diagnostics.Debug.WriteLine($"📄 Tipo Solicitud: {datos.TipoSolicitud}");
+                System.Diagnostics.Debug.WriteLine($"📄 Archivo CV: {(datos.ArchivoCV != null ? "Adjunto" : "Sin archivo")}");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailCV(datos);
+                string tipoSolicitudTexto = datos.TipoSolicitud == "residencia" ? "Residencias Profesionales" : "Oportunidad Laboral";
+
+                // Si hay archivo CV, enviar con adjunto
+                if (datos.ArchivoCV != null && datos.ArchivoCV.Length > 0)
+                {
+                    await EnviarEmailConAdjuntoViaBravo(
+                        destinatario: _rhEmail,
+                        asunto: $"🔔 Nuevo CV [{tipoSolicitudTexto}] - {datos.NombreCompleto}",
+                        htmlContent: emailBody,
+                        pdfBytes: datos.ArchivoCV,
+                        nombreArchivo: datos.NombreArchivoCV
+                    );
+                }
+                else
+                {
+                    await EnviarEmailViaBravo(
+                        destinatario: _rhEmail,
+                        asunto: $"🔔 Nuevo CV [{tipoSolicitudTexto}] - {datos.NombreCompleto}",
+                        htmlContent: emailBody
+                    );
+                }
+
+                System.Diagnostics.Debug.WriteLine("✅ Email de CV enviado correctamente");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error enviando CV: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Stack: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        // ============================================
+        // MÉTODOS PRIVADOS PARA ENVIAR VÍA BREVO API
+        // ============================================
+
+        private async Task EnviarEmailViaBravo(string destinatario, string asunto, string htmlContent)
+        {
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine("📤 Enviando email vía Brevo API...");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email enviado exitosamente vía Brevo");
+        }
+
+        private async Task EnviarEmailConAdjuntoViaBravo(
+            string destinatario,
+            string asunto,
+            string htmlContent,
+            byte[] pdfBytes,
+            string nombreArchivo)
+        {
+            // Convertir archivo a Base64
+            string base64Content = Convert.ToBase64String(pdfBytes);
+
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent,
+                attachment = new[]
+                {
+                    new
+                    {
+                        name = nombreArchivo,
+                        content = base64Content
+                    }
+                }
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine($"📤 Enviando email con CV adjunto vía Brevo API...");
+            System.Diagnostics.Debug.WriteLine($"📎 Archivo: {nombreArchivo} ({pdfBytes.Length} bytes)");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email con CV enviado exitosamente vía Brevo");
+        }
+
+        // ============================================
+        // GENERADORES DE HTML (Sin cambios en estructura)
+        // ============================================
+
         private string GenerarEmailConfirmacionEntrevista(SolicitudCV solicitud)
         {
             var tipoSolicitud = solicitud.TipoSolicitud == "residencia" ? "Residencias Profesionales" : "Oportunidad Laboral";
             var iconoTipo = solicitud.TipoSolicitud == "residencia" ? "🎓" : "💼";
             var colorTipo = solicitud.TipoSolicitud == "residencia" ? "#28a745" : "#1E3A5F";
 
-            // Formatear fecha de entrevista
             string fechaEntrevistaTexto = "Por definir";
             if (solicitud.FechaEntrevista.HasValue)
             {
@@ -76,11 +222,9 @@ namespace BIZ
                 ? solicitud.HoraEntrevista
                 : "Por definir";
 
-            // Preparar mensaje de WhatsApp para consultas
             string whatsappMessage = $"Hola, recibí la confirmación de entrevista para {tipoSolicitud}. Mi nombre es {solicitud.NombreCompleto}.";
             string whatsappLink = $"https://wa.me/5215659644304?text={Uri.EscapeDataString(whatsappMessage)}";
 
-            // Generar las 3 opciones de modalidad
             string modalidadesHTML = GenerarModalidadesHTML(solicitud);
 
             var emailBody = new StringBuilder();
@@ -482,7 +626,7 @@ namespace BIZ
 
             html.AppendLine("</div></div>");
 
-            // MODALIDAD 2: TELEFÓNICA (🆕 ACTUALIZADA)
+            // MODALIDAD 2: TELEFÓNICA
             html.AppendLine(@"
                 <div class='modality-card'>
                     <div class='modality-header'>
@@ -495,7 +639,6 @@ namespace BIZ
                 ? solicitud.TelefonoContacto
                 : solicitud.Telefono;
 
-            // 🆕 NUEVA ESTRUCTURA CON NÚMERO DE LA EMPRESA
             html.AppendLine($@"
                         <div class='modality-detail-item'>
                             <div class='modality-detail-label'>📱 Nosotros te llamaremos al:</div>
@@ -503,7 +646,7 @@ namespace BIZ
                                 {EscapeHtml(telefonoMostrar)}
                             </div>
                         </div>
-                        <div class='company-phone'>
+                        <div class='modality-detail-item'>
                             <div style='font-size: 14px; margin-bottom: 5px;'>
                                 <strong>📞 Desde el número de la empresa:</strong>
                             </div>
@@ -576,78 +719,20 @@ namespace BIZ
             return html.ToString();
         }
 
-        private string EscapeHtml(string text)
+        private string GenerarEmailCV(SolicitudCV datos)
         {
-            if (string.IsNullOrEmpty(text)) return "";
-            return text
-                .Replace("&", "&amp;")
-                .Replace("<", "&lt;")
-                .Replace(">", "&gt;")
-                .Replace("\"", "&quot;")
-                .Replace("'", "&#39;");
-        }
-
-        // Método original para enviar CV al admin (sin cambios)
-        public async Task<bool> EnviarCV(SolicitudCV datos)
-        {
-            try
-            {
-                // MODO DEBUG: Registrar datos recibidos
-                System.Diagnostics.Debug.WriteLine("📄 === DATOS DE CV RECIBIDOS ===");
-                System.Diagnostics.Debug.WriteLine($"📄 Nombre: {datos.NombreCompleto}");
-                System.Diagnostics.Debug.WriteLine($"📄 Email: {datos.Email}");
-                System.Diagnostics.Debug.WriteLine($"📄 Teléfono: {datos.Telefono}");
-                System.Diagnostics.Debug.WriteLine($"📄 Tipo Solicitud: {datos.TipoSolicitud}");
-                System.Diagnostics.Debug.WriteLine($"📄 Carrera: {datos.Carrera}");
-                System.Diagnostics.Debug.WriteLine($"📄 Universidad: {datos.Universidad}");
-                System.Diagnostics.Debug.WriteLine($"📄 Experiencia: {datos.Experiencia}");
-                System.Diagnostics.Debug.WriteLine($"📄 Posición Interés: {datos.PosicionInteres}");
-                System.Diagnostics.Debug.WriteLine($"📄 Mensaje: {datos.Mensaje}");
-                System.Diagnostics.Debug.WriteLine($"📄 Archivo CV: {(datos.ArchivoCV != null ? "Adjunto" : "Sin archivo")}");
-
-                try
-                {
-                    await EnviarEmailCV(datos);
-                    System.Diagnostics.Debug.WriteLine("✅ Email de CV enviado correctamente");
-                    return true;
-                }
-                catch (Exception emailEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"❌ Error enviando email CV: {emailEx.Message}");
-                    System.Diagnostics.Debug.WriteLine($"❌ Stack trace: {emailEx.StackTrace}");
-                    // Devolver true para evitar error 500 durante pruebas
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"🔥 Error general en CVEmailService: {ex.Message}");
-                return false;
-            }
-        }
-
-        // Email original (sin cambios)
-        private async Task EnviarEmailCV(SolicitudCV datos)
-        {
-            using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-            smtpClient.EnableSsl = true;
-            smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
-
-            // Construir el HTML del email
-            var emailBody = new StringBuilder();
-
-            // Determinar el tipo de solicitud para personalizar el email
             string tipoSolicitudTexto = datos.TipoSolicitud == "residencia" ? "Residencias Profesionales" : "Oportunidad Laboral";
             string iconoTipo = datos.TipoSolicitud == "residencia" ? "🎓" : "💼";
             string colorTipo = datos.TipoSolicitud == "residencia" ? "#28a745" : "#1E3A5F";
 
-            emailBody.AppendLine(@"
+            var emailBody = new StringBuilder();
+            emailBody.AppendLine($@"
          <html>
          <head>
              <meta charset='UTF-8'>
              <meta name='viewport' content='width=device-width, initial-scale=1.0'>
              <style>
-                 body { 
+                 body {{ 
                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
                      line-height: 1.6; 
                      color: #333; 
@@ -655,209 +740,208 @@ namespace BIZ
                      padding: 0; 
                      -webkit-text-size-adjust: 100%;
                      -ms-text-size-adjust: 100%;
-                 }
-                 .container { 
+                 }}
+                 .container {{ 
                      max-width: 100%; 
                      width: 100%;
                      margin: 0 auto; 
                      padding: 0; 
                      background: #ffffff; 
-                 }
-                 .header { 
-                     background: linear-gradient(135deg, " + colorTipo + @" 0%, #2c5282 100%); 
+                 }}
+                 .header {{ 
+                     background: linear-gradient(135deg, {colorTipo} 0%, #2c5282 100%); 
                      color: white; 
                      padding: 20px 15px; 
                      text-align: center; 
-                 }
-                 .header h2 { 
+                 }}
+                 .header h2 {{ 
                      margin: 0; 
                      font-size: 20px; 
                      font-weight: 600; 
                      word-wrap: break-word;
-                 }
-                 .header .subtitle { 
+                 }}
+                 .header .subtitle {{ 
                      font-size: 14px; 
                      opacity: 0.9; 
                      margin-top: 8px; 
-                 }
-                 .content { 
+                 }}
+                 .content {{ 
                      padding: 20px 15px; 
                      background: #f8f9fa; 
-                 }
-                 .section { 
+                 }}
+                 .section {{ 
                      background: white; 
                      margin-bottom: 20px; 
                      padding: 20px 15px; 
                      border-radius: 8px; 
                      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-                 }
-                 .section-title { 
-                     color: " + colorTipo + @"; 
+                 }}
+                 .section-title {{ 
+                     color: {colorTipo}; 
                      font-size: 16px; 
                      font-weight: 600; 
                      margin-bottom: 15px; 
                      padding-bottom: 8px; 
                      border-bottom: 2px solid #e9ecef; 
-                 }
-                 .field { 
+                 }}
+                 .field {{ 
                      margin-bottom: 12px; 
                      display: block;
-                 }
-                 .field-label { 
+                 }}
+                 .field-label {{ 
                      font-weight: 600; 
                      color: #495057; 
                      display: block;
                      margin-bottom: 4px;
                      font-size: 14px;
-                 }
-                 .field-value { 
+                 }}
+                 .field-value {{ 
                      color: #333; 
                      display: block;
                      word-wrap: break-word;
                      overflow-wrap: break-word;
-                 }
-                 .highlight-box { 
+                 }}
+                 .highlight-box {{ 
                      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); 
                      padding: 15px; 
                      border-radius: 8px; 
-                     border-left: 4px solid " + colorTipo + @"; 
+                     border-left: 4px solid {colorTipo}; 
                      margin: 15px 0; 
-                 }
-                 .footer { 
+                 }}
+                 .footer {{ 
                      background: #343a40; 
                      color: white; 
                      padding: 20px 15px; 
                      text-align: center; 
-                 }
-                 .footer h4 { 
+                 }}
+                 .footer h4 {{ 
                      margin: 0 0 10px 0; 
                      color: #fff; 
                      font-size: 16px;
-                 }
-                 .footer p { 
+                 }}
+                 .footer p {{ 
                      margin: 5px 0; 
                      opacity: 0.8; 
                      font-size: 12px;
-                 }
-                 .tipo-badge { 
+                 }}
+                 .tipo-badge {{ 
                      display: inline-block; 
-                     background: " + colorTipo + @"; 
+                     background: {colorTipo}; 
                      color: white; 
                      padding: 8px 12px; 
                      border-radius: 20px; 
                      font-size: 12px; 
                      font-weight: 600; 
                      margin-bottom: 15px; 
-                 }
-                 .experiencia-nivel { 
+                 }}
+                 .experiencia-nivel {{ 
                      padding: 6px 12px; 
                      border-radius: 6px; 
                      display: inline-block; 
                      font-weight: 600;
                      color: white;
                      font-size: 12px;
-                 }
-                 .exp-0-1 { background: #28a745; }
-                 .exp-2-3 { background: #fd7e14; }
-                 .exp-4-plus { background: #dc3545; }
-                 .contact-info { 
+                 }}
+                 .exp-0-1 {{ background: #28a745; }}
+                 .exp-2-3 {{ background: #fd7e14; }}
+                 .exp-4-plus {{ background: #dc3545; }}
+                 .contact-info {{ 
                      background: #e8f5e8; 
                      padding: 12px; 
                      border-radius: 8px; 
                      margin: 10px 0; 
-                 }
-                 .alert-box {
+                 }}
+                 .alert-box {{
                      padding: 12px;
                      border-radius: 6px;
                      margin-top: 10px;
                      font-size: 14px;
-                 }
-                 .alert-info {
+                 }}
+                 .alert-info {{
                      background: #d1ecf1;
                      color: #0c5460;
                      border-left: 4px solid #17a2b8;
-                 }
-                 .alert-warning {
+                 }}
+                 .alert-warning {{
                      background: #f8d7da;
                      color: #721c24;
                      border-left: 4px solid #dc3545;
-                 }
+                 }}
                  
-                 /* Media Queries para móvil */
-                 @media only screen and (max-width: 480px) {
-                     .container {
+                 @media only screen and (max-width: 480px) {{
+                     .container {{
                          width: 100% !important;
                          max-width: 100% !important;
-                     }
-                     .header {
+                     }}
+                     .header {{
                          padding: 15px 10px !important;
-                     }
-                     .header h2 {
+                     }}
+                     .header h2 {{
                          font-size: 18px !important;
                          line-height: 1.3;
-                     }
-                     .content {
+                     }}
+                     .content {{
                          padding: 15px 10px !important;
-                     }
-                     .section {
+                     }}
+                     .section {{
                          padding: 15px 12px !important;
                          margin-bottom: 15px !important;
-                     }
-                     .section-title {
+                     }}
+                     .section-title {{
                          font-size: 15px !important;
-                     }
-                     .field-label {
+                     }}
+                     .field-label {{
                          font-size: 13px !important;
-                     }
-                     .highlight-box {
+                     }}
+                     .highlight-box {{
                          padding: 12px !important;
                          margin: 10px 0 !important;
-                     }
-                     .tipo-badge {
+                     }}
+                     .tipo-badge {{
                          font-size: 11px !important;
                          padding: 6px 10px !important;
-                     }
-                     .experiencia-nivel {
+                     }}
+                     .experiencia-nivel {{
                          font-size: 11px !important;
                          padding: 5px 10px !important;
-                     }
-                     .footer {
+                     }}
+                     .footer {{
                          padding: 15px 10px !important;
-                     }
-                     .footer h4 {
+                     }}
+                     .footer h4 {{
                          font-size: 14px !important;
-                     }
-                     .footer p {
+                     }}
+                     .footer p {{
                          font-size: 11px !important;
-                     }
-                 }
+                     }}
+                 }}
              </style>
          </head>
          <body>
              <div class='container'>
                  <div class='header'>
-                     <h2>" + iconoTipo + @" Nueva Solicitud<br>" + tipoSolicitudTexto + @"</h2>
+                     <h2>{iconoTipo} Nueva Solicitud<br>{tipoSolicitudTexto}</h2>
                      <div class='subtitle'>Consultoría Integral SC</div>
                  </div>
                  
                  <div class='content'>
-                     <div class='tipo-badge'>" + iconoTipo + " " + tipoSolicitudTexto + @"</div>
+                     <div class='tipo-badge'>{iconoTipo} {tipoSolicitudTexto}</div>
                      
                      <!-- Información Personal -->
                      <div class='section'>
                          <h3 class='section-title'>👤 Información Personal</h3>
                          <div class='field'>
                              <span class='field-label'>Nombre Completo:</span>
-                             <span class='field-value'><strong>" + datos.NombreCompleto + @"</strong></span>
+                             <span class='field-value'><strong>{datos.NombreCompleto}</strong></span>
                          </div>
                          <div class='contact-info'>
                              <div class='field'>
                                  <span class='field-label'>📧 Email:</span>
-                                 <span class='field-value'><a href='mailto:" + datos.Email + @"' style='color: #007bff; text-decoration: none; word-break: break-all; overflow-wrap: break-word; display: inline-block; max-width: 100%;'>" + datos.Email + @"</a></span>
+                                 <span class='field-value'><a href='mailto:{datos.Email}' style='color: #007bff; text-decoration: none; word-break: break-all;'>{datos.Email}</a></span>
                              </div>
                              <div class='field'>
                                  <span class='field-label'>📱 Teléfono:</span>
-                                 <span class='field-value'><a href='tel:" + datos.Telefono + @"' style='color: #007bff; text-decoration: none; word-break: break-all; overflow-wrap: break-word; display: inline-block; max-width: 100%;'>" + datos.Telefono + @"</a></span>
+                                 <span class='field-value'><a href='tel:{datos.Telefono}' style='color: #007bff; text-decoration: none;'>{datos.Telefono}</a></span>
                              </div>
                          </div>
                      </div>");
@@ -987,34 +1071,18 @@ namespace BIZ
          </body>
          </html>");
 
-            // Crear el mensaje de email
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_smtpUsername, "Consultoría Integral SC - RH"),
-                Subject = $"🔔 Nuevo CV [{tipoSolicitudTexto}] - {datos.NombreCompleto}",
-                Body = emailBody.ToString(),
-                IsBodyHtml = true
-            };
-
-            mailMessage.To.Add(_rhEmail);
-
-            // Agregar archivo CV como adjunto si existe
-            if (datos.ArchivoCV != null && datos.ArchivoCV.Length > 0 && !string.IsNullOrWhiteSpace(datos.NombreArchivoCV))
-            {
-                var attachment = new Attachment(new System.IO.MemoryStream(datos.ArchivoCV), datos.NombreArchivoCV);
-                mailMessage.Attachments.Add(attachment);
-                System.Diagnostics.Debug.WriteLine($"📎 Archivo adjunto agregado: {datos.NombreArchivoCV}");
-            }
-
-            // Configurar codificación
-            mailMessage.BodyEncoding = Encoding.UTF8;
-            mailMessage.SubjectEncoding = Encoding.UTF8;
-
-            await smtpClient.SendMailAsync(mailMessage);
-            mailMessage.Dispose();
-
-            System.Diagnostics.Debug.WriteLine("📧 Email de CV enviado exitosamente");
+            return emailBody.ToString();
         }
 
+        private string EscapeHtml(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            return text
+                .Replace("&", "&amp;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;")
+                .Replace("\"", "&quot;")
+                .Replace("'", "&#39;");
+        }
     }
 }

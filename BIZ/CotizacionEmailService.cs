@@ -4,21 +4,24 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BIZ
 {
     public class CotizacionEmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 465;
-        private readonly string _smtpUsername = "zaira7731479269@gmail.com";
-        private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
+        // ============================================
+        // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
+        // ============================================
+        private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromName = "Consultoría Integral SC";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
+
+        private static readonly HttpClient _httpClient = new HttpClient();
 
         // Email de confirmación al cliente
         public async Task<bool> EnviarConfirmacionCotizacion(Cotizacion cotizacion)
@@ -27,26 +30,19 @@ namespace BIZ
             {
                 System.Diagnostics.Debug.WriteLine($"📧 Enviando confirmación de cotización a: {cotizacion.Correo}");
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
 
                 var emailBody = GenerarEmailConfirmacion(cotizacion);
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
-                    Subject = $"✅ Solicitud de Cotización Recibida - Folio #{cotizacion.Id:D6}",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(cotizacion.Correo);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                await smtpClient.SendMailAsync(mailMessage);
-                mailMessage.Dispose();
+                await EnviarEmailViaBravo(
+                    destinatario: cotizacion.Correo,
+                    asunto: $"✅ Solicitud de Cotización Recibida - Folio #{cotizacion.Id:D6}",
+                    htmlContent: emailBody
+                );
 
                 System.Diagnostics.Debug.WriteLine("✅ Email de confirmación enviado");
                 return true;
@@ -65,26 +61,19 @@ namespace BIZ
             {
                 System.Diagnostics.Debug.WriteLine($"📧 Enviando cotización a: {cotizacion.Correo}");
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
 
                 var emailBody = GenerarEmailCotizacion(cotizacion, respuesta, monto);
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
-                    Subject = $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(cotizacion.Correo);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                await smtpClient.SendMailAsync(mailMessage);
-                mailMessage.Dispose();
+                await EnviarEmailViaBravo(
+                    destinatario: cotizacion.Correo,
+                    asunto: $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
+                    htmlContent: emailBody
+                );
 
                 System.Diagnostics.Debug.WriteLine("✅ Cotización enviada por email");
                 return true;
@@ -96,7 +85,7 @@ namespace BIZ
             }
         }
 
-        // ✅ CORREGIDO: Email con la cotización Y PDF adjunto
+        // Email con la cotización Y PDF adjunto
         public async Task<bool> EnviarCotizacionClienteConPDF(
             Cotizacion cotizacion,
             string respuesta,
@@ -109,44 +98,33 @@ namespace BIZ
                 System.Diagnostics.Debug.WriteLine($"📧 Enviando cotización con PDF a: {cotizacion.Correo}");
                 System.Diagnostics.Debug.WriteLine($"📎 PDF: {nombreArchivoPDF} ({pdfBytes?.Length ?? 0} bytes)");
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort);
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
 
                 var emailBody = GenerarEmailCotizacion(cotizacion, respuesta, monto, tienePDF: true);
 
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, "Consultoría Integral SC"),
-                    Subject = $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(cotizacion.Correo);
-                mailMessage.BodyEncoding = Encoding.UTF8;
-                mailMessage.SubjectEncoding = Encoding.UTF8;
-
-                // ✅ ADJUNTAR PDF DESDE BYTES
                 if (pdfBytes != null && pdfBytes.Length > 0)
                 {
-                    using (var stream = new MemoryStream(pdfBytes))
-                    {
-                        var attachment = new Attachment(stream, nombreArchivoPDF, "application/pdf");
-                        mailMessage.Attachments.Add(attachment);
-
-                        System.Diagnostics.Debug.WriteLine($"📎 PDF adjuntado correctamente: {nombreArchivoPDF}");
-
-                        await smtpClient.SendMailAsync(mailMessage);
-                    }
+                    await EnviarEmailConAdjuntoViaBravo(
+                        destinatario: cotizacion.Correo,
+                        asunto: $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
+                        htmlContent: emailBody,
+                        pdfBytes: pdfBytes,
+                        nombreArchivo: nombreArchivoPDF
+                    );
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("⚠️ No hay bytes de PDF para adjuntar");
-                    await smtpClient.SendMailAsync(mailMessage);
+                    System.Diagnostics.Debug.WriteLine("⚠️ No hay bytes de PDF, enviando sin adjunto");
+                    await EnviarEmailViaBravo(
+                        destinatario: cotizacion.Correo,
+                        asunto: $"📋 Tu Cotización está Lista - Folio #{cotizacion.Id:D6}",
+                        htmlContent: emailBody
+                    );
                 }
-
-                mailMessage.Dispose();
 
                 System.Diagnostics.Debug.WriteLine("✅ Cotización con PDF enviada por email");
                 return true;
@@ -158,6 +136,109 @@ namespace BIZ
                 return false;
             }
         }
+
+        // ============================================
+        // MÉTODOS PRIVADOS PARA ENVIAR VÍA BREVO API
+        // ============================================
+
+        private async Task EnviarEmailViaBravo(string destinatario, string asunto, string htmlContent)
+        {
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine("📤 Enviando email vía Brevo API...");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            System.Diagnostics.Debug.WriteLine($"📥 Status: {(int)response.StatusCode}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email enviado exitosamente vía Brevo");
+        }
+
+        private async Task EnviarEmailConAdjuntoViaBravo(
+            string destinatario,
+            string asunto,
+            string htmlContent,
+            byte[] pdfBytes,
+            string nombreArchivo)
+        {
+            // Convertir PDF a Base64
+            string pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+            var emailRequest = new
+            {
+                sender = new { name = _fromName, email = _fromEmail },
+                to = new[] { new { email = destinatario } },
+                subject = asunto,
+                htmlContent = htmlContent,
+                attachment = new[]
+                {
+                    new
+                    {
+                        name = nombreArchivo,
+                        content = pdfBase64
+                    }
+                }
+            };
+
+            var jsonContent = JsonSerializer.Serialize(emailRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", _brevoApiKey);
+            request.Headers.Add("accept", "application/json");
+
+            System.Diagnostics.Debug.WriteLine($"📤 Enviando email con PDF adjunto vía Brevo API...");
+            System.Diagnostics.Debug.WriteLine($"📎 Archivo: {nombreArchivo} ({pdfBase64.Length} caracteres base64)");
+
+            var response = await _httpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            System.Diagnostics.Debug.WriteLine($"📥 Status: {(int)response.StatusCode}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error Brevo: {responseBody}");
+                throw new Exception($"Error Brevo API: {response.StatusCode} - {responseBody}");
+            }
+
+            System.Diagnostics.Debug.WriteLine("✅ Email con PDF enviado exitosamente vía Brevo");
+        }
+
+        // ============================================
+        // GENERADORES DE HTML (Sin cambios)
+        // ============================================
 
         private string GenerarEmailConfirmacion(Cotizacion cotizacion)
         {
@@ -418,7 +499,7 @@ namespace BIZ
                             
                             <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>
                                 Este correo fue enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}<br>
-                                Sistema automatizado de notificaciones - No responder a este correo
+                                Sistema automatizado de notificaciones
                             </p>
                         </div>
                     </div>
@@ -525,17 +606,6 @@ namespace BIZ
                             border-radius: 10px;
                             margin: 25px 0;
                         }}
-                        .cta-button {{
-                            display: inline-block;
-                            background: #28a745;
-                            color: white;
-                            padding: 15px 35px;
-                            border-radius: 25px;
-                            text-decoration: none;
-                            font-weight: 600;
-                            margin: 10px;
-                            font-size: 16px;
-                        }}
                         .whatsapp-button {{
                             display: inline-block;
                             background: #25D366;
@@ -561,7 +631,7 @@ namespace BIZ
                             .monto-box .monto {{
                                 font-size: 28px;
                             }}
-                            .cta-button, .whatsapp-button {{
+                            .whatsapp-button {{
                                 display: block;
                                 margin: 10px auto;
                             }}
