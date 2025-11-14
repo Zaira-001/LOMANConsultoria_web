@@ -11,7 +11,7 @@ if (window.adminUsersModuleLoaded) {
     window.adminUsersModuleLoaded = true;
 
     // Configuración de API
-    const ADMIN_API_URL = 'https://lomanconsultoria-web.onrender.com/Admin';
+    const ADMIN_API_URL = 'https://lomanconsultoria-web.onrender.com/api/Admin';
 
     // Estado del módulo
     let adminsData = [];

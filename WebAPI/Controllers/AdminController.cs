@@ -16,9 +16,9 @@ namespace WebAPI.Controllers
     public class AdminController : GenericController<Admin>
     {
         private readonly AdminManager _adminManager;
-        private readonly IHttpContextAccessor _httpContextAccessor; // 🆕
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AdminController(IDB<Admin> repositorio, IHttpContextAccessor httpContextAccessor): base(repositorio)
+        public AdminController(IDB<Admin> repositorio, IHttpContextAccessor httpContextAccessor) : base(repositorio)
         {
             _adminManager = new AdminManager(repositorio);
             _httpContextAccessor = httpContextAccessor;
@@ -153,11 +153,9 @@ namespace WebAPI.Controllers
                 {
                     Console.WriteLine($"[CREAR_ADMIN] ✅ Admin creado con ID: {admin.Id}");
 
-                    // 🆕 OBTENER URL BASE DINÁMICA DESDE EL REQUEST
                     string baseUrl = ObtenerUrlBase();
                     Console.WriteLine($"[CREAR_ADMIN] 🌐 URL Base detectada: {baseUrl}");
 
-                    // 📧 ENVIAR EMAIL CON URL DINÁMICA
                     try
                     {
                         var emailService = new AdminEmailService();
@@ -173,10 +171,9 @@ namespace WebAPI.Controllers
                             EsAdminPrincipal = admin.EsAdminPrincipal
                         };
 
-                        // 👉 Pasar la URL base dinámica
                         var emailEnviado = await emailService.EnviarCredencialesNuevoAdmin(
                             datosCredenciales,
-                            baseUrl); // 🆕 URL dinámica
+                            baseUrl);
 
                         if (emailEnviado)
                         {
@@ -224,14 +221,12 @@ namespace WebAPI.Controllers
                     return "http://localhost:5067";
                 }
 
-                // Construir URL base: scheme + host + (port si no es estándar)
-                var scheme = request.Scheme; // http o https
-                var host = request.Host.Host; // dominio
-                var port = request.Host.Port; // puerto
+                var scheme = request.Scheme;
+                var host = request.Host.Host;
+                var port = request.Host.Port;
 
                 string baseUrl;
 
-                // Si el puerto es estándar (80 para HTTP, 443 para HTTPS), no incluirlo
                 if ((scheme == "http" && port == 80) || (scheme == "https" && port == 443) || !port.HasValue)
                 {
                     baseUrl = $"{scheme}://{host}";
@@ -242,10 +237,6 @@ namespace WebAPI.Controllers
                 }
 
                 Console.WriteLine($"✅ URL Base construida: {baseUrl}");
-                Console.WriteLine($"   - Scheme: {scheme}");
-                Console.WriteLine($"   - Host: {host}");
-                Console.WriteLine($"   - Port: {port}");
-
                 return baseUrl;
             }
             catch (Exception ex)
@@ -255,7 +246,6 @@ namespace WebAPI.Controllers
             }
         }
 
-        // 🆕 ENDPOINT DE PRUEBA PARA VERIFICAR LA URL
         [HttpGet("test-url-base")]
         public ActionResult TestUrlBase()
         {
@@ -313,7 +303,6 @@ namespace WebAPI.Controllers
                 if (adminActual == null)
                     return BadRequest(new { message = "Admin no existe" });
 
-                // ✅ Si no viene passwordHash en la petición, usar el actual
                 if (string.IsNullOrWhiteSpace(entidad.PasswordHash))
                 {
                     entidad.PasswordHash = adminActual.PasswordHash;
@@ -338,41 +327,75 @@ namespace WebAPI.Controllers
             }
         }
 
+        // ✅ CORREGIDO: Usar método ASYNC y buscar correctamente
         [HttpPut("{id}/datos")]
-        public ActionResult<Admin> ActualizarDatos(int id, [FromBody] ActualizarDatosAdminRequest request)
+        public async Task<ActionResult<Admin>> ActualizarDatos(int id, [FromBody] ActualizarDatosAdminRequest request)
         {
             try
             {
-                var adminActual = _repositorio.ObtenerPorId(id);
-                if (adminActual == null)
-                    return BadRequest(new { message = "Admin no existe" });
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Actualizando admin ID: {id}");
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Username: {request.Username}");
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Email: {request.Email}");
 
+                // ✅ USAR MÉTODO ASYNC DEL MANAGER
+                var adminActual = await _adminManager.ObtenerPorId(id);
+
+                if (adminActual == null)
+                {
+                    Console.WriteLine($"[ACTUALIZAR_DATOS] ❌ Admin {id} no encontrado");
+
+                    // DEBUG: Listar todos los admins para ver qué IDs existen
+                    var todosLosAdmins = await _adminManager.ObtenerTodos();
+                    Console.WriteLine($"[ACTUALIZAR_DATOS] DEBUG - Total admins en DB: {todosLosAdmins?.Count ?? 0}");
+
+                    if (todosLosAdmins != null)
+                    {
+                        foreach (var a in todosLosAdmins)
+                        {
+                            Console.WriteLine($"[ACTUALIZAR_DATOS] DEBUG - Admin existente: ID={a.Id}, Username={a.Username}");
+                        }
+                    }
+
+                    return BadRequest(new
+                    {
+                        message = $"Admin con ID {id} no encontrado en la base de datos",
+                        idBuscado = id,
+                        idsDisponibles = todosLosAdmins?.Select(a => a.Id).ToList()
+                    });
+                }
+
+                Console.WriteLine($"[ACTUALIZAR_DATOS] ✅ Admin encontrado: {adminActual.Username}");
+
+                // Actualizar solo los campos permitidos
                 adminActual.Username = request.Username;
                 adminActual.Email = request.Email;
                 adminActual.NombreCompleto = request.NombreCompleto;
                 adminActual.Activo = request.Activo;
                 adminActual.FechaMod = DateTime.Now;
-                adminActual.UsuarioMod = request.UsuarioMod;
+                adminActual.UsuarioMod = request.UsuarioMod ?? "admin";
 
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Llamando a _repositorio.Actualizar...");
                 var datos = _repositorio.Actualizar(adminActual);
 
                 if (datos != null)
                 {
+                    Console.WriteLine($"[ACTUALIZAR_DATOS] ✅ Admin actualizado exitosamente");
                     datos.PasswordHash = null;
                     return Ok(datos);
                 }
                 else
                 {
-                    return BadRequest(new { message = _repositorio.Error });
+                    Console.WriteLine($"[ACTUALIZAR_DATOS] ❌ Error actualizando: {_repositorio.Error}");
+                    return BadRequest(new { message = _repositorio.Error ?? "Error desconocido al actualizar" });
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ACTUALIZAR_DATOS] ❌ Excepción: {ex.Message}");
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Stack: {ex.StackTrace}");
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
-
 
         // PUT: api/Admin/{id}/estado
         [HttpPut("{id}/estado")]
@@ -397,8 +420,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
-
-
 
         // PUT: api/Admin/cambiar-password
         [HttpPut("cambiar-password")]
@@ -447,11 +468,15 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = $"Nueva contraseña no válida: {mensaje}" });
                 }
 
-                var adminActual = _repositorio.ObtenerPorId(id);
-                if (adminActual == null)
-                    return NotFound(new { message = "Administrador no encontrado" });
+                // ✅ USAR MÉTODO ASYNC
+                var adminActual = await _adminManager.ObtenerPorId(id);
 
-                // Actualizar contraseña directamente (sin validar la anterior)
+                if (adminActual == null)
+                {
+                    Console.WriteLine($"[RESET_PASSWORD] ❌ Admin {id} no encontrado");
+                    return NotFound(new { message = "Administrador no encontrado" });
+                }
+
                 adminActual.PasswordHash = AdminManager.HashPassword(request.NuevaPassword);
                 adminActual.FechaMod = DateTime.Now;
                 adminActual.UsuarioMod = request.UsuarioMod ?? "admin";
@@ -517,7 +542,7 @@ namespace WebAPI.Controllers
         }
     }
 
-    // DTOs simplificados
+    // DTOs
     public class LoginRequest
     {
         [Required]
@@ -537,7 +562,7 @@ namespace WebAPI.Controllers
         public string NombreCompleto { get; set; } = "";
         public string Rol { get; set; } = "";
         public DateTime? UltimoLogin { get; set; }
-        public bool EsAdminPrincipal { get; set; } // Agregar esta propiedad
+        public bool EsAdminPrincipal { get; set; }
     }
 
     public class CrearAdminRequest
@@ -572,7 +597,6 @@ namespace WebAPI.Controllers
         public bool Activo { get; set; }
     }
 
-    // DTO para actualizar solo datos (sin passwordHash)
     public class ActualizarDatosAdminRequest
     {
         public string Username { get; set; }
