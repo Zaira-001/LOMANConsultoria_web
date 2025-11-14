@@ -28,22 +28,6 @@ namespace DAL
             this.validador = validador;
         }
 
-        // ✅ HELPER: Obtener nombre de tabla con comillas para PostgreSQL
-        private string GetTableName()
-        {
-            string tableName = typeof(T).Name;
-            // Envolver en comillas dobles para preservar mayúsculas/minúsculas
-            return $"\"{tableName}\"";
-        }
-
-        // ✅ HELPER: Obtener nombre de columna con comillas
-        private string GetColumnName(string propertyName)
-        {
-            // Convertir PascalCase a snake_case si es necesario
-            // Por ahora, solo envolver en comillas
-            return $"\"{propertyName}\"";
-        }
-
         public T Actualizar(T entidad)
         {
             Error = "";
@@ -60,16 +44,11 @@ namespace DAL
                     return null;
                 }
 
-                // ✅ CORREGIDO: Usar nombres con comillas
-                string tableName = GetTableName();
-                var propiedades = entidad.GetType().GetProperties().Where(p => p.Name != campoId);
-                string setClause = string.Join(",", propiedades.Select(p => $"{GetColumnName(p.Name)}=@{p.Name}"));
-
-                string sql = $"UPDATE {tableName} SET {setClause} WHERE {GetColumnName(campoId)}=@Id";
+                string sql = $"UPDATE {typeof(T).Name} SET {string.Join(",", entidad.GetType().GetProperties().Where(p => p.Name != campoId).Select(p => p.Name + "=@" + p.Name))} WHERE {campoId}=@Id";
 
                 Dictionary<string, object> parametros = new Dictionary<string, object>();
 
-                foreach (var propiedad in propiedades)
+                foreach (var propiedad in entidad.GetType().GetProperties().Where(p => p.Name != campoId))
                 {
                     var valor = propiedad.GetValue(entidad);
                     parametros.Add("@" + propiedad.Name, valor ?? DBNull.Value);
@@ -139,8 +118,7 @@ namespace DAL
             Error = "";
             try
             {
-                string tableName = GetTableName();
-                string sql = $"DELETE FROM {tableName} WHERE {GetColumnName(campoId)}=@Id";
+                string sql = $"DELETE FROM {typeof(T).Name} WHERE {campoId}=@Id";
                 Dictionary<string, object> parametros = new Dictionary<string, object>();
                 parametros.Add("@Id", entidad.GetType().GetProperty(campoId).GetValue(entidad));
                 return EjecutarComando(sql, parametros) == 1;
@@ -191,17 +169,14 @@ namespace DAL
 
                 string sql;
                 Dictionary<string, object> parametros = new Dictionary<string, object>();
-                string tableName = GetTableName();
 
                 if (esAutonumerico)
                 {
-                    var propiedadesSinId = entidad.GetType().GetProperties().Where(p => p.Name != campoId);
-                    string columnas = string.Join(",", propiedadesSinId.Select(p => GetColumnName(p.Name)));
-                    string valores = string.Join(", ", propiedadesSinId.Select(p => "@" + p.Name));
+                    // ✅ POSTGRESQL: Usar RETURNING en lugar de SCOPE_IDENTITY()
+                    sql = $"INSERT INTO {typeof(T).Name} ({string.Join(",", entidad.GetType().GetProperties().Where(p => p.Name != campoId).Select(p => p.Name))}) VALUES " +
+                        $"({string.Join(", ", entidad.GetType().GetProperties().Where(p => p.Name != campoId).Select(p => "@" + p.Name))}) RETURNING {campoId}";
 
-                    sql = $"INSERT INTO {tableName} ({columnas}) VALUES ({valores}) RETURNING {GetColumnName(campoId)}";
-
-                    foreach (var propiedad in propiedadesSinId)
+                    foreach (var propiedad in entidad.GetType().GetProperties().Where(p => p.Name != campoId))
                     {
                         var valor = propiedad.GetValue(entidad);
                         parametros.Add("@" + propiedad.Name, valor ?? DBNull.Value);
@@ -209,13 +184,10 @@ namespace DAL
                 }
                 else
                 {
-                    var todasPropiedades = entidad.GetType().GetProperties();
-                    string columnas = string.Join(",", todasPropiedades.Select(p => GetColumnName(p.Name)));
-                    string valores = string.Join(", ", todasPropiedades.Select(p => "@" + p.Name));
+                    sql = $"INSERT INTO {typeof(T).Name} ({string.Join(",", entidad.GetType().GetProperties().Select(p => p.Name))}) VALUES " +
+                        $"({string.Join(", ", entidad.GetType().GetProperties().Select(p => "@" + p.Name))})";
 
-                    sql = $"INSERT INTO {tableName} ({columnas}) VALUES ({valores})";
-
-                    foreach (var propiedad in todasPropiedades)
+                    foreach (var propiedad in entidad.GetType().GetProperties())
                     {
                         var valor = propiedad.GetValue(entidad);
                         parametros.Add("@" + propiedad.Name, valor ?? DBNull.Value);
@@ -237,6 +209,7 @@ namespace DAL
 
                 if (esAutonumerico)
                 {
+                    // ✅ POSTGRESQL: ExecuteScalar con RETURNING obtiene el ID directamente
                     var idResult = comando.ExecuteScalar();
 
                     if (idResult != null && idResult != DBNull.Value)
@@ -279,6 +252,12 @@ namespace DAL
                 Console.WriteLine($"[DB] ❌ PostgreSQL Exception:");
                 Console.WriteLine($"[DB]    SqlState: {sqlEx.SqlState}");
                 Console.WriteLine($"[DB]    Message: {sqlEx.Message}");
+
+                // Errores comunes PostgreSQL:
+                // 23505 = Violación de clave única
+                // 23503 = Violación de clave foránea
+                // 23502 = Not null violation
+
                 return null;
             }
             catch (Exception ex)
@@ -309,32 +288,13 @@ namespace DAL
         {
             try
             {
-                Console.WriteLine($"[DB PostgreSQL] ObtenerPorId: {id}");
-
-                string tableName = GetTableName();
-                string sql = $"SELECT * FROM {tableName} WHERE {GetColumnName(campoId)}=@Id";
-
-                Console.WriteLine($"[DB PostgreSQL] SQL: {sql}");
-
+                string sql = $"SELECT * FROM {typeof(T).Name} WHERE {campoId}=@Id";
                 Dictionary<string, object> parametros = new Dictionary<string, object>();
                 parametros.Add("@Id", id);
-
-                var resultado = EjecutarConsulta(sql, parametros).FirstOrDefault();
-
-                if (resultado != null)
-                {
-                    Console.WriteLine($"[DB PostgreSQL] ✅ Registro encontrado");
-                }
-                else
-                {
-                    Console.WriteLine($"[DB PostgreSQL] ❌ Registro NO encontrado");
-                }
-
-                return resultado;
+                return EjecutarConsulta(sql, parametros).FirstOrDefault();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DB PostgreSQL] ❌ Error en ObtenerPorId: {ex.Message}");
                 Error = ex.Message;
                 return null;
             }
@@ -345,17 +305,12 @@ namespace DAL
             Error = "";
             try
             {
-                string tableName = GetTableName();
-                string sql = $"SELECT * FROM {tableName}";
-
-                Console.WriteLine($"[DB PostgreSQL] ObtenerTodos SQL: {sql}");
-
+                string sql = $"SELECT * FROM {typeof(T).Name}";
                 Dictionary<string, object> parametros = new Dictionary<string, object>();
                 return EjecutarConsulta(sql, parametros);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DB PostgreSQL] ❌ Error en ObtenerTodos: {ex.Message}");
                 Error = ex.Message;
                 return null;
             }
@@ -380,6 +335,7 @@ namespace DAL
 
                     while (reader.Read())
                     {
+                        Console.WriteLine($"[DB] Procesando fila...");
                         T entidad = Activator.CreateInstance<T>();
 
                         foreach (var propiedad in entidad.GetType().GetProperties())
@@ -392,7 +348,9 @@ namespace DAL
                                     if (reader.GetName(i).Equals(propiedad.Name, StringComparison.OrdinalIgnoreCase))
                                     {
                                         encontrada = true;
-                                        var valor = reader[i]; // Usar índice en lugar de nombre
+                                        var valor = reader[propiedad.Name];
+
+                                        Console.WriteLine($"[DB] Campo {propiedad.Name}: Valor={valor}, Tipo={valor?.GetType()}, IsDBNull={valor == DBNull.Value}");
 
                                         if (valor != DBNull.Value)
                                         {
@@ -410,7 +368,7 @@ namespace DAL
                             catch (Exception ex)
                             {
                                 Console.WriteLine($"[DB] ERROR en campo {propiedad.Name}: {ex.Message}");
-                                // No lanzar, continuar con los demás campos
+                                throw;
                             }
                         }
                         lista.Add(entidad);

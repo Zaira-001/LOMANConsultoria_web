@@ -18,6 +18,7 @@ namespace BIZ
         private readonly IDB<Admin> _repositorio;
         public string Error { get; private set; }
 
+        // Constructor que recibe el repositorio
         public AdminManager(IDB<Admin> repositorio)
         {
             _repositorio = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
@@ -39,6 +40,7 @@ namespace BIZ
 
                 Console.WriteLine($"[AdminManager.Login] Usuario encontrado: ID={admin.Id}, Activo={admin.Activo}");
 
+                // Verificar si está bloqueado
                 if (admin.BloqueoHasta.HasValue && admin.BloqueoHasta > DateTime.Now)
                 {
                     var tiempoRestante = admin.BloqueoHasta.Value - DateTime.Now;
@@ -47,6 +49,7 @@ namespace BIZ
                     return null;
                 }
 
+                // Verificar si está activo
                 if (!admin.Activo)
                 {
                     Error = "Usuario desactivado";
@@ -54,6 +57,7 @@ namespace BIZ
                     return null;
                 }
 
+                // Verificar contraseña
                 Console.WriteLine($"[AdminManager.Login] Verificando contraseña...");
                 if (!VerificarPassword(password, admin.PasswordHash))
                 {
@@ -64,6 +68,7 @@ namespace BIZ
                 }
 
                 Console.WriteLine($"[AdminManager.Login] Login exitoso");
+                // Login exitoso
                 await RegistrarLoginExitoso(admin);
                 return admin;
             }
@@ -85,6 +90,7 @@ namespace BIZ
                 Console.WriteLine($"[AdminManager.CrearAdmin]   Email: {email}");
                 Console.WriteLine($"[AdminManager.CrearAdmin]   NombreCompleto: {nombreCompleto}");
 
+                // Validaciones básicas
                 if (string.IsNullOrWhiteSpace(username))
                 {
                     Error = "El nombre de usuario es requerido";
@@ -106,6 +112,7 @@ namespace BIZ
                     return null;
                 }
 
+                // Verificar si el usuario ya existe
                 Console.WriteLine($"[AdminManager.CrearAdmin] Verificando si usuario existe...");
                 var existeUsuario = await BuscarPorUsername(username);
                 if (existeUsuario != null)
@@ -115,6 +122,7 @@ namespace BIZ
                     return null;
                 }
 
+                // Verificar si el email ya existe
                 Console.WriteLine($"[AdminManager.CrearAdmin] Verificando si email existe...");
                 var existeEmail = await BuscarPorEmail(email);
                 if (existeEmail != null)
@@ -177,7 +185,7 @@ namespace BIZ
         {
             try
             {
-                var admin = await ObtenerPorId(adminId);
+                var admin = _repositorio.ObtenerPorId(adminId);
                 if (admin == null)
                 {
                     Error = "Administrador no encontrado";
@@ -206,7 +214,7 @@ namespace BIZ
         {
             try
             {
-                var admin = await ObtenerPorId(adminId);
+                var admin = _repositorio.ObtenerPorId(adminId);
                 if (admin == null)
                 {
                     Error = "Administrador no encontrado";
@@ -238,51 +246,20 @@ namespace BIZ
             }
         }
 
-        // ✅ CORREGIDO: Método async que busca por ID correctamente
-        // ✅ SOLUCIÓN TEMPORAL: Usar ObtenerTodos y filtrar
         public async Task<Admin> ObtenerPorId(int id)
         {
             try
             {
-                Console.WriteLine($"[AdminManager.ObtenerPorId] Buscando admin con ID: {id}");
-
-                // ✅ USAR SIEMPRE ObtenerTodos() Y FILTRAR (más confiable con PostgreSQL)
-                var todos = _repositorio.ObtenerTodos();
-
-                if (todos != null && todos.Any())
-                {
-                    Console.WriteLine($"[AdminManager.ObtenerPorId] Total admins en DB: {todos.Count}");
-
-                    var admin = todos.FirstOrDefault(a => a.Id == id);
-
-                    if (admin != null)
-                    {
-                        Console.WriteLine($"[AdminManager.ObtenerPorId] ✅ Admin encontrado: {admin.Username} (ID: {admin.Id})");
-                        return admin;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[AdminManager.ObtenerPorId] ❌ Admin con ID {id} no existe");
-                        Console.WriteLine($"[AdminManager.ObtenerPorId] IDs disponibles: {string.Join(", ", todos.Select(a => a.Id))}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"[AdminManager.ObtenerPorId] ❌ No hay admins en la base de datos");
-                }
-
-                Error = $"Admin con ID {id} no encontrado";
-                return null;
+                return _repositorio.ObtenerPorId(id);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[AdminManager.ObtenerPorId] ❌ Excepción: {ex.Message}");
-                Console.WriteLine($"[AdminManager.ObtenerPorId] Stack: {ex.StackTrace}");
                 Error = ex.Message;
                 return null;
             }
         }
 
+        // Método para verificar si ya existe al menos un administrador
         public async Task<bool> ExisteAlgunAdmin()
         {
             try
