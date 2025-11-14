@@ -115,6 +115,7 @@ namespace WebAPI
                             "https://localhost:5067",
                             "http://localhost:5000",
                             "https://localhost:5001",
+                            "https://lomanconsultoria-web.onrender.com",
                             "http://www.consultoriaintegralsc.somee.com",
                             "https://www.consultoriaintegralsc.somee.com",
                             "http://consultoriaintegralsc.somee.com",

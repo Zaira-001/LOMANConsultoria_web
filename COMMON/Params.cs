@@ -9,7 +9,7 @@ namespace COMMON
     public static class Params
     {
         public static string UsuarioConectado = "UsuarioAPI";
-        public static string UrlAPI = @"http://www.ConsultoriaIntegralSC.somee.com"; //cambiar a la URL de la API
+        public static string UrlAPI = @"https://lomanconsultoria-web.onrender.com"; //cambiar a la URL de la API
 
 
     }

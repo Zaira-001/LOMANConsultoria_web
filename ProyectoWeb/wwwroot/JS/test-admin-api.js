@@ -3,10 +3,10 @@ console.log('🔍 Iniciando diagnóstico de API de Administradores...');
 
 async function testAdminAPI() {
     const baseURLs = [
-        'http://www.consultoriaintegralsc.somee.com/api/Admin',
-        'http://consultoriaintegralsc.somee.com/api/Admin',
-        'https://www.consultoriaintegralsc.somee.com/api/Admin',
-        'https://consultoriaintegralsc.somee.com/api/Admin'
+        'https://lomanconsultoria-web.onrender.com/api/Admin',
+        'https://lomanconsultoria-web.onrender.com/api/Admin',
+        'https://lomanconsultoria-web.onrender.com/api/Admin',
+        'https://lomanconsultoria-web.onrender.com/api/Admin'
     ];
 
     console.log('Probando diferentes variaciones de URL...\n');
@@ -80,7 +80,7 @@ async function testAdminAPI() {
 async function testDatabaseEndpoint() {
     console.log('\n\n🔍 Probando endpoint de diagnóstico...');
 
-    const testURL = 'http://www.consultoriaintegralsc.somee.com/api/Admin/test-db';
+    const testURL = 'https://lomanconsultoria-web.onrender.com/api/Admin/test-db';
 
     try {
         const response = await fetch(testURL, {

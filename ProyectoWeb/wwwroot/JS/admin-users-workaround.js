@@ -16,7 +16,7 @@ window.loadAdminsList = async function () {
         let useWorkaround = false;
 
         try {
-            const normalResponse = await fetch('http://www.consultoriaintegralsc.somee.com/api/Admin', {
+            const normalResponse = await fetch('https://lomanconsultoria-web.onrender.com/api/Admin', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -40,7 +40,7 @@ window.loadAdminsList = async function () {
         // Si el GET normal falló, usar /test-db
         if (useWorkaround) {
             try {
-                const testDbResponse = await fetch('http://www.consultoriaintegralsc.somee.com/api/Admin/test-db', {
+                const testDbResponse = await fetch('https://lomanconsultoria-web.onrender.com/api/Admin/test-db', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',

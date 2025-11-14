@@ -10,7 +10,7 @@ const calendarSystem = {
     currentYear: new Date().getFullYear(),
 
     config: {
-        apiBaseUrl: 'http://www.ConsultoriaIntegralSC.somee.com',
+        apiBaseUrl: 'https://lomanconsultoria-web.onrender.com',
         apiPath: '/api/Cita',
         timeout: 30000,
         businessHours: {
