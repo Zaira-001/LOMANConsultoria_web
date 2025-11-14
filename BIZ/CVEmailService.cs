@@ -11,7 +11,7 @@ namespace BIZ
     public class CVEmailService
     {
         private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 587;
+        private readonly int _smtpPort = 465;
         private readonly string _smtpUsername = "zaira7731479269@gmail.com";
         private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
         private readonly string _rhEmail = "zaira7731479269@gmail.com";

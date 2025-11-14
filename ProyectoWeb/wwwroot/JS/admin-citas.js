@@ -337,7 +337,7 @@ if (window.adminCitasInitialized) {
         try {
             console.log('🔄 Refrescando citas...');
 
-            const response = await fetch('http://ConsultoriaIntegralSC.somee.com/api/Cita');
+            const response = await fetch('https://lomanconsultoria-web.onrender.com/api/Cita');
 
             document.getElementById(loadingId)?.remove();
 
@@ -935,7 +935,7 @@ if (window.adminCitasInitialized) {
         try {
             console.log(`📤 Actualizando cita ${citaId}:`, { nuevoEstado, notas });
 
-            const response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cita/${citaId}/estado`, {
+            const response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cita/${citaId}/estado`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'

@@ -9,8 +9,8 @@ if (window.adminSystemActive) {
 
     // Configuración de la API
     const API_CONFIG = {
-        BASE_URL: 'http://consultoriaintegralsc.somee.com/api/Empleo',
-        ADMIN_URL: 'http://consultoriaintegralsc.somee.com/api/Admin',
+        BASE_URL: 'https://lomanconsultoria-web.onrender.com/api/Empleo',
+        ADMIN_URL: 'https://lomanconsultoria-web.onrender.com/api/Admin',
         TIMEOUT: 10000
     };
 

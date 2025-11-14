@@ -7,7 +7,7 @@ if (window.adminSolicitudesActive) {
     window.adminSolicitudesActive = true;
 
     const API_CONFIG = {
-        BASE_URL: 'http://consultoriaintegralsc.somee.com/api/CV',
+        BASE_URL: 'https://lomanconsultoria-web.onrender.com/api/CV',
         TIMEOUT: 10000
     };
 

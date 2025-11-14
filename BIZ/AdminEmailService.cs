@@ -9,7 +9,7 @@ namespace BIZ
     public class AdminEmailService
     {
         private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 587;
+        private readonly int _smtpPort = 465;
         private readonly string _smtpUsername = "zaira7731479269@gmail.com";
         private readonly string _smtpPassword = "whaf gfpi gjpa bpaf";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";

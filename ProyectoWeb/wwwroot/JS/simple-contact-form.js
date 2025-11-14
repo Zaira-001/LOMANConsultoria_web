@@ -2,7 +2,7 @@
 console.log('🚀 Iniciando carga del script de contacto...');
 
 // CONFIGURACIÓN DE LA API
-const API_URL = 'http://consultoriaintegralsc.somee.com/api/Contacto';
+const API_URL = 'https://lomanconsultoria-web.onrender.com/api/Contacto';
 
 // Variables globales
 let form, submitBtn, btnText, formMessage;

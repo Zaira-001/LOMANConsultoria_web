@@ -7,7 +7,7 @@ if (window.loginSystemActive) {
     window.loginSystemActive = true;
 
     const CONFIG = {
-        API_URL: 'http://consultoriaintegralsc.somee.com/api/Admin',
+        API_URL: 'https://lomanconsultoria-web.onrender.com/api/Admin',
         TIMEOUT: 15000,
         MAX_REDIRECT_ATTEMPTS: 3
     };

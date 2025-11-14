@@ -37,7 +37,7 @@ namespace WebAPI
             {
                 var httpClient = new HttpClient
                 {
-                    BaseAddress = new Uri("http://consultoriaintegralsc.somee.com/"),
+                    BaseAddress = new Uri("https://lomanconsultoria-web.onrender.com/"),
                     Timeout = TimeSpan.FromSeconds(30)
                 };
                 return httpClient;

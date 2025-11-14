@@ -16,7 +16,7 @@ namespace ProyectoWeb
             // ✅ CONFIGURAR HttpClient CON BaseAddress para Blazor Server
             builder.Services.AddScoped(sp => new HttpClient
             {
-                BaseAddress = new Uri("http://consultoriaintegralsc.somee.com/"),
+                BaseAddress = new Uri("https://lomanconsultoria-web.onrender.com/"),
                 Timeout = TimeSpan.FromSeconds(30)
             });
 

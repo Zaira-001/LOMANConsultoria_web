@@ -113,7 +113,7 @@ window.testAPI = async function () {
     console.log('🔌 Probando conectividad con API...');
 
     try {
-        const response = await fetch('http://consultoriaintegralsc.somee.com/api/Empleo', {
+        const response = await fetch('https://lomanconsultoria-web.onrender.com/api/Empleo', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',

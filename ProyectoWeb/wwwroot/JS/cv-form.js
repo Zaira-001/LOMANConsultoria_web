@@ -8,7 +8,7 @@
     }
     window.cvFormLoaded = true;
 
-    const API_URL = 'http://consultoriaintegralsc.somee.com/api/CV/enviar';
+    const API_URL = 'https://lomanconsultoria-web.onrender.com/api/CV/enviar';
 
     // Esperar a que el DOM esté listo
     if (document.readyState === 'loading') {

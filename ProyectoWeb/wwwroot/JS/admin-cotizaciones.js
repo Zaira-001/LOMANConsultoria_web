@@ -895,7 +895,7 @@ window.enviarCotizacionCliente = async function () {
 
         console.log('📤 Enviando cotización al servidor...');
         const response = await fetch(
-            `http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${window.selectedCotizacion.id}/enviar-cotizacion`,
+            `https://lomanconsultoria-web.onrender.com/api/Cotizacion/${window.selectedCotizacion.id}/enviar-cotizacion`,
             {
                 method: 'POST',
                 body: formData
@@ -982,7 +982,7 @@ window.saveNotas = async function () {
 
     try {
         // Intentar con endpoint específico primero
-        let response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}/notas`, {
+        let response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cotizacion/${id}/notas`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ NotasInternas: notas })
@@ -990,7 +990,7 @@ window.saveNotas = async function () {
 
         // Si falla, intentar con endpoint general
         if (!response.ok) {
-            response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}`, {
+            response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cotizacion/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1043,7 +1043,7 @@ window.updateEstado = async function (id, nuevoEstado) {
 
     try {
         // Intentar con endpoint específico primero
-        let response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}/estado`, {
+        let response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cotizacion/${id}/estado`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ Estado: nuevoEstado })
@@ -1051,7 +1051,7 @@ window.updateEstado = async function (id, nuevoEstado) {
 
         // Si falla, intentar con endpoint general
         if (!response.ok) {
-            response = await fetch(`http://ConsultoriaIntegralSC.somee.com/api/Cotizacion/${id}`, {
+            response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cotizacion/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1128,7 +1128,7 @@ window.refreshCotizaciones = async function () {
     console.log('🔄 Refrescando cotizaciones...');
 
     try {
-        const response = await fetch('http://ConsultoriaIntegralSC.somee.com/api/Cotizacion');
+        const response = await fetch('https://lomanconsultoria-web.onrender.com/api/Cotizacion');
 
         if (response.ok) {
             window.cotizacionesData = await response.json();

@@ -15,7 +15,7 @@
     // CONFIGURACIÓN
     // ==========================================
     const API_CONFIG = {
-        baseUrl: 'http://consultoriaintegralsc.somee.com',
+        baseUrl: 'https://lomanconsultoria-web.onrender.com',
         empleosEndpoint: '/api/Empleo/activos',
         whatsappNumber: '525659644304'
     };
