@@ -1,4 +1,7 @@
 ﻿using DAL;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using static DAL.FabricRepository;
 
 namespace WebAPI
@@ -15,7 +18,8 @@ namespace WebAPI
         /// <summary>
         /// Obtiene la cadena de conexión de forma automática
         /// 1. Primero intenta leer de variables de entorno (Render)
-        /// 2. Si no existe, usa la conexión local por defecto
+        /// 2. Resuelve DNS a IPv4 si es necesario
+        /// 3. Si no existe, usa la conexión local por defecto
         /// </summary>
         private static string ObtenerCadenaConexion()
         {
@@ -23,7 +27,42 @@ namespace WebAPI
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
             if (!string.IsNullOrEmpty(databaseUrl))
             {
-                Console.WriteLine("✅ Usando DATABASE_URL de Render");
+                Console.WriteLine("✅ DATABASE_URL encontrada");
+
+                // 🔧 FORZAR RESOLUCIÓN IPv4 para Supabase
+                if (databaseUrl.Contains("db.qtgcgariprlgxgqhndck.supabase.co"))
+                {
+                    try
+                    {
+                        Console.WriteLine("🔍 Resolviendo DNS de Supabase a IPv4...");
+
+                        var hostEntry = Dns.GetHostEntry("db.qtgcgariprlgxgqhndck.supabase.co");
+                        var ipv4 = hostEntry.AddressList
+                            .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+                        if (ipv4 != null)
+                        {
+                            var ipv4String = ipv4.ToString();
+                            databaseUrl = databaseUrl.Replace(
+                                "db.qtgcgariprlgxgqhndck.supabase.co",
+                                ipv4String
+                            );
+                            Console.WriteLine($"✅ DNS resuelto a IPv4: {ipv4String}");
+                            Console.WriteLine($"✅ Nueva cadena: {OcultarPassword(databaseUrl)}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("⚠️ No se encontró dirección IPv4, usando hostname original");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Error resolviendo DNS (usando hostname): {ex.Message}");
+                        // Continuar con el hostname original si falla
+                    }
+                }
+
+                Console.WriteLine("✅ Usando DATABASE_URL procesada");
                 return databaseUrl;
             }
 
@@ -38,9 +77,6 @@ namespace WebAPI
             // 3️⃣ Desarrollo LOCAL - PostgreSQL local
             Console.WriteLine("⚠️ Usando conexión LOCAL de desarrollo");
             return "Host=localhost;Database=consultoria;Username=postgres;Password=123456;Port=5432";
-
-            // 🔴 OPCIÓN: Si quieres seguir usando SQL Server en local, usa:
-            // return "Server=localhost;Database=Consultoria;Integrated Security=True;TrustServerCertificate=True";
         }
 
         /// <summary>
@@ -96,8 +132,15 @@ namespace WebAPI
             // PostgreSQL: postgresql://user:PASSWORD@host/db
             if (connectionString.StartsWith("postgresql://"))
             {
-                var uri = new Uri(connectionString);
-                return $"postgresql://{uri.UserInfo.Split(':')[0]}:****@{uri.Host}{uri.PathAndQuery}";
+                try
+                {
+                    var uri = new Uri(connectionString);
+                    return $"postgresql://{uri.UserInfo.Split(':')[0]}:****@{uri.Host}:{uri.Port}{uri.PathAndQuery}";
+                }
+                catch
+                {
+                    return "postgresql://****";
+                }
             }
 
             // Formato estándar: Password=xxx o pwd=xxx
