@@ -25,6 +25,45 @@ namespace WebAPI.Controllers
             _logger = logger;
         }
 
+        // ✅ MÉTODO HELPER PARA BUSCAR POR ID DE FORMA CORRECTA
+        private SolicitudCV? ObtenerSolicitudPorId(int id)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 Buscando solicitud ID: {id}");
+
+                // Buscar en la lista completa en lugar de usar ObtenerPorId
+                var todasLasSolicitudes = _solicitudCVRepository.ObtenerTodos();
+
+                if (todasLasSolicitudes == null || !todasLasSolicitudes.Any())
+                {
+                    _logger.LogWarning("❌ No hay solicitudes en la base de datos");
+                    return null;
+                }
+
+                _logger.LogInformation($"📊 Total solicitudes en DB: {todasLasSolicitudes.Count}");
+
+                var solicitud = todasLasSolicitudes.FirstOrDefault(s => s.Id == id);
+
+                if (solicitud == null)
+                {
+                    _logger.LogWarning($"❌ Solicitud {id} no encontrada");
+                    _logger.LogInformation($"📋 IDs disponibles: {string.Join(", ", todasLasSolicitudes.Select(s => s.Id))}");
+                }
+                else
+                {
+                    _logger.LogInformation($"✅ Solicitud encontrada: {solicitud.NombreCompleto}");
+                }
+
+                return solicitud;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error buscando solicitud: {ex.Message}");
+                return null;
+            }
+        }
+
         // ✅ OBTENER TODAS LAS SOLICITUDES
         [HttpGet]
         public ActionResult<List<SolicitudCV>> GetAll()
@@ -53,7 +92,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        // ✅ OBTENER POR ID
+        // ✅ OBTENER POR ID - CORREGIDO
         [HttpGet("{id:int}")]
         public ActionResult<SolicitudCV> GetById(int id)
         {
@@ -61,7 +100,8 @@ namespace WebAPI.Controllers
             {
                 _logger.LogInformation($"📥 GET /api/CV/{id}");
 
-                var solicitud = _solicitudCVRepository.ObtenerPorId(id);
+                var solicitud = ObtenerSolicitudPorId(id);
+
                 if (solicitud != null)
                 {
                     _logger.LogInformation($"✅ Solicitud {id} encontrada");
@@ -70,7 +110,7 @@ namespace WebAPI.Controllers
                 else
                 {
                     _logger.LogWarning($"⚠️ Solicitud {id} no encontrada");
-                    return NotFound($"Solicitud con ID {id} no encontrada");
+                    return NotFound(new { error = $"Solicitud con ID {id} no encontrada" });
                 }
             }
             catch (Exception ex)
@@ -80,7 +120,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        // ✅ DESCARGAR CV
+        // ✅ DESCARGAR CV - CORREGIDO
         [HttpGet("{id:int}/descargar-cv")]
         public ActionResult DescargarCV(int id)
         {
@@ -88,18 +128,18 @@ namespace WebAPI.Controllers
             {
                 _logger.LogInformation($"📥 GET /api/CV/{id}/descargar-cv");
 
-                var solicitud = _solicitudCVRepository.ObtenerPorId(id);
+                var solicitud = ObtenerSolicitudPorId(id);
 
                 if (solicitud == null)
                 {
                     _logger.LogWarning($"⚠️ Solicitud {id} no encontrada");
-                    return NotFound("Solicitud no encontrada");
+                    return NotFound(new { error = "Solicitud no encontrada" });
                 }
 
                 if (solicitud.ArchivoCV == null || solicitud.ArchivoCV.Length == 0)
                 {
                     _logger.LogWarning($"⚠️ Solicitud {id} sin CV");
-                    return NotFound("Esta solicitud no tiene CV adjunto");
+                    return NotFound(new { error = "Esta solicitud no tiene CV adjunto" });
                 }
 
                 var extension = Path.GetExtension(solicitud.NombreArchivoCV).ToLowerInvariant();
@@ -121,11 +161,11 @@ namespace WebAPI.Controllers
             }
         }
 
-        // ✅ PROCESAR SOLICITUD Y AGENDAR ENTREVISTA - OPTIMIZADO
+
         [HttpPut("{id:int}/procesar")]
         public async Task<ActionResult> MarcarProcesado(
-            int id,
-            [FromBody] ProcesarSolicitudRequest request)
+    int id,
+    [FromBody] ProcesarSolicitudRequest request)
         {
             try
             {
@@ -151,8 +191,8 @@ namespace WebAPI.Controllers
                     return BadRequest(new { error = "La hora de entrevista es requerida" });
                 }
 
-                // BUSCAR SOLICITUD
-                var solicitud = _solicitudCVRepository.ObtenerPorId(id);
+                // ✅ BUSCAR SOLICITUD CON EL MÉTODO CORREGIDO
+                var solicitud = ObtenerSolicitudPorId(id);
 
                 if (solicitud == null)
                 {
@@ -206,7 +246,7 @@ namespace WebAPI.Controllers
 
                 _logger.LogInformation("✅ Guardado exitoso");
 
-                // 🆕 ENVIAR EMAIL DE FORMA ASÍNCRONA (SIN BLOQUEAR LA RESPUESTA)
+                // ENVIAR EMAIL DE FORMA ASÍNCRONA
                 _ = Task.Run(async () =>
                 {
                     try
@@ -229,7 +269,7 @@ namespace WebAPI.Controllers
                     }
                 });
 
-                // RETORNAR RESPUESTA INMEDIATA (sin esperar el email)
+                // RETORNAR RESPUESTA INMEDIATA
                 _logger.LogInformation("✅ === PROCESAMIENTO COMPLETADO ===");
 
                 return Ok(new
@@ -264,7 +304,7 @@ namespace WebAPI.Controllers
                             }
                         }
                     },
-                    emailStatus = "sending", // 🆕 Indica que el email se está enviando
+                    emailStatus = "sending",
                     timestamp = DateTime.Now
                 });
             }
@@ -284,7 +324,6 @@ namespace WebAPI.Controllers
         }
 
 
-        // ✅ ELIMINAR SOLICITUD
         [HttpDelete("{id:int}")]
         public ActionResult Eliminar(int id)
         {
@@ -292,12 +331,12 @@ namespace WebAPI.Controllers
             {
                 _logger.LogInformation($"🗑️ DELETE /api/CV/{id}");
 
-                var solicitud = _solicitudCVRepository.ObtenerPorId(id);
+                var solicitud = ObtenerSolicitudPorId(id);
 
                 if (solicitud == null)
                 {
                     _logger.LogWarning($"⚠️ Solicitud {id} no encontrada");
-                    return NotFound("Solicitud no encontrada");
+                    return NotFound(new { error = "Solicitud no encontrada" });
                 }
 
                 var resultado = _solicitudCVRepository.Eliminar(solicitud);
@@ -310,7 +349,7 @@ namespace WebAPI.Controllers
                 else
                 {
                     _logger.LogError($"❌ Error: {_solicitudCVRepository.Error}");
-                    return BadRequest(_solicitudCVRepository.Error);
+                    return BadRequest(new { error = _solicitudCVRepository.Error });
                 }
             }
             catch (Exception ex)
