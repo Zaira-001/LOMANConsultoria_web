@@ -327,7 +327,6 @@ namespace WebAPI.Controllers
             }
         }
 
-        // ✅ CORREGIDO: Usar método ASYNC y buscar correctamente
         [HttpPut("{id}/datos")]
         public async Task<ActionResult<Admin>> ActualizarDatos(int id, [FromBody] ActualizarDatosAdminRequest request)
         {
@@ -337,30 +336,31 @@ namespace WebAPI.Controllers
                 Console.WriteLine($"[ACTUALIZAR_DATOS] Username: {request.Username}");
                 Console.WriteLine($"[ACTUALIZAR_DATOS] Email: {request.Email}");
 
-                // ✅ USAR MÉTODO ASYNC DEL MANAGER
-                var adminActual = await _adminManager.ObtenerPorId(id);
+                // ✅ SOLUCIÓN SIMPLE: Buscar en la lista completa en lugar de usar ObtenerPorId
+                var todosLosAdmins = _repositorio.ObtenerTodos();
+
+                if (todosLosAdmins == null || !todosLosAdmins.Any())
+                {
+                    Console.WriteLine($"[ACTUALIZAR_DATOS] ❌ No hay admins en la base de datos");
+                    return BadRequest(new { message = "No se pudo acceder a la base de datos de administradores" });
+                }
+
+                Console.WriteLine($"[ACTUALIZAR_DATOS] Total admins en DB: {todosLosAdmins.Count}");
+                foreach (var a in todosLosAdmins)
+                {
+                    Console.WriteLine($"[ACTUALIZAR_DATOS]   - Admin: ID={a.Id}, Username={a.Username}");
+                }
+
+                var adminActual = todosLosAdmins.FirstOrDefault(a => a.Id == id);
 
                 if (adminActual == null)
                 {
                     Console.WriteLine($"[ACTUALIZAR_DATOS] ❌ Admin {id} no encontrado");
-
-                    // DEBUG: Listar todos los admins para ver qué IDs existen
-                    var todosLosAdmins = await _adminManager.ObtenerTodos();
-                    Console.WriteLine($"[ACTUALIZAR_DATOS] DEBUG - Total admins en DB: {todosLosAdmins?.Count ?? 0}");
-
-                    if (todosLosAdmins != null)
-                    {
-                        foreach (var a in todosLosAdmins)
-                        {
-                            Console.WriteLine($"[ACTUALIZAR_DATOS] DEBUG - Admin existente: ID={a.Id}, Username={a.Username}");
-                        }
-                    }
-
                     return BadRequest(new
                     {
                         message = $"Admin con ID {id} no encontrado en la base de datos",
                         idBuscado = id,
-                        idsDisponibles = todosLosAdmins?.Select(a => a.Id).ToList()
+                        idsDisponibles = todosLosAdmins.Select(a => a.Id).ToList()
                     });
                 }
 
@@ -468,8 +468,16 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = $"Nueva contraseña no válida: {mensaje}" });
                 }
 
-                // ✅ USAR MÉTODO ASYNC
-                var adminActual = await _adminManager.ObtenerPorId(id);
+                // ✅ Buscar en la lista completa
+                var todosLosAdmins = _repositorio.ObtenerTodos();
+
+                if (todosLosAdmins == null || !todosLosAdmins.Any())
+                {
+                    Console.WriteLine($"[RESET_PASSWORD] ❌ No hay admins en la base de datos");
+                    return BadRequest(new { message = "No se pudo acceder a la base de datos" });
+                }
+
+                var adminActual = todosLosAdmins.FirstOrDefault(a => a.Id == id);
 
                 if (adminActual == null)
                 {
@@ -499,6 +507,7 @@ namespace WebAPI.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
 
         // GET: api/Admin/test-db
         [HttpGet("test-db")]
