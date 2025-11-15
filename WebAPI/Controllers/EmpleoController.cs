@@ -17,16 +17,15 @@ namespace WebAPI.Controllers
             _empleoManager = new EmpleoManager();
         }
 
-        // ✅ AGREGAR ESTE MÉTODO DELETE SOBRESCRITO
+        // ✅ MÉTODO DELETE CORREGIDO
         [HttpDelete("{id}")]
-        public override ActionResult<Empleo> Delete(int id)
+        public override ActionResult Delete(int id)  // ← SIN <Empleo>
         {
             try
             {
                 Console.WriteLine($"[DELETE EMPLEO] ==========================================");
                 Console.WriteLine($"[DELETE EMPLEO] ID recibido: {id}");
 
-                // ✅ SOLUCIÓN: Buscar en la lista completa en lugar de ObtenerPorId
                 var todosLosEmpleos = _repositorio.ObtenerTodos();
 
                 if (todosLosEmpleos == null || !todosLosEmpleos.Any())
@@ -41,13 +40,11 @@ namespace WebAPI.Controllers
 
                 Console.WriteLine($"[DELETE EMPLEO] Total empleos en DB: {todosLosEmpleos.Count}");
 
-                // Mostrar todos los IDs disponibles para debug
                 foreach (var e in todosLosEmpleos)
                 {
                     Console.WriteLine($"[DELETE EMPLEO]   - Empleo: ID={e.Id}, Título={e.Titulo}");
                 }
 
-                // Buscar el empleo específico
                 var empleo = todosLosEmpleos.FirstOrDefault(e => e.Id == id);
 
                 if (empleo == null)
@@ -63,7 +60,6 @@ namespace WebAPI.Controllers
 
                 Console.WriteLine($"[DELETE EMPLEO] ✅ Empleo encontrado: {empleo.Titulo}");
 
-                // Intentar eliminar
                 var resultado = _repositorio.Eliminar(empleo);
 
                 if (resultado)
