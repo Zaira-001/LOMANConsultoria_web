@@ -20,6 +20,45 @@ namespace WebAPI.Controllers
             _logger.LogInformation("CitaController inicializado con servicio de email");
         }
 
+        // ✅ MÉTODO HELPER PARA BUSCAR POR ID CORRECTAMENTE
+        private Cita? ObtenerCitaPorId(int id)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 Buscando cita ID: {id}");
+
+                // Buscar en la lista completa en lugar de usar ObtenerPorId
+                var todasLasCitas = _repositorio.ObtenerTodos();
+
+                if (todasLasCitas == null || !todasLasCitas.Any())
+                {
+                    _logger.LogWarning("❌ No hay citas en la base de datos");
+                    return null;
+                }
+
+                _logger.LogInformation($"📊 Total citas en DB: {todasLasCitas.Count}");
+
+                var cita = todasLasCitas.FirstOrDefault(c => c.Id == id);
+
+                if (cita == null)
+                {
+                    _logger.LogWarning($"❌ Cita {id} no encontrada");
+                    _logger.LogInformation($"📋 IDs disponibles: {string.Join(", ", todasLasCitas.Select(c => c.Id))}");
+                }
+                else
+                {
+                    _logger.LogInformation($"✅ Cita encontrada: {cita.NombreCompleto}, Fecha: {cita.FechaHora:yyyy-MM-dd HH:mm}");
+                }
+
+                return cita;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error buscando cita: {ex.Message}");
+                return null;
+            }
+        }
+
         [HttpPost]
         public override ActionResult<Cita> Post([FromBody] Cita entidad)
         {
@@ -152,57 +191,66 @@ namespace WebAPI.Controllers
         {
             try
             {
-                _logger.LogInformation($"Actualizando estado de cita ID: {id} a '{dto.Estado}'");
+                _logger.LogInformation($"📝 === PUT /api/Cita/{id}/estado ===");
+                _logger.LogInformation($"📝 Nuevo estado: '{dto.Estado}'");
+                _logger.LogInformation($"📝 Notas: '{dto.NotasAdmin ?? "sin notas"}'");
 
-                var cita = _repositorio.ObtenerPorId(id);
+                // ✅ USAR EL MÉTODO CORREGIDO
+                var cita = ObtenerCitaPorId(id);
+
                 if (cita == null)
                 {
-                    _logger.LogWarning($"Cita no encontrada: {id}");
-                    return NotFound(new { error = "Cita no encontrada" });
+                    _logger.LogWarning($"❌ Cita {id} no encontrada");
+                    return NotFound(new { error = $"Cita con ID {id} no encontrada" });
                 }
 
                 var estadoAnterior = cita.Estado;
-                _logger.LogInformation($"Estado anterior: '{estadoAnterior}' -> Nuevo estado: '{dto.Estado}'");
+                _logger.LogInformation($"✅ Cita encontrada: {cita.NombreCompleto}");
+                _logger.LogInformation($"📊 Estado anterior: '{estadoAnterior}' -> Nuevo estado: '{dto.Estado}'");
 
+                // Actualizar cita
                 cita.Estado = dto.Estado;
                 cita.NotasAdmin = dto.NotasAdmin ?? "";
                 cita.UsuarioMod = "Admin";
                 cita.FechaMod = DateTime.Now;
 
+                _logger.LogInformation("💾 Guardando cambios en BD...");
                 var resultado = _repositorio.Actualizar(cita);
+
                 if (resultado == null)
                 {
-                    _logger.LogError($"Error actualizando en BD: {_repositorio.Error}");
-                    return StatusCode(500, new { error = _repositorio.Error });
+                    var errorMsg = _repositorio.Error ?? "Error desconocido";
+                    _logger.LogError($"❌ Error actualizando en BD: {errorMsg}");
+                    return StatusCode(500, new { error = errorMsg });
                 }
 
-                _logger.LogInformation($"Cita actualizada exitosamente en BD");
+                _logger.LogInformation("✅ Cita actualizada exitosamente en BD");
 
-                // ENVIAR EMAIL DE NOTIFICACIÓN CON ENLACE MEET Y TELÉFONO
+                // ENVIAR EMAIL DE NOTIFICACIÓN
                 bool emailEnviado = false;
                 if (estadoAnterior != dto.Estado && !string.IsNullOrWhiteSpace(cita.Email))
                 {
-                    _logger.LogInformation($"Estado cambió, enviando email a: {cita.Email}");
+                    _logger.LogInformation($"📧 Estado cambió, enviando email a: {cita.Email}");
 
                     // Generar enlace de Meet si es cita virtual
                     string enlaceMeet = "";
                     if (cita.Modalidad?.ToLower().Contains("virtual") == true)
                     {
                         enlaceMeet = MeetLinkGenerator.GenerarEnlaceMeet(cita.Id);
-                        _logger.LogInformation($"Enlace Meet generado: {enlaceMeet}");
+                        _logger.LogInformation($"🔗 Enlace Meet generado: {enlaceMeet}");
                     }
 
                     var notificacion = new NotificacionCita
                     {
                         NombreCliente = cita.NombreCompleto,
                         EmailCliente = cita.Email,
-                        TelefonoCliente = cita.Telefono,  // ← INCLUIR TELÉFONO
+                        TelefonoCliente = cita.Telefono,
                         FechaHora = cita.FechaHora,
                         ServicioInteres = cita.ServicioInteres ?? "Consultoría General",
                         Modalidad = cita.Modalidad ?? "Presencial",
                         Estado = dto.Estado,
                         NotasAdmin = dto.NotasAdmin ?? "",
-                        EnlaceMeet = enlaceMeet  // ← INCLUIR ENLACE MEET
+                        EnlaceMeet = enlaceMeet
                     };
 
                     // Enviar email en segundo plano
@@ -213,44 +261,60 @@ namespace WebAPI.Controllers
                             var enviado = await _emailService.EnviarNotificacionCita(notificacion);
                             if (enviado)
                             {
-                                _logger.LogInformation($"Email enviado exitosamente a: {cita.Email}");
+                                _logger.LogInformation($"✅ Email enviado exitosamente a: {cita.Email}");
                             }
                             else
                             {
-                                _logger.LogWarning($"No se pudo enviar email a: {cita.Email}");
+                                _logger.LogWarning($"⚠️ No se pudo enviar email a: {cita.Email}");
                             }
                         }
                         catch (Exception emailEx)
                         {
-                            _logger.LogError($"Error enviando email: {emailEx.Message}");
+                            _logger.LogError($"❌ Error enviando email: {emailEx.Message}");
                         }
                     });
 
                     emailEnviado = true;
-                    _logger.LogInformation("Email programado para envío en segundo plano");
+                    _logger.LogInformation("📨 Email programado para envío en segundo plano");
                 }
                 else if (string.IsNullOrWhiteSpace(cita.Email))
                 {
-                    _logger.LogWarning("No se puede enviar email: cliente sin correo electrónico");
+                    _logger.LogWarning("⚠️ No se puede enviar email: cliente sin correo electrónico");
                 }
                 else
                 {
-                    _logger.LogInformation($"Estado no cambió, no se envía email");
+                    _logger.LogInformation("ℹ️ Estado no cambió, no se envía email");
                 }
+
+                _logger.LogInformation("✅ === ACTUALIZACIÓN COMPLETADA ===");
 
                 return Ok(new
                 {
                     success = true,
                     message = "Estado actualizado correctamente",
-                    cita = resultado,
-                    emailEnviado = emailEnviado
+                    cita = new
+                    {
+                        id = resultado.Id,
+                        nombreCompleto = resultado.NombreCompleto,
+                        fechaHora = resultado.FechaHora,
+                        estado = resultado.Estado,
+                        modalidad = resultado.Modalidad,
+                        notasAdmin = resultado.NotasAdmin
+                    },
+                    emailEnviado = emailEnviado,
+                    timestamp = DateTime.Now
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error actualizando estado: {ex.Message}");
+                _logger.LogError($"🔥 ERROR: {ex.Message}");
                 _logger.LogError($"Stack trace: {ex.StackTrace}");
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new
+                {
+                    error = "Error interno del servidor",
+                    message = ex.Message,
+                    timestamp = DateTime.Now
+                });
             }
         }
 
