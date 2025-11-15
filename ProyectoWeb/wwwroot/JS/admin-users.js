@@ -16,6 +16,8 @@ if (window.adminUsersModuleLoaded) {
     // Estado del módulo
     let adminsData = [];
     let currentEditingAdminId = null;
+    let mostrarInactivos = false; // Nueva variable para controlar visibilidad
+
 
     // Función helper para obtener el usuario actual
     function getCurrentUsername() {
@@ -98,221 +100,290 @@ if (window.adminUsersModuleLoaded) {
         }
     }
 
-    function renderAdminsList() {
+    function renderAdminsList(admins) {
         const container = document.getElementById('adminsListContainer');
         if (!container) return;
 
-        if (adminsList.length === 0) {
+        // FILTRAR: Solo mostrar admins activos (a menos que se active el toggle)
+        const adminsVisibles = mostrarInactivos ? admins : admins.filter(a => a.activo);
+
+        if (admins.length === 0) {
             container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <div style="font-size: 48px; margin-bottom: 20px;">👥</div>
-                <h3>No hay administradores</h3>
-                <p>Agrega el primer administrador del sistema.</p>
-            </div>
-        `;
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center;">
+                    <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);">
+                        <span style="font-size: 60px; color: white;">👥</span>
+                    </div>
+                    <h3 style="color: #2c3e50; margin-bottom: 12px; font-size: 26px; font-weight: 600;">No hay administradores</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 35px; font-size: 16px; max-width: 450px; line-height: 1.6;">Crea el primer administrador del sistema para comenzar a gestionar el acceso</p>
+                    <button onclick="showCreateAdminForm()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 36px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">➕</span>
+                        Crear Primer Administrador
+                    </button>
+                </div>
+            `;
             return;
         }
 
-        // 🆕 FILTRAR SOLO ADMINS ACTIVOS
-        const adminsActivos = adminsList.filter(admin => admin.activo === true);
+        const conteoActivos = admins.filter(a => a.activo).length;
+        const conteoInactivos = admins.filter(a => !a.activo).length;
 
-        console.log(`📊 Total admins: ${adminsList.length}, Activos: ${adminsActivos.length}`);
-
-        if (adminsActivos.length === 0) {
-            container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <div style="font-size: 48px; margin-bottom: 20px;">😴</div>
-                <h3>No hay administradores activos</h3>
-                <p>Todos los administradores están desactivados.</p>
-                <button class="btn-primary" onclick="mostrarAdminsInactivos()" 
-                        style="margin-top: 20px; background: #667eea; color: white; 
-                               border: none; padding: 12px 30px; border-radius: 8px; 
-                               cursor: pointer;">
-                    👁️ Ver Administradores Inactivos
-                </button>
-            </div>
+        let html = `
+            <div style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #2c3e50; display: flex; align-items: center; gap: 12px;">
+                            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">👥</span>
+                            Administradores del Sistema
+                        </h3>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 14px;">Gestiona los usuarios con acceso al panel de administración</p>
+                    </div>
+                    <button onclick="showCreateAdminForm()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">➕</span>
+                        Agregar Administrador
+                    </button>
+                </div>
+                
+                <!-- Toggle para mostrar inactivos -->
+                ${conteoInactivos > 0 ? `
+                <div style="margin-bottom: 20px; padding: 12px 20px; background: #f8f9fa; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;">👁️</span>
+                        <span style="color: #495057; font-weight: 500;">Mostrar administradores ocultos (${conteoInactivos})</span>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 54px; height: 28px; cursor: pointer;">
+                        <input type="checkbox" 
+                               id="toggleInactivos" 
+                               ${mostrarInactivos ? 'checked' : ''}
+                               onchange="toggleMostrarInactivos()"
+                               style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px;"></span>
+                        <span style="position: absolute; cursor: pointer; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; ${mostrarInactivos ? 'transform: translateX(26px);' : ''}"></span>
+                    </label>
+                </div>
+                ` : ''}
+                
+                <div style="background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden;">
         `;
-            return;
+
+        if (adminsVisibles.length === 0) {
+            html += `
+                <div style="padding: 60px 20px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                    <h3 style="color: #6c757d; margin: 0 0 8px 0; font-size: 20px;">No hay administradores visibles</h3>
+                    <p style="color: #adb5bd; font-size: 14px;">Todos los administradores están ocultos. Activa el toggle arriba para verlos.</p>
+                </div>
+            `;
+        } else {
+            html += `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Nombre Completo</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Email</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Visibilidad</th>
+                                    <th style="padding: 18px 24px; text-align: left; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Último Login</th>
+                                    <th style="padding: 18px 24px; text-align: center; font-weight: 600; font-size: 13px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            adminsVisibles.forEach((admin, index) => {
+                if (!admin._originalPasswordHash) {
+                    admin._originalPasswordHash = admin.passwordHash;
+                }
+
+                const visibilidadBg = admin.activo ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
+                const visibilidadText = admin.activo ? 'Visible' : 'Oculto';
+                const lastLogin = admin.ultimoLogin ?
+                    new Date(admin.ultimoLogin).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : 'Nunca';
+
+                const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                const opacity = admin.activo ? '1' : '0.6';
+
+                html += `
+                    <tr style="background: ${rowBg}; opacity: ${opacity}; transition: all 0.2s ease;">
+                        <td style="padding: 20px 24px; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px;">
+                                    ${escapeHtml(admin.username.charAt(0).toUpperCase())}
+                                </div>
+                                <strong style="color: #2c3e50; font-size: 15px;">${escapeHtml(admin.username)}</strong>
+                            </div>
+                        </td>
+                        <td style="padding: 20px 24px; color: #495057; font-size: 14px; border-bottom: 1px solid #e9ecef;">${escapeHtml(admin.nombreCompleto || '-')}</td>
+                        <td style="padding: 20px 24px; color: #6c757d; font-size: 14px; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px;">📧</span>
+                                ${escapeHtml(admin.email)}
+                            </div>
+                        </td>
+                        <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                            <span style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">
+                                ${escapeHtml(admin.rol)}
+                            </span>
+                        </td>
+                        <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                            <span style="background: ${visibilidadBg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 8px ${admin.activo ? 'rgba(16, 185, 129, 0.3)' : 'rgba(108, 117, 125, 0.3)'};">
+                                ${admin.activo ? '👁️' : '🙈'} ${visibilidadText}
+                            </span>
+                        </td>
+                        <td style="padding: 20px 24px; color: #6c757d; font-size: 13px; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span>🕒</span>
+                                ${lastLogin}
+                            </div>
+                        </td>
+                        <td style="padding: 20px 24px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                <button onclick="showEditAdminForm(${admin.id})" title="Editar" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center;">
+                                    ✏️
+                                </button>
+                                <button onclick="confirmToggleVisibilidad(${admin.id})" title="${admin.activo ? 'Ocultar' : 'Mostrar'}" style="background: ${admin.activo ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}; color: white; border: none; width: 38px; height: 38px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px ${admin.activo ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; display: flex; align-items: center; justify-content: center;">
+                                    ${admin.activo ? '🙈' : '👁️'}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+            `;
         }
 
-        const html = adminsActivos.map(admin => {
-            const isPrincipal = admin.esAdminPrincipal;
-            const lastLogin = admin.ultimoLogin
-                ? new Date(admin.ultimoLogin).toLocaleString('es-ES')
-                : 'Nunca';
-            const createdDate = admin.fechaAlta
-                ? new Date(admin.fechaAlta).toLocaleDateString('es-ES')
-                : 'N/A';
-
-            return `
-            <div class="admin-card" data-admin-id="${admin.id}">
-                <div class="admin-card-header">
-                    <div class="admin-info">
-                        <div class="admin-avatar">${admin.nombreCompleto?.charAt(0) || admin.username?.charAt(0) || '👤'}</div>
+        html += `
+                </div>
+                
+                <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">ℹ️</span>
                         <div>
-                            <h3>
-                                ${escapeHtml(admin.nombreCompleto || admin.username)}
-                                ${isPrincipal ? '<span class="badge-principal">👑 Principal</span>' : ''}
-                            </h3>
-                            <div class="admin-username">@${escapeHtml(admin.username)}</div>
+                            <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">Total de administradores: ${admins.length}</p>
+                            <p style="margin: 4px 0 0 0; color: #3b82f6; font-size: 13px;">Visibles: ${conteoActivos} | Ocultos: ${conteoInactivos}</p>
                         </div>
                     </div>
-                    <div class="admin-status status-active">
-                        ✓ Activo
-                    </div>
-                </div>
-
-                <div class="admin-details">
-                    <div class="admin-detail-item">
-                        <span class="detail-label">📧 Email:</span>
-                        <span class="detail-value">${escapeHtml(admin.email)}</span>
-                    </div>
-                    <div class="admin-detail-item">
-                        <span class="detail-label">🎭 Rol:</span>
-                        <span class="detail-value">${escapeHtml(admin.rol || 'Admin')}</span>
-                    </div>
-                    <div class="admin-detail-item">
-                        <span class="detail-label">🕐 Último acceso:</span>
-                        <span class="detail-value">${lastLogin}</span>
-                    </div>
-                    <div class="admin-detail-item">
-                        <span class="detail-label">📅 Fecha de alta:</span>
-                        <span class="detail-value">${createdDate}</span>
-                    </div>
-                </div>
-
-                <div class="admin-actions">
-                    <button class="btn-admin-action btn-edit" onclick="openEditAdminModal(${admin.id})" 
-                            title="Editar datos del administrador">
-                        ✏️ Editar
-                    </button>
-                    <button class="btn-admin-action btn-password" onclick="openResetPasswordModal(${admin.id})" 
-                            title="Cambiar contraseña">
-                        🔑 Password
-                    </button>
-                    <button class="btn-admin-action btn-deactivate" 
-                            onclick="toggleAdminStatus(${admin.id}, false)"
-                            title="Desactivar administrador">
-                        ⏸️ Desactivar
-                    </button>
                 </div>
             </div>
         `;
-        }).join('');
 
-        // 🆕 Agregar botón para ver inactivos si existen
-        const adminsInactivos = adminsList.filter(a => !a.activo);
-        const botonInactivos = adminsInactivos.length > 0 ? `
-        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 12px;">
-            <p style="color: #856404; margin-bottom: 15px;">
-                📋 Hay ${adminsInactivos.length} administrador(es) desactivado(s)
-            </p>
-            <button class="btn-secondary" onclick="mostrarAdminsInactivos()" 
-                    style="background: #6c757d; color: white; border: none; 
-                           padding: 10px 25px; border-radius: 8px; cursor: pointer;">
-                👁️ Ver Administradores Inactivos
-            </button>
-        </div>
-    ` : '';
+        container.innerHTML = html;
 
-        container.innerHTML = html + botonInactivos;
-    }
-
-    // 🆕 NUEVA FUNCIÓN: Mostrar administradores inactivos
-    function mostrarAdminsInactivos() {
-        const modal = document.createElement('div');
-        modal.id = 'inactivosModal';
-        modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        padding: 20px;
-    `;
-
-        const adminsInactivos = adminsList.filter(a => !a.activo);
-
-        const content = `
-        <div style="background: white; border-radius: 20px; padding: 40px; 
-                    max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h2 style="margin: 0; color: #333;">
-                    😴 Administradores Inactivos
-                </h2>
-                <button onclick="cerrarInactivosModal()" 
-                        style="background: none; border: none; font-size: 24px; 
-                               cursor: pointer; color: #666;">×</button>
-            </div>
-
-            ${adminsInactivos.length === 0 ? `
-                <p style="text-align: center; color: #666; padding: 40px;">
-                    No hay administradores inactivos
-                </p>
-            ` : adminsInactivos.map(admin => `
-                <div style="padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; 
-                            margin-bottom: 15px; background: #f8f9fa;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3 style="margin: 0 0 10px 0; color: #333;">
-                                ${escapeHtml(admin.nombreCompleto || admin.username)}
-                                ${admin.esAdminPrincipal ? '<span style="background: #764ba2; color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.8em; margin-left: 10px;">👑 Principal</span>' : ''}
-                            </h3>
-                            <p style="margin: 5px 0; color: #666;">
-                                📧 ${escapeHtml(admin.email)}
-                            </p>
-                            <p style="margin: 5px 0; color: #666;">
-                                @${escapeHtml(admin.username)}
-                            </p>
-                        </div>
-                        <button onclick="reactivarAdmin(${admin.id})" 
-                                style="background: #28a745; color: white; border: none; 
-                                       padding: 10px 20px; border-radius: 8px; cursor: pointer;
-                                       font-weight: 600;">
-                            ▶️ Reactivar
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-        modal.innerHTML = content;
-        document.body.appendChild(modal);
-
-        // Cerrar con clic fuera del modal
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                cerrarInactivosModal();
+        // Aplicar estilos del toggle checkbox
+        const style = document.createElement('style');
+        style.textContent = `
+            #toggleInactivos:checked + span {
+                background-color: #667eea !important;
             }
-        });
+            #toggleInactivos:checked + span + span {
+                transform: translateX(26px);
+            }
+        `;
+        document.head.appendChild(style);
     }
 
-    // 🆕 NUEVA FUNCIÓN: Cerrar modal de inactivos
-    function cerrarInactivosModal() {
-        const modal = document.getElementById('inactivosModal');
-        if (modal) {
-            modal.remove();
-        }
-    }
+    // ============================================
+    // NUEVA FUNCIÓN PARA TOGGLE DE VISIBILIDAD
+    // ============================================
+    window.toggleMostrarInactivos = function () {
+        mostrarInactivos = !mostrarInactivos;
+        console.log(`👁️ Mostrar inactivos: ${mostrarInactivos}`);
+        renderAdminsList(adminsData);
+    };
 
-    // 🆕 NUEVA FUNCIÓN: Reactivar administrador
-    async function reactivarAdmin(id) {
-        const admin = adminsList.find(a => a.id === id);
+    // ============================================
+    // FUNCIÓN PARA CONFIRMAR CAMBIO DE VISIBILIDAD
+    // ============================================
+    function confirmToggleVisibilidad(adminId) {
+        const admin = adminsData.find(a => a.id === adminId);
         if (!admin) return;
 
-        if (!confirm(`¿Reactivar a ${admin.nombreCompleto || admin.username}?`)) return;
+        const action = admin.activo ? 'ocultar' : 'mostrar';
+        const title = `${action.charAt(0).toUpperCase() + action.slice(1)} Administrador`;
+        const message = admin.activo
+            ? `¿Estás seguro de que deseas OCULTAR al usuario "${admin.username}"?\n\n⚠️ El administrador quedará oculto en la interfaz pero permanecerá en la base de datos. No podrá iniciar sesión hasta que lo vuelvas a mostrar.`
+            : `¿Deseas MOSTRAR nuevamente al usuario "${admin.username}"?\n\nEl administrador volverá a ser visible y podrá iniciar sesión normalmente.`;
 
+        if (window.showConfirmModal) {
+            window.showConfirmModal(
+                title,
+                message,
+                () => toggleVisibilidadAdmin(adminId),
+                `Sí, ${action}`,
+                'Cancelar',
+                admin.activo ? 'warning' : 'success'
+            );
+        } else {
+            if (confirm(message)) {
+                toggleVisibilidadAdmin(adminId);
+            }
+        }
+    }
+
+    // ============================================
+    // FUNCIÓN PARA CAMBIAR VISIBILIDAD
+    // ============================================
+    async function toggleVisibilidadAdmin(adminId) {
         try {
-            await toggleAdminStatus(id, true);
-            cerrarInactivosModal();
+            const admin = adminsData.find(a => a.id === adminId);
+            if (!admin) {
+                showError('Administrador no encontrado');
+                return;
+            }
+
+            const nuevoEstado = !admin.activo;
+            console.log(`🔄 Cambiando visibilidad de admin ${adminId} a: ${nuevoEstado ? 'Visible' : 'Oculto'}`);
+
+            showLoading(true);
+
+            const response = await fetch(`${ADMIN_API_URL}/${adminId}/estado`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    activo: nuevoEstado
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al cambiar visibilidad');
+            }
+
+            const result = await response.json();
+            console.log('✅ Visibilidad actualizada:', result);
+
+            // Actualizar datos locales
+            admin.activo = nuevoEstado;
+
+            showSuccessMessage(
+                nuevoEstado
+                    ? `Administrador ahora es VISIBLE y puede iniciar sesión`
+                    : `Administrador ahora está OCULTO. Permanece en la base de datos pero no puede iniciar sesión`
+            );
+
+            // Recargar lista
+            await loadAdminsList();
+
         } catch (error) {
-            console.error('Error reactivando admin:', error);
+            console.error('❌ Error cambiando visibilidad:', error);
+            showError(`Error: ${error.message}`);
+        } finally {
+            showLoading(false);
         }
     }
 
@@ -987,6 +1058,7 @@ if (window.adminUsersModuleLoaded) {
     window.showEditAdminForm = showEditAdminForm;
     window.confirmToggleAdmin = confirmToggleAdmin;
     window.getCurrentUsername = getCurrentUsername;
+    window.confirmToggleVisibilidad = confirmToggleVisibilidad;
 
     window.showAdminManager = function () {
         console.log('👥 Abriendo gestión de administradores...');

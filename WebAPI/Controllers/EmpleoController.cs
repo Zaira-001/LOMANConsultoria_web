@@ -17,6 +17,91 @@ namespace WebAPI.Controllers
             _empleoManager = new EmpleoManager();
         }
 
+        // ✅ AGREGAR ESTE MÉTODO DELETE SOBRESCRITO
+        [HttpDelete("{id}")]
+        public override ActionResult<Empleo> Delete(int id)
+        {
+            try
+            {
+                Console.WriteLine($"[DELETE EMPLEO] ==========================================");
+                Console.WriteLine($"[DELETE EMPLEO] ID recibido: {id}");
+
+                // ✅ SOLUCIÓN: Buscar en la lista completa en lugar de ObtenerPorId
+                var todosLosEmpleos = _repositorio.ObtenerTodos();
+
+                if (todosLosEmpleos == null || !todosLosEmpleos.Any())
+                {
+                    Console.WriteLine($"[DELETE EMPLEO] ❌ No hay empleos en la base de datos");
+                    return NotFound(new
+                    {
+                        message = "No se pudo acceder a la base de datos de empleos",
+                        error = _repositorio.Error
+                    });
+                }
+
+                Console.WriteLine($"[DELETE EMPLEO] Total empleos en DB: {todosLosEmpleos.Count}");
+
+                // Mostrar todos los IDs disponibles para debug
+                foreach (var e in todosLosEmpleos)
+                {
+                    Console.WriteLine($"[DELETE EMPLEO]   - Empleo: ID={e.Id}, Título={e.Titulo}");
+                }
+
+                // Buscar el empleo específico
+                var empleo = todosLosEmpleos.FirstOrDefault(e => e.Id == id);
+
+                if (empleo == null)
+                {
+                    Console.WriteLine($"[DELETE EMPLEO] ❌ Empleo {id} no encontrado");
+                    return NotFound(new
+                    {
+                        message = $"No se encontró el recurso con ID {id}.",
+                        idBuscado = id,
+                        idsDisponibles = todosLosEmpleos.Select(e => e.Id).ToList()
+                    });
+                }
+
+                Console.WriteLine($"[DELETE EMPLEO] ✅ Empleo encontrado: {empleo.Titulo}");
+
+                // Intentar eliminar
+                var resultado = _repositorio.Eliminar(empleo);
+
+                if (resultado)
+                {
+                    Console.WriteLine($"[DELETE EMPLEO] ✅ Empleo {id} eliminado exitosamente");
+                    Console.WriteLine($"[DELETE EMPLEO] ==========================================");
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "Empleo eliminado exitosamente",
+                        id = id,
+                        titulo = empleo.Titulo
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[DELETE EMPLEO] ❌ Error eliminando: {_repositorio.Error}");
+                    Console.WriteLine($"[DELETE EMPLEO] ==========================================");
+                    return BadRequest(new
+                    {
+                        message = _repositorio.Error ?? "Error desconocido al eliminar"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DELETE EMPLEO] ❌ Excepción: {ex.Message}");
+                Console.WriteLine($"[DELETE EMPLEO] Stack: {ex.StackTrace}");
+                Console.WriteLine($"[DELETE EMPLEO] ==========================================");
+                return StatusCode(500, new
+                {
+                    message = "Error interno del servidor",
+                    error = ex.Message
+                });
+            }
+        }
+
+
         // GET: api/Empleo/activos
         [HttpGet("activos")]
         public async Task<ActionResult<List<Empleo>>> GetEmpleosActivos()
