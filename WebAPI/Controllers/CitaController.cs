@@ -27,7 +27,6 @@ namespace WebAPI.Controllers
             {
                 _logger.LogInformation($"🔍 Buscando cita ID: {id}");
 
-                // Buscar en la lista completa en lugar de usar ObtenerPorId
                 var todasLasCitas = _repositorio.ObtenerTodos();
 
                 if (todasLasCitas == null || !todasLasCitas.Any())
@@ -133,19 +132,18 @@ namespace WebAPI.Controllers
 
         [HttpGet("available-slots-by-day")]
         public ActionResult<Dictionary<string, List<string>>> GetAvailableSlotsByDay(
-    [FromQuery] DateTime startDate,
-    [FromQuery] int days = 14)
+            [FromQuery] DateTime startDate,
+            [FromQuery] int days = 14)
         {
             try
             {
-                // AGREGAR ESTE LOG PARA DEPURAR
                 _logger.LogInformation($"Recibiendo startDate: {startDate:yyyy-MM-dd}, days: {days}");
 
                 if (startDate < DateTime.Now.Date)
                     startDate = DateTime.Now.Date;
 
                 if (days <= 0 || days > 90)
-                    days = 90; // Cambiar de 60 a 90
+                    days = 90;
 
                 var slotsByDay = GenerateAvailableSlots(startDate, days);
 
@@ -215,11 +213,13 @@ namespace WebAPI.Controllers
                 cita.FechaMod = DateTime.Now;
 
                 _logger.LogInformation("💾 Guardando cambios en BD...");
-                var resultado = _repositorio.Actualizar(cita);
 
-                if (resultado == null)
+                // ✅ SOLUCIÓN: Actualizar directamente sin validación completa
+                var resultado = ActualizarEstadoCitaDirecto(cita);
+
+                if (!resultado)
                 {
-                    var errorMsg = _repositorio.Error ?? "Error desconocido";
+                    var errorMsg = _repositorio.Error ?? "Error desconocido al actualizar";
                     _logger.LogError($"❌ Error actualizando en BD: {errorMsg}");
                     return StatusCode(500, new { error = errorMsg });
                 }
@@ -294,12 +294,12 @@ namespace WebAPI.Controllers
                     message = "Estado actualizado correctamente",
                     cita = new
                     {
-                        id = resultado.Id,
-                        nombreCompleto = resultado.NombreCompleto,
-                        fechaHora = resultado.FechaHora,
-                        estado = resultado.Estado,
-                        modalidad = resultado.Modalidad,
-                        notasAdmin = resultado.NotasAdmin
+                        id = cita.Id,
+                        nombreCompleto = cita.NombreCompleto,
+                        fechaHora = cita.FechaHora,
+                        estado = cita.Estado,
+                        modalidad = cita.Modalidad,
+                        notasAdmin = cita.NotasAdmin
                     },
                     emailEnviado = emailEnviado,
                     timestamp = DateTime.Now
@@ -327,7 +327,7 @@ namespace WebAPI.Controllers
 
             for (int i = 0; i < days; i++)
             {
-                var date = startDate.AddDays(i); // IMPORTANTE: usar startDate, no DateTime.Now
+                var date = startDate.AddDays(i);
 
                 // Solo días laborables
                 if (date.DayOfWeek != DayOfWeek.Saturday &&
@@ -365,6 +365,65 @@ namespace WebAPI.Controllers
             return slots;
         }
 
+        // ✅ MÉTODO PRIVADO: Actualizar estado sin pasar por validación completa
+        private bool ActualizarEstadoCitaDirecto(Cita cita)
+        {
+            try
+            {
+                _logger.LogInformation($"🔄 Actualizando estado directamente para cita ID: {cita.Id}");
+
+                // Usar System.Data para ejecutar SQL directo
+                using (var conexion = new Npgsql.NpgsqlConnection(ObtenerCadenaConexion()))
+                {
+                    conexion.Open();
+
+                    var sql = @"
+                        UPDATE Cita 
+                        SET Estado = @Estado, 
+                            NotasAdmin = @NotasAdmin, 
+                            UsuarioMod = @UsuarioMod, 
+                            FechaMod = @FechaMod 
+                        WHERE Id = @Id";
+
+                    using (var comando = new Npgsql.NpgsqlCommand(sql, conexion))
+                    {
+                        comando.Parameters.AddWithValue("@Estado", cita.Estado);
+                        comando.Parameters.AddWithValue("@NotasAdmin", cita.NotasAdmin ?? "");
+                        comando.Parameters.AddWithValue("@UsuarioMod", cita.UsuarioMod ?? "Admin");
+                        comando.Parameters.AddWithValue("@FechaMod", cita.FechaMod);
+                        comando.Parameters.AddWithValue("@Id", cita.Id);
+
+                        var filasAfectadas = comando.ExecuteNonQuery();
+
+                        _logger.LogInformation($"✅ Filas afectadas: {filasAfectadas}");
+
+                        return filasAfectadas > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error en ActualizarEstadoCitaDirecto: {ex.Message}");
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        // Método helper para obtener cadena de conexión
+        private string ObtenerCadenaConexion()
+        {
+            // Esto debería venir de tu configuración
+            // Ajusta según tu implementación
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            return configuration.GetConnectionString("DefaultConnection")
+                ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+                ?? throw new InvalidOperationException("No se encontró cadena de conexión");
+        }
+
         [HttpGet("test")]
         public ActionResult TestEndpoint()
         {
@@ -372,7 +431,7 @@ namespace WebAPI.Controllers
             {
                 message = "CitaController funcionando correctamente",
                 timestamp = DateTime.Now,
-                version = "3.0-Con-Meet-y-Telefono",
+                version = "3.1-Fix-Validacion",
                 emailServiceActive = _emailService != null
             });
         }
