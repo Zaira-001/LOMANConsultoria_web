@@ -405,18 +405,57 @@ namespace WebAPI.Controllers
             {
                 Console.WriteLine($"[CAMBIAR_ESTADO] ID: {id}, Nuevo estado: {request.Activo}");
 
-                var resultado = await _adminManager.CambiarEstadoAdmin(id, request.Activo);
-                if (resultado)
+                // ✅ SOLUCIÓN: Buscar en la lista completa igual que los otros métodos
+                var todosLosAdmins = _repositorio.ObtenerTodos();
+
+                if (todosLosAdmins == null || !todosLosAdmins.Any())
                 {
-                    return Ok(new { mensaje = $"Estado cambiado a {(request.Activo ? "activo" : "inactivo")}" });
+                    Console.WriteLine($"[CAMBIAR_ESTADO] ❌ No hay admins en la base de datos");
+                    return BadRequest(new { message = "No se pudo acceder a la base de datos" });
+                }
+
+                Console.WriteLine($"[CAMBIAR_ESTADO] Total admins en DB: {todosLosAdmins.Count}");
+
+                var adminActual = todosLosAdmins.FirstOrDefault(a => a.Id == id);
+
+                if (adminActual == null)
+                {
+                    Console.WriteLine($"[CAMBIAR_ESTADO] ❌ Admin {id} no encontrado");
+                    return NotFound(new { message = "Administrador no encontrado" });
+                }
+
+                Console.WriteLine($"[CAMBIAR_ESTADO] ✅ Admin encontrado: {adminActual.Username}");
+
+                // Actualizar estado
+                adminActual.Activo = request.Activo;
+                adminActual.FechaMod = DateTime.Now;
+                adminActual.UsuarioMod = "admin";
+
+                var resultado = _repositorio.Actualizar(adminActual);
+
+                if (resultado != null)
+                {
+                    Console.WriteLine($"[CAMBIAR_ESTADO] ✅ Estado actualizado exitosamente");
+                    return Ok(new
+                    {
+                        mensaje = $"Estado cambiado a {(request.Activo ? "activo" : "inactivo")}",
+                        admin = new
+                        {
+                            resultado.Id,
+                            resultado.Username,
+                            resultado.Activo
+                        }
+                    });
                 }
                 else
                 {
-                    return BadRequest(new { message = _adminManager.Error });
+                    Console.WriteLine($"[CAMBIAR_ESTADO] ❌ Error actualizando: {_repositorio.Error}");
+                    return BadRequest(new { message = _repositorio.Error ?? "Error al actualizar el estado" });
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[CAMBIAR_ESTADO] ❌ Excepción: {ex.Message}");
                 return StatusCode(500, new { message = ex.Message });
             }
         }
