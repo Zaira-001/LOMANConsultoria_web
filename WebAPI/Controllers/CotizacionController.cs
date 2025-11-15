@@ -21,6 +21,45 @@ namespace WebAPI.Controllers
             _emailService = new CotizacionEmailService();
         }
 
+        // ✅ MÉTODO HELPER PARA BUSCAR POR ID CORRECTAMENTE
+        private Cotizacion? ObtenerCotizacionPorId(int id)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 Buscando cotización ID: {id}");
+
+                // Buscar en la lista completa en lugar de usar ObtenerPorId
+                var todasLasCotizaciones = _repositorio.ObtenerTodos();
+
+                if (todasLasCotizaciones == null || !todasLasCotizaciones.Any())
+                {
+                    _logger.LogWarning("❌ No hay cotizaciones en la base de datos");
+                    return null;
+                }
+
+                _logger.LogInformation($"📊 Total cotizaciones en DB: {todasLasCotizaciones.Count}");
+
+                var cotizacion = todasLasCotizaciones.FirstOrDefault(c => c.Id == id);
+
+                if (cotizacion == null)
+                {
+                    _logger.LogWarning($"❌ Cotización {id} no encontrada");
+                    _logger.LogInformation($"📋 IDs disponibles: {string.Join(", ", todasLasCotizaciones.Select(c => c.Id))}");
+                }
+                else
+                {
+                    _logger.LogInformation($"✅ Cotización encontrada: {cotizacion.Nombre}, Estado: {cotizacion.Estado}");
+                }
+
+                return cotizacion;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Error buscando cotización: {ex.Message}");
+                return null;
+            }
+        }
+
         [HttpPost]
         public override ActionResult<Cotizacion> Post([FromBody] Cotizacion entidad)
         {
@@ -264,26 +303,42 @@ namespace WebAPI.Controllers
         /// El admin puede opcionalmente adjuntar un PDF con la cotización detallada
         /// </summary>
         [HttpPost("{id}/enviar-cotizacion")]
+        [Consumes("multipart/form-data")]
         public async Task<ActionResult> EnviarCotizacion(int id, [FromForm] EnviarCotizacionFormDto dto)
         {
             try
             {
-                _logger.LogInformation($"📨 Procesando cotización para ID: {id}");
+                _logger.LogInformation("========================================");
+                _logger.LogInformation($"📨 EnviarCotizacion - ID: {id}");
+                _logger.LogInformation($"📝 Respuesta length: {dto.Respuesta?.Length ?? 0}");
+                _logger.LogInformation($"💰 Monto: {dto.MontoEstimado}");
+                _logger.LogInformation($"📄 PDF: {dto.ArchivoPDF?.FileName ?? "ninguno"}");
+                _logger.LogInformation("========================================");
 
-                var cotizacion = _repositorio.ObtenerPorId(id);
+                // ✅ USAR EL MÉTODO CORREGIDO
+                var cotizacion = ObtenerCotizacionPorId(id);
+
                 if (cotizacion == null)
                 {
                     _logger.LogWarning($"❌ Cotización {id} no encontrada");
-                    return NotFound(new { error = "Cotización no encontrada" });
+                    return NotFound(new { error = $"Cotización con ID {id} no encontrada" });
+                }
+
+                _logger.LogInformation($"✅ Cotización encontrada: {cotizacion.Nombre}");
+
+                // VALIDAR RESPUESTA
+                if (string.IsNullOrWhiteSpace(dto.Respuesta))
+                {
+                    _logger.LogWarning("❌ Respuesta vacía");
+                    return BadRequest(new { error = "La respuesta es requerida" });
                 }
 
                 byte[] pdfBytes = null;
                 string nombrePDF = null;
 
-                // SI SE ADJUNTÓ PDF, VALIDARLO Y PROCESARLO
+                // PROCESAR PDF SI EXISTE
                 if (dto.ArchivoPDF != null && dto.ArchivoPDF.Length > 0)
                 {
-                    // VALIDAR FORMATO PDF
                     var extension = Path.GetExtension(dto.ArchivoPDF.FileName).ToLowerInvariant();
                     if (extension != ".pdf")
                     {
@@ -291,17 +346,15 @@ namespace WebAPI.Controllers
                         return BadRequest(new { error = "Solo se permiten archivos PDF" });
                     }
 
-                    // VALIDAR TAMAÑO (10MB máximo)
-                    const int maxSize = 10 * 1024 * 1024;
+                    const int maxSize = 10 * 1024 * 1024; // 10MB
                     if (dto.ArchivoPDF.Length > maxSize)
                     {
                         _logger.LogWarning($"⚠️ Archivo muy grande: {dto.ArchivoPDF.Length} bytes");
                         return BadRequest(new { error = "El PDF no debe superar 10MB" });
                     }
 
-                    _logger.LogInformation($"📎 PDF recibido: {dto.ArchivoPDF.FileName} ({dto.ArchivoPDF.Length} bytes)");
+                    _logger.LogInformation($"📎 Procesando PDF: {dto.ArchivoPDF.FileName} ({dto.ArchivoPDF.Length} bytes)");
 
-                    // CONVERTIR PDF A BYTES
                     using (var memoryStream = new MemoryStream())
                     {
                         await dto.ArchivoPDF.CopyToAsync(memoryStream);
@@ -309,14 +362,10 @@ namespace WebAPI.Controllers
                     }
 
                     nombrePDF = dto.ArchivoPDF.FileName;
-                    _logger.LogInformation($"✅ PDF convertido a bytes: {pdfBytes.Length} bytes");
-                }
-                else
-                {
-                    _logger.LogInformation("📧 Enviando cotización sin PDF adjunto");
+                    _logger.LogInformation($"✅ PDF convertido: {pdfBytes.Length} bytes");
                 }
 
-                // ACTUALIZAR COTIZACIÓN
+                // ACTUALIZAR COTIZACIÓN EN BD
                 cotizacion.RespuestaAdmin = dto.Respuesta;
                 cotizacion.MontoEstimado = dto.MontoEstimado;
                 cotizacion.Estado = "Enviada";
@@ -329,51 +378,58 @@ namespace WebAPI.Controllers
                     cotizacion.NombreArchivoPDF = nombrePDF;
                 }
 
-                _logger.LogInformation($"💾 Actualizando cotización en BD...");
+                _logger.LogInformation("💾 Actualizando cotización en BD...");
                 var actualizado = _repositorio.Actualizar(cotizacion);
 
                 if (actualizado == null)
                 {
-                    _logger.LogError($"❌ Error actualizando: {_repositorio.Error}");
-                    return StatusCode(500, new { error = _repositorio.Error ?? "Error actualizando cotización" });
+                    var errorMsg = _repositorio.Error ?? "Error desconocido";
+                    _logger.LogError($"❌ Error actualizando: {errorMsg}");
+                    return StatusCode(500, new { error = errorMsg });
                 }
 
-                _logger.LogInformation($"✅ Cotización actualizada en BD");
+                _logger.LogInformation("✅ Cotización actualizada en BD");
 
-                // ✅ ENVIAR EMAIL (CON O SIN PDF) - CORREGIDO
-                bool emailEnviado;
-                if (pdfBytes != null && pdfBytes.Length > 0)
+                // ENVIAR EMAIL
+                bool emailEnviado = false;
+                try
                 {
-                    _logger.LogInformation($"📧 Enviando email con PDF adjunto a {actualizado.Correo}...");
-                    _logger.LogInformation($"📎 Adjuntando: {nombrePDF} ({pdfBytes.Length} bytes)");
+                    if (pdfBytes != null && pdfBytes.Length > 0)
+                    {
+                        _logger.LogInformation($"📧 Enviando email CON PDF a {actualizado.Correo}...");
+                        emailEnviado = await _emailService.EnviarCotizacionClienteConPDF(
+                            actualizado,
+                            dto.Respuesta,
+                            dto.MontoEstimado,
+                            pdfBytes,
+                            nombrePDF
+                        );
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"📧 Enviando email SIN PDF a {actualizado.Correo}...");
+                        emailEnviado = await _emailService.EnviarCotizacionCliente(
+                            actualizado,
+                            dto.Respuesta,
+                            dto.MontoEstimado
+                        );
+                    }
 
-                    // ✅ PASAR LOS BYTES DEL PDF AL SERVICIO DE EMAIL
-                    emailEnviado = await _emailService.EnviarCotizacionClienteConPDF(
-                        actualizado,
-                        dto.Respuesta,
-                        dto.MontoEstimado,
-                        pdfBytes,      // ✅ BYTES DEL PDF
-                        nombrePDF      // ✅ NOMBRE DEL ARCHIVO
-                    );
+                    if (emailEnviado)
+                    {
+                        _logger.LogInformation("✅ Email enviado exitosamente");
+                    }
+                    else
+                    {
+                        _logger.LogWarning("⚠️ Email no pudo ser enviado");
+                    }
                 }
-                else
+                catch (Exception emailEx)
                 {
-                    _logger.LogInformation($"📧 Enviando email sin PDF a {actualizado.Correo}...");
-                    emailEnviado = await _emailService.EnviarCotizacionCliente(
-                        actualizado,
-                        dto.Respuesta,
-                        dto.MontoEstimado
-                    );
+                    _logger.LogError($"❌ Error enviando email: {emailEx.Message}");
                 }
 
-                if (emailEnviado)
-                {
-                    _logger.LogInformation($"✅ Email enviado exitosamente {(pdfBytes != null ? "con PDF adjunto" : "sin PDF")}");
-                }
-                else
-                {
-                    _logger.LogWarning("⚠️ Email no pudo ser enviado");
-                }
+                _logger.LogInformation("✅ === PROCESO COMPLETADO ===");
 
                 return Ok(new
                 {
@@ -383,7 +439,7 @@ namespace WebAPI.Controllers
                         : "Cotización enviada correctamente",
                     emailEnviado,
                     pdfAdjunto = pdfBytes != null,
-                    nombrePDF = nombrePDF,
+                    nombrePDF,
                     tamañoPDF = pdfBytes?.Length,
                     cotizacion = new
                     {
@@ -398,12 +454,19 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error en EnviarCotizacion: {ex.Message}");
-                _logger.LogError($"Stack: {ex.StackTrace}");
+                _logger.LogError("========================================");
+                _logger.LogError($"❌ EXCEPCIÓN en EnviarCotizacion");
+                _logger.LogError($"Message: {ex.Message}");
+                _logger.LogError($"StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                    _logger.LogError($"InnerException: {ex.InnerException.Message}");
+                _logger.LogError("========================================");
+
                 return StatusCode(500, new
                 {
                     error = "Error al procesar la cotización",
-                    details = ex.Message
+                    details = ex.Message,
+                    stackTrace = ex.StackTrace
                 });
             }
         }
@@ -414,25 +477,39 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var cotizacion = _repositorio.ObtenerPorId(id);
+                _logger.LogInformation($"📝 === PUT /api/Cotizacion/{id}/estado ===");
+                _logger.LogInformation($"📝 Nuevo estado: '{dto.Estado}'");
+
+                // ✅ USAR EL MÉTODO CORREGIDO
+                var cotizacion = ObtenerCotizacionPorId(id);
+
                 if (cotizacion == null)
-                    return NotFound(new { error = "Cotización no encontrada" });
+                {
+                    _logger.LogWarning($"❌ Cotización {id} no encontrada");
+                    return NotFound(new { error = $"Cotización con ID {id} no encontrada" });
+                }
+
+                _logger.LogInformation($"✅ Cotización encontrada: {cotizacion.Nombre}");
 
                 cotizacion.Estado = dto.Estado;
                 cotizacion.UsuarioMod = "Admin";
                 cotizacion.FechaMod = DateTime.Now;
 
-                if (dto.Estado == "Contactado" && !cotizacion.FechaContacto.HasValue)
-                    cotizacion.FechaContacto = DateTime.Now;
-
                 var resultado = _repositorio.Actualizar(cotizacion);
                 if (resultado == null)
-                    return StatusCode(500, new { error = _repositorio.Error });
+                {
+                    var errorMsg = _repositorio.Error ?? "Error desconocido";
+                    _logger.LogError($"❌ Error actualizando: {errorMsg}");
+                    return StatusCode(500, new { error = errorMsg });
+                }
+
+                _logger.LogInformation("✅ Estado actualizado correctamente");
 
                 return Ok(new { success = true, cotizacion = resultado });
             }
             catch (Exception ex)
             {
+                _logger.LogError($"❌ Error: {ex.Message}");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
