@@ -325,6 +325,109 @@
             });
             console.log('✅ Event listener select universidad configurado');
         }
+
+        // ✅ CONTADOR DE CARACTERES EN TIEMPO REAL - RESIDENCIA
+        const mensajeRes = document.getElementById('mensajeRes');
+        if (mensajeRes) {
+            // Crear o encontrar elemento de ayuda
+            let helpText = mensajeRes.nextElementSibling;
+            if (!helpText || !helpText.classList.contains('help-text')) {
+                helpText = document.createElement('small');
+                helpText.className = 'help-text';
+                mensajeRes.parentNode.insertBefore(helpText, mensajeRes.nextSibling);
+            }
+
+            mensajeRes.addEventListener('input', function () {
+                const length = this.value.trim().length;
+                const minimo = 50;
+
+                if (length === 0) {
+                    helpText.textContent = '💡 Mínimo 50 caracteres. Cuéntanos sobre tus motivaciones, objetivos y qué esperas aprender.';
+                    helpText.style.color = '#7f8c8d';
+                } else if (length < minimo) {
+                    helpText.textContent = `💡 Faltan ${minimo - length} caracteres para el mínimo requerido.`;
+                    helpText.style.color = '#e74c3c';
+                    helpText.style.fontWeight = '600';
+                } else if (length > 1000) {
+                    helpText.textContent = `⚠️ Has excedido el límite de 1000 caracteres (${length}/1000)`;
+                    helpText.style.color = '#e74c3c';
+                    helpText.style.fontWeight = '600';
+                } else {
+                    helpText.textContent = `✅ Excelente (${length} caracteres)`;
+                    helpText.style.color = '#27ae60';
+                    helpText.style.fontWeight = '600';
+                }
+
+                // Limpiar error si existe
+                clearFieldError(this);
+            });
+
+            console.log('✅ Contador de caracteres residencia configurado');
+        }
+
+        // ✅ CONTADOR DE CARACTERES EN TIEMPO REAL - TRABAJO
+        const mensajeTrab = document.getElementById('mensajeTrab');
+        if (mensajeTrab) {
+            // Crear o encontrar elemento de ayuda
+            let helpText = mensajeTrab.nextElementSibling;
+            if (!helpText || !helpText.classList.contains('help-text')) {
+                helpText = document.createElement('small');
+                helpText.className = 'help-text';
+                mensajeTrab.parentNode.insertBefore(helpText, mensajeTrab.nextSibling);
+            }
+
+            mensajeTrab.addEventListener('input', function () {
+                const length = this.value.trim().length;
+                const minimo = 100;
+
+                if (length === 0) {
+                    helpText.textContent = '💡 Mínimo 100 caracteres. Describe tu experiencia relevante, habilidades clave y motivación.';
+                    helpText.style.color = '#7f8c8d';
+                } else if (length < minimo) {
+                    helpText.textContent = `💡 Faltan ${minimo - length} caracteres para el mínimo requerido.`;
+                    helpText.style.color = '#e74c3c';
+                    helpText.style.fontWeight = '600';
+                } else if (length > 1000) {
+                    helpText.textContent = `⚠️ Has excedido el límite de 1000 caracteres (${length}/1000)`;
+                    helpText.style.color = '#e74c3c';
+                    helpText.style.fontWeight = '600';
+                } else {
+                    helpText.textContent = `✅ Excelente descripción (${length} caracteres)`;
+                    helpText.style.color = '#27ae60';
+                    helpText.style.fontWeight = '600';
+                }
+
+                // Limpiar error si existe
+                clearFieldError(this);
+            });
+
+            console.log('✅ Contador de caracteres trabajo configurado');
+        }
+
+        // ✅ VALIDACIÓN EN TIEMPO REAL PARA ARCHIVO CV
+        const fileInputRes = document.getElementById('archivoCVRes');
+        if (fileInputRes) {
+            fileInputRes.addEventListener('change', function () {
+                if (this.files[0]) {
+                    const fileValidation = validateFile(this.files[0]);
+                    if (fileValidation.isValid) {
+                        clearFieldError(this);
+                    }
+                }
+            });
+        }
+
+        const fileInputTrab = document.getElementById('archivoCVTrab');
+        if (fileInputTrab) {
+            fileInputTrab.addEventListener('change', function () {
+                if (this.files[0]) {
+                    const fileValidation = validateFile(this.files[0]);
+                    if (fileValidation.isValid) {
+                        clearFieldError(this);
+                    }
+                }
+            });
+        }
     }
 
     function setupFileUploadListeners() {
@@ -507,10 +610,24 @@
         // Validar
         if (!validateForm(form, tipo)) {
             console.log('❌ Validación fallida');
+
+            // Mostrar notificación de error
+            showMessage(form,
+                '⚠️ Por favor corrige los errores en el formulario antes de enviar',
+                'error');
+
+            // Hacer scroll al primer error
             const firstError = form.querySelector('.error-message[style*="block"]');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Enfocar en el campo con error
+                const errorField = firstError.previousElementSibling;
+                if (errorField && errorField.tagName !== 'LABEL') {
+                    setTimeout(() => errorField.focus(), 500);
+                }
             }
+
             return;
         }
 
@@ -525,7 +642,9 @@
             formData.append('email', getFieldValue(form, 'email'));
             formData.append('telefono', getFieldValue(form, 'telefono'));
             formData.append('tipoSolicitud', tipo);
-            formData.append('mensaje', getFieldValue(form, 'mensaje') || '');
+
+            // ✅ Mensaje ahora es obligatorio, no vacío
+            formData.append('mensaje', getFieldValue(form, 'mensaje'));
 
             if (tipo === 'residencia') {
                 formData.append('carrera', getFieldValue(form, 'carrera'));
@@ -547,7 +666,7 @@
                 formData.append('posicionInteres', getFieldValue(form, 'posicionInteres'));
             }
 
-            // Archivo
+            // ✅ Archivo ahora es obligatorio
             const fileInput = form.querySelector('input[type="file"]');
             if (fileInput?.files[0]) {
                 formData.append('archivoCV', fileInput.files[0]);
@@ -642,7 +761,40 @@
             isValid = false;
         }
 
-        // Campos específicos
+        // ✅ VALIDAR MENSAJE (OBLIGATORIO PARA AMBOS)
+        const mensaje = getFieldValue(form, 'mensaje');
+        const minCaracteresMensaje = tipo === 'residencia' ? 50 : 100;
+
+        if (!mensaje) {
+            showFieldError(form, 'mensaje', 'El mensaje es requerido');
+            isValid = false;
+        } else if (mensaje.length < minCaracteresMensaje) {
+            showFieldError(form, 'mensaje',
+                `El mensaje debe tener al menos ${minCaracteresMensaje} caracteres (actualmente: ${mensaje.length})`);
+            isValid = false;
+        } else if (mensaje.length > 1000) {
+            showFieldError(form, 'mensaje', 'El mensaje no debe exceder 1000 caracteres');
+            isValid = false;
+        }
+
+        // ✅ VALIDAR CV (OBLIGATORIO PARA AMBOS)
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput?.files[0]) {
+            showFieldError(form, 'archivoCV',
+                tipo === 'residencia'
+                    ? 'El CV es obligatorio para solicitar residencia'
+                    : 'El CV es obligatorio para solicitudes de trabajo');
+            isValid = false;
+        } else {
+            // Validar el archivo si existe
+            const fileValidation = validateFile(fileInput.files[0]);
+            if (!fileValidation.isValid) {
+                showFieldError(form, 'archivoCV', fileValidation.error);
+                isValid = false;
+            }
+        }
+
+        // Campos específicos de tipo
         if (tipo === 'residencia') {
             if (!getFieldValue(form, 'carrera')) {
                 showFieldError(form, 'carrera', 'La carrera es requerida');
@@ -659,23 +811,6 @@
             }
             if (!getFieldValue(form, 'posicionInteres')) {
                 showFieldError(form, 'posicionInteres', 'La posición de interés es requerida');
-                isValid = false;
-            }
-
-            // CV obligatorio para trabajo
-            const fileInput = form.querySelector('input[type="file"]');
-            if (!fileInput?.files[0]) {
-                showFieldError(form, 'archivoCV', 'El CV es requerido para solicitudes de trabajo');
-                isValid = false;
-            }
-        }
-
-        // Validar archivo si existe
-        const fileInput = form.querySelector('input[type="file"]');
-        if (fileInput?.files[0]) {
-            const fileValidation = validateFile(fileInput.files[0]);
-            if (!fileValidation.isValid) {
-                showFieldError(form, 'archivoCV', fileValidation.error);
                 isValid = false;
             }
         }

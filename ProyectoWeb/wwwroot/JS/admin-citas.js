@@ -305,8 +305,10 @@ if (window.adminCitasInitialized) {
         background: white;
         border-radius: 12px;
         padding: 0;
-        max-width: 550px;
+        max-width: 480px;
         width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         animation: scaleIn 0.3s ease-out;
     `;
@@ -326,26 +328,26 @@ if (window.adminCitasInitialized) {
         </div>
         
         <div style="padding: 24px;">
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <p style="margin: 0; color: #856404; font-size: 14px;">
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                <p style="margin: 0; color: #856404; font-size: 13px;">
                     <strong>⚠️ Importante:</strong> El cliente recibirá un email con la notificación de cancelación y el motivo que escribas.
                 </p>
             </div>
 
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="margin-bottom: 8px;">
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <div style="margin-bottom: 6px; font-size: 14px;">
                     <strong style="color: #333;">👤 Cliente:</strong> ${escapeHtml(cita.nombreCompleto)}
                 </div>
-                <div style="margin-bottom: 8px;">
+                <div style="margin-bottom: 6px; font-size: 14px;">
                     <strong style="color: #333;">📅 Fecha:</strong> ${fechaFormateada}
                 </div>
-                <div>
+                <div style="font-size: 14px;">
                     <strong style="color: #333;">💼 Servicio:</strong> ${escapeHtml(cita.servicioInteres || 'No especificado')}
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px;">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 6px; font-size: 14px;">
                     📝 Motivo de la Cancelación <span style="color: #dc3545;">*</span>
                 </label>
                 <textarea 
@@ -353,12 +355,12 @@ if (window.adminCitasInitialized) {
                     placeholder="Ej: Lo sentimos, tenemos un imprevisto. Te ofrecemos reagendar para la próxima semana..."
                     style="
                         width: 100%;
-                        min-height: 120px;
-                        padding: 12px;
+                        min-height: 90px;
+                        padding: 10px;
                         border: 2px solid #ddd;
-                        border-radius: 8px;
+                        border-radius: 6px;
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        font-size: 14px;
+                        font-size: 13px;
                         resize: vertical;
                         transition: border-color 0.2s;
                         box-sizing: border-box;
@@ -366,15 +368,15 @@ if (window.adminCitasInitialized) {
                     onfocus="this.style.borderColor='#667eea'; this.style.outline='none';"
                     onblur="this.style.borderColor='#ddd';"
                 ></textarea>
-                <small style="color: #666; display: block; margin-top: 8px;">
+                <small style="color: #666; display: block; margin-top: 6px; font-size: 12px;">
                     💡 Sé claro y empático. Opcionalmente, ofrece alternativas para reagendar.
                 </small>
             </div>
 
-            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="font-size: 13px; color: #2e7d32;">
+            <div style="background: #e8f5e9; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                <div style="font-size: 12px; color: #2e7d32;">
                     <strong>✨ Sugerencias de motivos:</strong>
-                    <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                    <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.6;">
                         <li>Emergencia en la empresa que requiere atención inmediata</li>
                         <li>Conflicto de agenda - Ofrecimiento de nuevas fechas disponibles</li>
                         <li>Situación imprevista del consultor asignado</li>
@@ -382,20 +384,20 @@ if (window.adminCitasInitialized) {
                 </div>
             </div>
 
-            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button 
                     id="cancelDialogBtn" 
                     type="button"
                     style="
-                        padding: 12px 24px;
+                        padding: 10px 20px;
                         border: 2px solid #ddd;
                         background: white;
                         color: #666;
-                        border-radius: 8px;
+                        border-radius: 6px;
                         font-weight: 600;
                         cursor: pointer;
                         transition: all 0.2s;
-                        font-size: 14px;
+                        font-size: 13px;
                     " 
                     onmouseover="this.style.background='#f5f5f5'; this.style.borderColor='#ccc';" 
                     onmouseout="this.style.background='white'; this.style.borderColor='#ddd';">
@@ -405,15 +407,15 @@ if (window.adminCitasInitialized) {
                     id="confirmCancelBtn" 
                     type="button"
                     style="
-                        padding: 12px 24px;
+                        padding: 10px 20px;
                         border: none;
                         background: #dc3545;
                         color: white;
-                        border-radius: 8px;
+                        border-radius: 6px;
                         font-weight: 600;
                         cursor: pointer;
                         transition: all 0.2s;
-                        font-size: 14px;
+                        font-size: 13px;
                     " 
                     onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';" 
                     onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
