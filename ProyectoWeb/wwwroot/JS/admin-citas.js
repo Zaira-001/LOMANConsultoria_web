@@ -282,6 +282,204 @@ if (window.adminCitasInitialized) {
         });
     }
 
+    // ==================== FUNCIÓN MEJORADA: Mostrar diálogo de cancelación con motivo ====================
+
+    window.showCancelDialog = function (cita, callback) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10002;
+        animation: fadeIn 0.2s ease-out;
+    `;
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 0;
+        max-width: 550px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        animation: scaleIn 0.3s ease-out;
+    `;
+
+        const fechaFormateada = parseDate(cita.fechaHora)?.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) || 'Fecha no disponible';
+
+        dialog.innerHTML = `
+        <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+            <h3 style="margin: 0; font-size: 22px; font-weight: 600;">Cancelar Cita</h3>
+        </div>
+        
+        <div style="padding: 24px;">
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #856404; font-size: 14px;">
+                    <strong>⚠️ Importante:</strong> El cliente recibirá un email con la notificación de cancelación y el motivo que escribas.
+                </p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #333;">👤 Cliente:</strong> ${escapeHtml(cita.nombreCompleto)}
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #333;">📅 Fecha:</strong> ${fechaFormateada}
+                </div>
+                <div>
+                    <strong style="color: #333;">💼 Servicio:</strong> ${escapeHtml(cita.servicioInteres || 'No especificado')}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 8px;">
+                    📝 Motivo de la Cancelación <span style="color: #dc3545;">*</span>
+                </label>
+                <textarea 
+                    id="motivoCancelacion" 
+                    placeholder="Ej: Lo sentimos, tenemos un imprevisto. Te ofrecemos reagendar para la próxima semana..."
+                    style="
+                        width: 100%;
+                        min-height: 120px;
+                        padding: 12px;
+                        border: 2px solid #ddd;
+                        border-radius: 8px;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        font-size: 14px;
+                        resize: vertical;
+                        transition: border-color 0.2s;
+                        box-sizing: border-box;
+                    "
+                    onfocus="this.style.borderColor='#667eea'; this.style.outline='none';"
+                    onblur="this.style.borderColor='#ddd';"
+                ></textarea>
+                <small style="color: #666; display: block; margin-top: 8px;">
+                    💡 Sé claro y empático. Opcionalmente, ofrece alternativas para reagendar.
+                </small>
+            </div>
+
+            <div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="font-size: 13px; color: #2e7d32;">
+                    <strong>✨ Sugerencias de motivos:</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                        <li>Emergencia en la empresa que requiere atención inmediata</li>
+                        <li>Conflicto de agenda - Ofrecimiento de nuevas fechas disponibles</li>
+                        <li>Situación imprevista del consultor asignado</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button 
+                    id="cancelDialogBtn" 
+                    type="button"
+                    style="
+                        padding: 12px 24px;
+                        border: 2px solid #ddd;
+                        background: white;
+                        color: #666;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 14px;
+                    " 
+                    onmouseover="this.style.background='#f5f5f5'; this.style.borderColor='#ccc';" 
+                    onmouseout="this.style.background='white'; this.style.borderColor='#ddd';">
+                    Volver
+                </button>
+                <button 
+                    id="confirmCancelBtn" 
+                    type="button"
+                    style="
+                        padding: 12px 24px;
+                        border: none;
+                        background: #dc3545;
+                        color: white;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 14px;
+                    " 
+                    onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';" 
+                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                    ❌ Cancelar Cita
+                </button>
+            </div>
+        </div>
+    `;
+
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        const motivoTextarea = dialog.querySelector('#motivoCancelacion');
+        const confirmBtn = dialog.querySelector('#confirmCancelBtn');
+        const cancelBtn = dialog.querySelector('#cancelDialogBtn');
+
+        // Autoenfoque en el textarea
+        setTimeout(() => motivoTextarea.focus(), 100);
+
+        const close = (confirmed, motivo) => {
+            overlay.style.animation = 'fadeIn 0.2s ease-in reverse';
+            setTimeout(() => {
+                overlay.remove();
+                if (callback) callback(confirmed, motivo);
+            }, 200);
+        };
+
+        confirmBtn.onclick = () => {
+            const motivo = motivoTextarea.value.trim();
+
+            if (!motivo) {
+                // Resaltar el campo si está vacío
+                motivoTextarea.style.borderColor = '#dc3545';
+                motivoTextarea.style.boxShadow = '0 0 0 3px rgba(220, 53, 69, 0.1)';
+                showNotification('Por favor, escribe el motivo de la cancelación', 'warning', 4000);
+                motivoTextarea.focus();
+                return;
+            }
+
+            if (motivo.length < 20) {
+                showNotification('El motivo debe ser más detallado (mínimo 20 caracteres)', 'warning', 4000);
+                motivoTextarea.focus();
+                return;
+            }
+
+            close(true, motivo);
+        };
+
+        cancelBtn.onclick = () => close(false, null);
+
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                close(false, null);
+            }
+        };
+
+        // Cerrar con ESC
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                close(false, null);
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    };
+
     // ==================== FUNCIONES PRINCIPALES ====================
 
     function parseDate(dateStr) {
@@ -827,12 +1025,44 @@ if (window.adminCitasInitialized) {
         window.selectedCita = null;
     };
 
+    // ==================== ACTUALIZAR: updateCitaStatusFromModal ====================
+
     window.updateCitaStatusFromModal = async function (nuevoEstado) {
         if (!window.selectedCita) return;
 
+        // SI ES CANCELACIÓN, MOSTRAR DIÁLOGO ESPECIAL
+        if (nuevoEstado === 'Cancelada') {
+            window.showCancelDialog(window.selectedCita, async (confirmed, motivo) => {
+                if (!confirmed) return;
+
+                const loadingId = showNotification('Cancelando cita y notificando al cliente...', 'loading', 0);
+
+                const success = await updateCitaStatus(
+                    window.selectedCita.id,
+                    'Cancelada',
+                    motivo // El motivo se guarda en NotasAdmin
+                );
+
+                document.getElementById(loadingId)?.remove();
+
+                if (success) {
+                    showNotification(
+                        `Cita cancelada. Se envió un email a ${window.selectedCita.email} explicando el motivo.`,
+                        'success',
+                        5000
+                    );
+                    window.closeCitaModal();
+                    await window.refreshCitas();
+                } else {
+                    showNotification('Error al cancelar la cita', 'error');
+                }
+            });
+            return;
+        }
+
+        // PARA OTROS ESTADOS (Confirmada, Completada)
         const estadoEmoji = {
             'Confirmada': '✅',
-            'Cancelada': '❌',
             'Completada': '✔️'
         };
 
@@ -840,7 +1070,7 @@ if (window.adminCitasInitialized) {
             `${estadoEmoji[nuevoEstado]} Cambiar Estado`,
             `¿Cambiar el estado de esta cita a "${nuevoEstado}"?\n\nCliente: ${window.selectedCita.nombreCompleto}\nFecha: ${parseDate(window.selectedCita.fechaHora)?.toLocaleDateString('es-ES')}`,
             null,
-            nuevoEstado === 'Confirmada' ? 'success' : nuevoEstado === 'Cancelada' ? 'warning' : 'info'
+            nuevoEstado === 'Confirmada' ? 'success' : 'info'
         );
 
         if (!confirmed) return;
@@ -861,6 +1091,8 @@ if (window.adminCitasInitialized) {
         }
     };
 
+    // ==================== ACTUALIZAR: updateCitaStatusQuick ====================
+
     window.updateCitaStatusQuick = async function (citaId, nuevoEstado) {
         const cita = window.citasData.find(c => c.id === citaId);
 
@@ -869,13 +1101,34 @@ if (window.adminCitasInitialized) {
             return;
         }
 
-        const estadoEmoji = {
-            'Confirmada': '✅',
-            'Cancelada': '❌'
-        };
+        // SI ES CANCELACIÓN, MOSTRAR DIÁLOGO ESPECIAL
+        if (nuevoEstado === 'Cancelada') {
+            window.showCancelDialog(cita, async (confirmed, motivo) => {
+                if (!confirmed) return;
 
+                const loadingId = showNotification('Cancelando cita...', 'loading', 0);
+
+                const success = await updateCitaStatus(citaId, 'Cancelada', motivo);
+
+                document.getElementById(loadingId)?.remove();
+
+                if (success) {
+                    showNotification(
+                        `Cita cancelada. Email enviado a ${cita.email}`,
+                        'success',
+                        5000
+                    );
+                    await window.refreshCitas();
+                } else {
+                    showNotification('Error al cancelar la cita', 'error');
+                }
+            });
+            return;
+        }
+
+        // PARA CONFIRMACIÓN
         const confirmed = await showConfirmDialog(
-            `${estadoEmoji[nuevoEstado]} ${nuevoEstado === 'Confirmada' ? 'Confirmar Cita' : 'Cancelar Cita'}`,
+            '✅ Confirmar Cita',
             `Cliente: ${cita.nombreCompleto}\nFecha: ${parseDate(cita.fechaHora)?.toLocaleDateString('es-ES', {
                 weekday: 'long',
                 day: 'numeric',
@@ -884,28 +1137,79 @@ if (window.adminCitasInitialized) {
                 minute: '2-digit'
             })}\n\n¿Continuar?`,
             null,
-            nuevoEstado === 'Confirmada' ? 'success' : 'warning'
+            'success'
         );
 
         if (!confirmed) return;
 
         const notas = cita?.notasAdmin || '';
-        const loadingId = showNotification('Procesando...', 'loading', 0);
+        const loadingId = showNotification('Confirmando cita...', 'loading', 0);
 
-        const success = await updateCitaStatus(citaId, nuevoEstado, notas);
+        const success = await updateCitaStatus(citaId, 'Confirmada', notas);
 
         document.getElementById(loadingId)?.remove();
 
         if (success) {
-            showNotification(
-                `Cita ${nuevoEstado.toLowerCase()} correctamente`,
-                'success'
-            );
+            showNotification('Cita confirmada correctamente', 'success');
             await window.refreshCitas();
         } else {
-            showNotification('Error al actualizar la cita', 'error');
+            showNotification('Error al confirmar la cita', 'error');
         }
     };
+
+    // ==================== FUNCIÓN AUXILIAR ====================
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) return dateStr;
+
+        try {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                return date;
+            }
+        } catch (e) {
+            console.error('Error parseando fecha:', dateStr, e);
+        }
+
+        return null;
+    }
+
+    async function updateCitaStatus(citaId, nuevoEstado, notas) {
+        try {
+            console.log(`📤 Actualizando cita ${citaId}:`, { nuevoEstado, notas });
+
+            const response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cita/${citaId}/estado`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Estado: nuevoEstado,
+                    NotasAdmin: notas
+                })
+            });
+
+            if (response.ok) {
+                console.log('✅ Cita actualizada correctamente');
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Error en la respuesta:', response.status, errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error actualizando cita:', error);
+            return false;
+        }
+    }
 
     window.saveNotesOnly = async function () {
         if (!window.selectedCita) return;
@@ -931,33 +1235,6 @@ if (window.adminCitasInitialized) {
         }
     };
 
-    async function updateCitaStatus(citaId, nuevoEstado, notas) {
-        try {
-            console.log(`📤 Actualizando cita ${citaId}:`, { nuevoEstado, notas });
-
-            const response = await fetch(`https://lomanconsultoria-web.onrender.com/api/Cita/${citaId}/estado`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    Estado: nuevoEstado,
-                    NotasAdmin: notas
-                })
-            });
-
-            if (response.ok) {
-                console.log('✅ Cita actualizada correctamente');
-                return true;
-            } else {
-                console.error('❌ Error en la respuesta:', response.status);
-                return false;
-            }
-        } catch (error) {
-            console.error('❌ Error actualizando cita:', error);
-            return false;
-        }
-    }
 
     function escapeHtml(text) {
         if (!text) return '';

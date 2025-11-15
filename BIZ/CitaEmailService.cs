@@ -117,6 +117,10 @@ namespace BIZ
         // GENERADOR DE HTML (Sin cambios en estructura)
         // ============================================
 
+        // ============================================
+        // ACTUALIZAR ESTE MÉTODO EN CitaEmailService.cs
+        // ============================================
+
         private string GenerarEmailNotificacion(NotificacionCita datos)
         {
             string estadoColor = datos.Estado.ToLower() switch
@@ -146,7 +150,7 @@ namespace BIZ
             string mensaje = datos.Estado.ToLower() switch
             {
                 "confirmada" => "¡Excelente noticia! Tu cita ha sido confirmada. Te esperamos en la fecha y hora acordadas.",
-                "cancelada" => "Lamentamos informarte que tu cita ha sido cancelada. Por favor, contáctanos si deseas reagendar.",
+                "cancelada" => "Lamentamos informarte que tu cita ha sido cancelada.",
                 "completada" => "¡Gracias por tu visita! Esperamos que hayas tenido una excelente experiencia con nosotros.",
                 _ => "Tu cita está pendiente de confirmación. Te notificaremos pronto."
             };
@@ -159,289 +163,247 @@ namespace BIZ
             string mensajeWhatsApp = $"Hola, deseo reagendar mi cita del {fechaFormateada} para el servicio de {datos.ServicioInteres}.";
             string whatsappLink = $"https://wa.me/5215659644304?text={Uri.EscapeDataString(mensajeWhatsApp)}";
 
+            // ✅ AGREGAR SECCIÓN DE MOTIVO DE CANCELACIÓN
+            string motivoCancelacionHtml = "";
+            if (datos.Estado.ToLower() == "cancelada" && !string.IsNullOrWhiteSpace(datos.NotasAdmin))
+            {
+                motivoCancelacionHtml = $@"
+            <div style='background: #fff3cd; border-left: 5px solid #ffc107; padding: 25px; border-radius: 10px; margin: 25px 0;'>
+                <h3 style='margin: 0 0 15px 0; color: #856404; display: flex; align-items: center; gap: 10px;'>
+                    <span style='font-size: 24px;'>💬</span>
+                    Motivo de la Cancelación
+                </h3>
+                <div style='background: white; padding: 20px; border-radius: 8px; color: #333; line-height: 1.6; white-space: pre-wrap;'>
+                    {System.Net.WebUtility.HtmlEncode(datos.NotasAdmin)}
+                </div>
+            </div>
+        ";
+            }
+
             var emailBody = new StringBuilder();
             emailBody.AppendLine($@"
-                <html>
-                <head>
-                    <meta charset='UTF-8'>
-                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                    <style>
-                        body {{
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                            line-height: 1.6;
-                            color: #333;
-                            margin: 0;
-                            padding: 0;
-                            background-color: #f4f4f4;
-                        }}
-                        .container {{
-                            max-width: 600px;
-                            margin: 20px auto;
-                            background: #ffffff;
-                            border-radius: 10px;
-                            overflow: hidden;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                        }}
-                        .header {{
-                            background: linear-gradient(135deg, {estadoColor} 0%, {AdjustColor(estadoColor, -20)} 100%);
-                            color: white;
-                            padding: 30px 20px;
-                            text-align: center;
-                        }}
-                        .header h1 {{
-                            margin: 0;
-                            font-size: 28px;
-                            font-weight: 700;
-                        }}
-                        .status-badge {{
-                            display: inline-block;
-                            background: rgba(255,255,255,0.2);
-                            padding: 8px 20px;
-                            border-radius: 20px;
-                            margin-top: 15px;
-                            font-size: 16px;
-                            font-weight: 600;
-                        }}
-                        .content {{
-                            padding: 30px 25px;
-                        }}
-                        .message-box {{
-                            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-                            padding: 20px;
-                            border-radius: 10px;
-                            border-left: 5px solid {estadoColor};
-                            margin-bottom: 25px;
-                        }}
-                        .message-box p {{
-                            margin: 0;
-                            font-size: 16px;
-                            color: #333;
-                        }}
-                        .info-section {{
-                            background: #f8f9fa;
-                            padding: 20px;
-                            border-radius: 8px;
-                            margin-bottom: 20px;
-                        }}
-                        .info-row {{
-                            display: flex;
-                            padding: 12px 0;
-                            border-bottom: 1px solid #e0e0e0;
-                        }}
-                        .info-row:last-child {{
-                            border-bottom: none;
-                        }}
-                        .info-label {{
-                            font-weight: 600;
-                            color: #555;
-                            min-width: 120px;
-                        }}
-                        .info-value {{
-                            color: #333;
-                            flex: 1;
-                        }}
-                        .modalidad-box {{
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            padding: 25px;
-                            border-radius: 12px;
-                            margin: 25px 0;
-                            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        }}
-                        .modalidad-box h3 {{
-                            margin: 0 0 15px 0;
-                            font-size: 20px;
-                            display: flex;
-                            align-items: center;
-                            gap: 10px;
-                        }}
-                        .modalidad-box ul {{
-                            margin: 15px 0;
-                            padding-left: 20px;
-                        }}
-                        .modalidad-box li {{
-                            margin: 8px 0;
-                            line-height: 1.5;
-                        }}
-                        .modalidad-box .highlight-link {{
-                            display: inline-block;
-                            background: rgba(255,255,255,0.2);
-                            padding: 12px 25px;
-                            border-radius: 25px;
-                            margin: 15px 0;
-                            text-decoration: none;
-                            color: white;
-                            font-weight: 600;
-                            border: 2px solid white;
-                            transition: all 0.3s;
-                        }}
-                        .modalidad-box .highlight-link:hover {{
-                            background: white;
-                            color: #667eea;
-                        }}
-                        .meet-button {{
-                            display: inline-block;
-                            background: #0066ff;
-                            color: white;
-                            padding: 15px 35px;
-                            border-radius: 25px;
-                            text-decoration: none;
-                            font-weight: 600;
-                            font-size: 16px;
-                            margin: 20px auto;
-                            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
-                        }}
-                        .phone-highlight {{
-                            background: #25D366;
-                            color: white;
-                            padding: 15px 25px;
-                            border-radius: 10px;
-                            text-align: center;
-                            font-size: 18px;
-                            font-weight: 600;
-                            margin: 15px 0;
-                        }}
-                        .footer {{
-                            background: #343a40;
-                            color: white;
-                            padding: 25px;
-                            text-align: center;
-                        }}
-                        .footer h4 {{
-                            margin: 0 0 10px 0;
-                            font-size: 18px;
-                        }}
-                        .footer p {{
-                            margin: 5px 0;
-                            opacity: 0.8;
-                            font-size: 13px;
-                        }}
-                        .contact-info {{
-                            margin-top: 15px;
-                            padding-top: 15px;
-                            border-top: 1px solid rgba(255,255,255,0.1);
-                        }}
-                        .cta-button {{
-                            display: inline-block;
-                            background: {estadoColor};
-                            color: white;
-                            padding: 12px 30px;
-                            border-radius: 25px;
-                            text-decoration: none;
-                            font-weight: 600;
-                            margin-top: 20px;
-                            margin-right: 10px;
-                        }}
-                        .whatsapp-button {{
-                            display: inline-block;
-                            background: #25D366;
-                            color: white;
-                            padding: 12px 30px;
-                            border-radius: 25px;
-                            text-decoration: none;
-                            font-weight: 600;
-                            margin-top: 20px;
-                        }}
-                        @media only screen and (max-width: 480px) {{
-                            .container {{
-                                margin: 0;
-                                border-radius: 0;
-                            }}
-                            .header h1 {{
-                                font-size: 24px;
-                            }}
-                            .content {{
-                                padding: 20px 15px;
-                            }}
-                            .info-row {{
-                                flex-direction: column;
-                            }}
-                            .info-label {{
-                                margin-bottom: 5px;
-                            }}
-                            .cta-button, .whatsapp-button {{
-                                display: block;
-                                margin: 10px 0;
-                            }}
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <div class='container'>
-                        <div class='header'>
-                            <h1>{estadoIcono} Estado de tu Cita</h1>
-                            <div class='status-badge'>{estadoTexto}</div>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background: #ffffff;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, {estadoColor} 0%, {AdjustColor(estadoColor, -20)} 100%);
+                    color: white;
+                    padding: 30px 20px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                }}
+                .status-badge {{
+                    display: inline-block;
+                    background: rgba(255,255,255,0.2);
+                    padding: 8px 20px;
+                    border-radius: 20px;
+                    margin-top: 15px;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    padding: 30px 25px;
+                }}
+                .message-box {{
+                    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                    padding: 20px;
+                    border-radius: 10px;
+                    border-left: 5px solid {estadoColor};
+                    margin-bottom: 25px;
+                }}
+                .message-box p {{
+                    margin: 0;
+                    font-size: 16px;
+                    color: #333;
+                }}
+                .info-section {{
+                    background: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                }}
+                .info-row {{
+                    display: flex;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #e0e0e0;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .info-label {{
+                    font-weight: 600;
+                    color: #555;
+                    min-width: 120px;
+                }}
+                .info-value {{
+                    color: #333;
+                    flex: 1;
+                }}
+                .footer {{
+                    background: #343a40;
+                    color: white;
+                    padding: 25px;
+                    text-align: center;
+                }}
+                .footer h4 {{
+                    margin: 0 0 10px 0;
+                    font-size: 18px;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    opacity: 0.8;
+                    font-size: 13px;
+                }}
+                .contact-info {{
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 1px solid rgba(255,255,255,0.1);
+                }}
+                .cta-button {{
+                    display: inline-block;
+                    background: {estadoColor};
+                    color: white;
+                    padding: 12px 30px;
+                    border-radius: 25px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    margin-top: 20px;
+                    margin-right: 10px;
+                }}
+                .whatsapp-button {{
+                    display: inline-block;
+                    background: #25D366;
+                    color: white;
+                    padding: 12px 30px;
+                    border-radius: 25px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    margin-top: 20px;
+                }}
+                @media only screen and (max-width: 480px) {{
+                    .container {{
+                        margin: 0;
+                        border-radius: 0;
+                    }}
+                    .header h1 {{
+                        font-size: 24px;
+                    }}
+                    .content {{
+                        padding: 20px 15px;
+                    }}
+                    .info-row {{
+                        flex-direction: column;
+                    }}
+                    .info-label {{
+                        margin-bottom: 5px;
+                    }}
+                    .cta-button, .whatsapp-button {{
+                        display: block;
+                        margin: 10px 0;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>{estadoIcono} Estado de tu Cita</h1>
+                    <div class='status-badge'>{estadoTexto}</div>
+                </div>
+                
+                <div class='content'>
+                    <div class='message-box'>
+                        <p><strong>Hola {datos.NombreCliente},</strong></p>
+                        <p style='margin-top: 10px;'>{mensaje}</p>
+                    </div>
+                    
+                    {motivoCancelacionHtml}
+                    
+                    <div class='info-section'>
+                        <h3 style='margin-top: 0; color: #1E3A5F;'>📋 Detalles de la Cita</h3>
+                        
+                        <div class='info-row'>
+                            <div class='info-label'>📅 Fecha y Hora:</div>
+                            <div class='info-value'><strong>{fechaFormateada}</strong></div>
                         </div>
                         
-                        <div class='content'>
-                            <div class='message-box'>
-                                <p><strong>Hola {datos.NombreCliente},</strong></p>
-                                <p style='margin-top: 10px;'>{mensaje}</p>
-                            </div>
-                            
-                            <div class='info-section'>
-                                <h3 style='margin-top: 0; color: #1E3A5F;'>📋 Detalles de la Cita</h3>
-                                
-                                <div class='info-row'>
-                                    <div class='info-label'>📅 Fecha y Hora:</div>
-                                    <div class='info-value'><strong>{fechaFormateada}</strong></div>
-                                </div>
-                                
-                                <div class='info-row'>
-                                    <div class='info-label'>💼 Servicio:</div>
-                                    <div class='info-value'>{datos.ServicioInteres}</div>
-                                </div>
-                                
-                                <div class='info-row'>
-                                    <div class='info-label'>📍 Modalidad:</div>
-                                    <div class='info-value'><strong>{datos.Modalidad}</strong></div>
-                                </div>
-                                
-                                {(datos.Estado.ToLower() == "confirmada" && !string.IsNullOrWhiteSpace(datos.NotasAdmin) ? $@"
-                                <div class='info-row'>
-                                    <div class='info-label'>📌 Notas:</div>
-                                    <div class='info-value'>{datos.NotasAdmin}</div>
-                                </div>
-                                " : "")}
-                            </div>
-                            
-                            {modalidadContenido}
-                            
-                            {(datos.Estado.ToLower() == "confirmada" ? $@"
-                            <div style='text-align: center; padding: 20px 0;'>
-                                <p style='color: #666; margin-bottom: 15px;'>¿Necesitas hacer cambios o tienes alguna duda?</p>
-                                <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar</a>
-                                <a href='{whatsappLink}' class='whatsapp-button' style='color: white;'>💬 WhatsApp</a>
-                            </div>
-                            " : "")}
-                            
-                            {(datos.Estado.ToLower() == "cancelada" ? $@"
-                            <div style='text-align: center; padding: 20px 0;'>
-                                <p style='color: #666; margin-bottom: 15px;'>¿Deseas agendar una nueva cita?</p>
-                                <a href='{whatsappLink}' class='whatsapp-button' style='color: white;'>💬 Reagendar por WhatsApp</a>
-                                <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar</a>
-                            </div>
-                            " : "")}
+                        <div class='info-row'>
+                            <div class='info-label'>💼 Servicio:</div>
+                            <div class='info-value'>{datos.ServicioInteres}</div>
                         </div>
                         
-                        <div class='footer'>
-                            <h4>Consultoría Integral SC</h4>
-                            <p>Tu socio estratégico en soluciones empresariales</p>
-                            
-                            <div class='contact-info'>
-                                <p>📞 Teléfono: 56-5964-4304</p>
-                                <p>📧 Email: lomanconsultoria2025@gmail.com</p>
-                            </div>
-                            
-                            <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>
-                                Este correo fue enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}<br>
-                                Sistema automatizado de notificaciones
-                            </p>
+                        <div class='info-row'>
+                            <div class='info-label'>📍 Modalidad:</div>
+                            <div class='info-value'><strong>{datos.Modalidad}</strong></div>
                         </div>
                     </div>
-                </body>
-                </html>
-            ");
+                    
+                    {modalidadContenido}
+                    
+                    {(datos.Estado.ToLower() == "confirmada" ? $@"
+                    <div style='text-align: center; padding: 20px 0;'>
+                        <p style='color: #666; margin-bottom: 15px;'>¿Necesitas hacer cambios o tienes alguna duda?</p>
+                        <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar</a>
+                        <a href='{whatsappLink}' class='whatsapp-button' style='color: white;'>💬 WhatsApp</a>
+                    </div>
+                    " : "")}
+                    
+                    {(datos.Estado.ToLower() == "cancelada" ? $@"
+                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; margin: 25px 0; text-align: center; color: white;'>
+                        <h3 style='margin: 0 0 15px 0; font-size: 20px;'>📅 ¿Deseas Reagendar?</h3>
+                        <p style='margin: 0 0 20px 0; opacity: 0.95;'>
+                            Estamos disponibles para ayudarte a encontrar una nueva fecha que se ajuste a tus necesidades.
+                        </p>
+                        <a href='{whatsappLink}' class='whatsapp-button' style='color: white; background: #25D366; display: inline-block; margin: 5px;'>
+                            💬 Reagendar por WhatsApp
+                        </a>
+                        <a href='tel:5659644304' style='background: rgba(255,255,255,0.2); color: white; border: 2px solid white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; display: inline-block; margin: 5px;'>
+                            📞 Llamar
+                        </a>
+                    </div>
+                    " : "")}
+                </div>
+                
+                <div class='footer'>
+                    <h4>Consultoría Integral SC</h4>
+                    <p>Tu socio estratégico en soluciones empresariales</p>
+                    
+                    <div class='contact-info'>
+                        <p>📞 Teléfono: 56-5964-4304</p>
+                        <p>📧 Email: lomanconsultoria2025@gmail.com</p>
+                    </div>
+                    
+                    <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>
+                        Este correo fue enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}<br>
+                        Sistema automatizado de notificaciones
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+    ");
 
             return emailBody.ToString();
         }
