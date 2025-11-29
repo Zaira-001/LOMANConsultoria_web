@@ -15,21 +15,434 @@ namespace BIZ
         private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";
         private readonly string _fromName = "Consultoría Integral SC";
+        private readonly string _adminEmail = "zaira7731479269@gmail.com"; // Email del administrador
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
         private readonly string _meetLinkEmpresa = "https://meet.google.com/fcn-ecqy-ebz";
 
         private static readonly HttpClient _httpClient = new HttpClient();
 
+        public async Task<bool> EnviarConfirmacionCliente(NotificacionCita datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 Enviando confirmación al cliente: {datos.EmailCliente}");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailConfirmacionCliente(datos);
+
+                await EnviarEmailViaBravo(
+                    destinatario: datos.EmailCliente,
+                    asunto: $"✅ Cita Recibida - {datos.ServicioInteres} - Consultoría Integral SC",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Email de confirmación al cliente enviado");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error enviando confirmación al cliente: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ============================================
+        // 2️⃣ EMAIL AL ADMIN: Nueva cita recibida
+        // ============================================
+        public async Task<bool> EnviarNotificacionNuevaCitaAdmin(NotificacionCita datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 Enviando notificación de nueva cita al admin");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailNuevaCitaAdmin(datos);
+
+                await EnviarEmailViaBravo(
+                    destinatario: _adminEmail,
+                    asunto: $"🔔 Nueva Cita Recibida - {datos.NombreCliente} - {datos.FechaHora:dd/MM/yyyy HH:mm}",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Email al administrador enviado");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error enviando notificación al admin: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ============================================
+        // 3️⃣ EMAIL AL ADMIN: Recordatorio de cita pendiente
+        // ============================================
+        public async Task<bool> EnviarRecordatorioCitaPendiente(NotificacionCita datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 Enviando recordatorio de cita pendiente al admin");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailRecordatorioPendiente(datos);
+
+                await EnviarEmailViaBravo(
+                    destinatario: _adminEmail,
+                    asunto: $"⏰ Recordatorio: Cita Pendiente - {datos.NombreCliente} - {datos.FechaHora:dd/MM/yyyy HH:mm}",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Email de recordatorio al administrador enviado");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error enviando recordatorio al admin: {ex.Message}");
+                return false;
+            }
+        }
+
+        private string GenerarEmailConfirmacionCliente(NotificacionCita datos)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            string mensajeWhatsApp = $"Hola, acabo de agendar una cita para el {fechaFormateada}. Mi nombre es {datos.NombreCliente}.";
+            string whatsappLink = $"https://wa.me/5215659644304?text={Uri.EscapeDataString(mensajeWhatsApp)}";
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #1E3A5F 0%, #2c5282 100%); color: white; padding: 30px 20px; text-align: center; }}
+        .header h1 {{ margin: 0; font-size: 28px; }}
+        .content {{ padding: 30px; }}
+        .status-badge {{ background: #28a745; color: white; padding: 8px 20px; border-radius: 20px; display: inline-block; margin: 15px 0; }}
+        .info-box {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-row {{ padding: 12px 0; border-bottom: 1px solid #e0e0e0; }}
+        .info-label {{ font-weight: 600; color: #555; }}
+        .info-value {{ color: #333; font-weight: bold; }}
+        .cta-button {{ display: inline-block; background: #25D366; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 10px; }}
+        .footer {{ background: #343a40; color: white; padding: 25px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>✅ ¡Cita Recibida!</h1>
+            <div class='status-badge'>PENDIENTE DE CONFIRMACIÓN</div>
+        </div>
+        
+        <div class='content'>
+            <p><strong>Hola {datos.NombreCliente},</strong></p>
+            <p>Hemos recibido tu solicitud de cita correctamente. Te contactaremos pronto para confirmarla.</p>
+            
+            <div class='info-box'>
+                <h3 style='margin-top: 0; color: #1E3A5F;'>📋 Detalles de tu Solicitud</h3>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📅 Fecha y Hora Solicitada:</span><br>
+                    <span class='info-value'>{fechaFormateada}</span>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>💼 Servicio:</span><br>
+                    <span class='info-value'>{datos.ServicioInteres}</span>
+                </div>
+                
+                <div class='info-row' style='border-bottom: none;'>
+                    <span class='info-label'>📍 Modalidad:</span><br>
+                    <span class='info-value'>{datos.Modalidad}</span>
+                </div>
+            </div>
+            
+            <div style='background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <p style='margin: 0; color: #856404;'>
+                    <strong>⏳ Próximos Pasos:</strong><br>
+                    Revisaremos tu solicitud y te confirmaremos la disponibilidad en las próximas 24 horas.
+                </p>
+            </div>
+            
+            <div style='text-align: center; padding: 20px 0;'>
+                <p>¿Tienes alguna pregunta?</p>
+                <a href='tel:5659644304' style='display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 5px;'>📞 Llamar</a>
+                <a href='{whatsappLink}' class='cta-button'>💬 WhatsApp</a>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <h4>Consultoría Integral SC</h4>
+            <p>📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com</p>
+            <p style='font-size: 11px; opacity: 0.7; margin-top: 15px;'>
+                Enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        private string GenerarEmailNuevaCitaAdmin(NotificacionCita datos)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px 20px; text-align: center; }}
+        .header h1 {{ margin: 0; font-size: 26px; }}
+        .content {{ padding: 30px; }}
+        .alert-box {{ background: #fff3cd; border-left: 5px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .client-info {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-row {{ padding: 10px 0; border-bottom: 1px solid #e0e0e0; }}
+        .info-label {{ font-weight: 600; color: #555; display: inline-block; min-width: 140px; }}
+        .cta-button {{ display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 10px 5px; }}
+        .whatsapp-btn {{ background: #25D366; }}
+        .footer {{ background: #343a40; color: white; padding: 20px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>🔔 Nueva Cita Recibida</h1>
+            <p style='margin: 10px 0 0 0; font-size: 16px;'>Se ha registrado una nueva solicitud de cita</p>
+        </div>
+        
+        <div class='content'>
+            <div class='alert-box'>
+                <p style='margin: 0; color: #856404; font-weight: bold;'>
+                    ⚠️ ACCIÓN REQUERIDA: Revisa y confirma esta cita lo antes posible
+                </p>
+            </div>
+            
+            <div class='client-info'>
+                <h3 style='margin-top: 0; color: #1E3A5F; border-bottom: 2px solid #1E3A5F; padding-bottom: 10px;'>
+                    👤 Información del Cliente
+                </h3>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📝 Nombre:</span>
+                    <strong>{datos.NombreCliente}</strong>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📧 Email:</span>
+                    <a href='mailto:{datos.EmailCliente}' style='color: #007bff;'>{datos.EmailCliente}</a>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📱 Teléfono:</span>
+                    <a href='tel:{datos.TelefonoCliente}' style='color: #007bff;'>{datos.TelefonoCliente}</a>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📅 Fecha y Hora:</span>
+                    <strong style='color: #dc3545;'>{fechaFormateada}</strong>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>💼 Servicio:</span>
+                    <strong>{datos.ServicioInteres}</strong>
+                </div>
+                
+                <div class='info-row' style='border-bottom: none;'>
+                    <span class='info-label'>📍 Modalidad:</span>
+                    <strong>{datos.Modalidad}</strong>
+                </div>
+            </div>
+            
+            {(!string.IsNullOrWhiteSpace(datos.NotasAdmin) ? $@"
+            <div style='background: #e3f2fd; border-left: 5px solid #2196F3; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h4 style='margin: 0 0 10px 0; color: #1976d2;'>💬 Notas del Cliente:</h4>
+                <p style='margin: 0; white-space: pre-wrap;'>{System.Net.WebUtility.HtmlEncode(datos.NotasAdmin)}</p>
+            </div>
+            " : "")}
+            
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; text-align: center; color: white; margin: 25px 0;'>
+                <h3 style='margin: 0 0 15px 0;'>⚡ Acciones Rápidas</h3>
+                <p style='margin: 0 0 20px 0;'>Contacta al cliente para confirmar la cita</p>
+                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button' style='color: white;'>
+                    📅 Ver en Panel Admin
+                </a>
+                <a href='tel:{datos.TelefonoCliente}' class='cta-button' style='color: white;'>
+                    📞 Llamar Cliente
+                </a>
+                <a href='https://wa.me/52{datos.TelefonoCliente.Replace(" ", "").Replace("-", "")}' class='cta-button whatsapp-btn' style='color: white;'>
+                    💬 WhatsApp
+                </a>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <h4>Sistema de Gestión de Citas</h4>
+            <p>Consultoría Integral SC</p>
+            <p style='font-size: 11px; opacity: 0.7; margin-top: 10px;'>
+                Notificación generada automáticamente el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        private string GenerarEmailRecordatorioPendiente(NotificacionCita datos)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            var ahora = DateTime.Now;
+            var diferencia = datos.FechaHora - ahora;
+            string tiempoRestante = "";
+
+            if (diferencia.TotalHours < 24)
+            {
+                tiempoRestante = $"⚠️ URGENTE: Faltan {diferencia.Hours} horas";
+            }
+            else if (diferencia.TotalDays < 2)
+            {
+                tiempoRestante = $"⏰ Falta 1 día";
+            }
+            else
+            {
+                tiempoRestante = $"📅 Faltan {(int)diferencia.TotalDays} días";
+            }
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 30px 20px; text-align: center; }}
+        .header h1 {{ margin: 0; font-size: 26px; }}
+        .content {{ padding: 30px; }}
+        .urgent-box {{ background: #fff3cd; border: 3px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }}
+        .client-info {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-row {{ padding: 10px 0; border-bottom: 1px solid #e0e0e0; }}
+        .info-label {{ font-weight: 600; color: #555; display: inline-block; min-width: 140px; }}
+        .cta-button {{ display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 10px 5px; }}
+        .confirm-btn {{ background: #28a745; }}
+        .cancel-btn {{ background: #dc3545; }}
+        .footer {{ background: #343a40; color: white; padding: 20px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>⏰ Recordatorio de Cita Pendiente</h1>
+            <p style='margin: 10px 0 0 0; font-size: 16px;'>Tienes una cita sin confirmar</p>
+        </div>
+        
+        <div class='content'>
+            <div class='urgent-box'>
+                <h2 style='margin: 0; color: #f57c00; font-size: 24px;'>{tiempoRestante}</h2>
+                <p style='margin: 10px 0 0 0; color: #856404; font-weight: bold;'>
+                    Esta cita aún está PENDIENTE de confirmación
+                </p>
+            </div>
+            
+            <div class='client-info'>
+                <h3 style='margin-top: 0; color: #1E3A5F; border-bottom: 2px solid #1E3A5F; padding-bottom: 10px;'>
+                    👤 Detalles de la Cita
+                </h3>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📝 Cliente:</span>
+                    <strong>{datos.NombreCliente}</strong>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📧 Email:</span>
+                    <a href='mailto:{datos.EmailCliente}' style='color: #007bff;'>{datos.EmailCliente}</a>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📱 Teléfono:</span>
+                    <a href='tel:{datos.TelefonoCliente}' style='color: #007bff;'>{datos.TelefonoCliente}</a>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📅 Fecha y Hora:</span>
+                    <strong style='color: #dc3545; font-size: 16px;'>{fechaFormateada}</strong>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>💼 Servicio:</span>
+                    <strong>{datos.ServicioInteres}</strong>
+                </div>
+                
+                <div class='info-row' style='border-bottom: none;'>
+                    <span class='info-label'>📍 Modalidad:</span>
+                    <strong>{datos.Modalidad}</strong>
+                </div>
+            </div>
+            
+            <div style='background: #e8f5e9; border-left: 5px solid #4caf50; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h4 style='margin: 0 0 10px 0; color: #2e7d32;'>✅ Acciones Recomendadas:</h4>
+                <ul style='margin: 10px 0; padding-left: 20px; color: #1b5e20;'>
+                    <li>Contacta al cliente para confirmar la cita</li>
+                    <li>Verifica la disponibilidad del horario</li>
+                    <li>Actualiza el estado en el panel de administración</li>
+                    <li>Envía la confirmación al cliente</li>
+                </ul>
+            </div>
+            
+            <div style='text-align: center; padding: 20px 0;'>
+                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button confirm-btn' style='color: white;'>
+                    ✅ Confirmar Cita
+                </a>
+                <a href='tel:{datos.TelefonoCliente}' class='cta-button' style='color: white;'>
+                    📞 Llamar Cliente
+                </a>
+                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button cancel-btn' style='color: white;'>
+                    ❌ Cancelar Cita
+                </a>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <h4>Sistema de Recordatorios - Consultoría Integral SC</h4>
+            <p style='font-size: 11px; opacity: 0.7; margin-top: 10px;'>
+                Recordatorio enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
         public async Task<bool> EnviarNotificacionCita(NotificacionCita datos)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("📧 === ENVIANDO NOTIFICACIÓN DE CITA ===");
+                System.Diagnostics.Debug.WriteLine("📧 === ENVIANDO NOTIFICACIÓN DE CAMBIO DE ESTADO ===");
                 System.Diagnostics.Debug.WriteLine($"📧 Cliente: {datos.NombreCliente}");
                 System.Diagnostics.Debug.WriteLine($"📧 Email: {datos.EmailCliente}");
                 System.Diagnostics.Debug.WriteLine($"📧 Estado: {datos.Estado}");
-                System.Diagnostics.Debug.WriteLine($"📧 Modalidad: {datos.Modalidad}");
-                System.Diagnostics.Debug.WriteLine($"📧 Fecha: {datos.FechaHora}");
 
                 if (string.IsNullOrEmpty(_brevoApiKey))
                 {
@@ -52,7 +465,7 @@ namespace BIZ
                     "confirmada" => "confirmada",
                     "cancelada" => "cancelada",
                     "completada" => "completada",
-                    _ => "pendiente"
+                    _ => "actualizada"
                 };
 
                 await EnviarEmailViaBravo(
@@ -67,8 +480,7 @@ namespace BIZ
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Error enviando notificación: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"❌ Stack trace: {ex.StackTrace}");
-                return true; // No fallar si el email no se envía
+                return false;
             }
         }
 
@@ -99,7 +511,7 @@ namespace BIZ
             request.Headers.Add("api-key", _brevoApiKey);
             request.Headers.Add("accept", "application/json");
 
-            System.Diagnostics.Debug.WriteLine("📤 Enviando notificación de cita vía Brevo API...");
+            System.Diagnostics.Debug.WriteLine("📤 Enviando email vía Brevo API...");
 
             var response = await _httpClient.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
