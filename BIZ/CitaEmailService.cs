@@ -10,16 +10,86 @@ namespace BIZ
     public class CitaEmailService
     {
         // ============================================
-        // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
+        // CONFIGURACIÓN AUTOMÁTICA DE URLs
         // ============================================
+        private readonly string _urlPanelAdmin;
         private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         private readonly string _fromEmail = "zaira7731479269@gmail.com";
         private readonly string _fromName = "Consultoría Integral SC";
-        private readonly string _adminEmail = "zaira7731479269@gmail.com"; // Email del administrador
+        private readonly string _adminEmail = "zaira7731479269@gmail.com";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
         private readonly string _meetLinkEmpresa = "https://meet.google.com/fcn-ecqy-ebz";
 
         private static readonly HttpClient _httpClient = new HttpClient();
+
+        // ============================================
+        // CONSTRUCTOR: Detecta automáticamente la URL base
+        // ============================================
+        public CitaEmailService()
+        {
+            // Detectar URL base automáticamente
+            _urlPanelAdmin = DetectarUrlBase();
+        }
+
+        private string DetectarUrlBase()
+        {
+            // 1. Primero intenta variable de entorno (para configuración manual)
+            var urlEnv = Environment.GetEnvironmentVariable("ADMIN_PANEL_URL");
+            if (!string.IsNullOrEmpty(urlEnv))
+            {
+                System.Diagnostics.Debug.WriteLine($"📍 URL desde variable de entorno: {urlEnv}");
+                return urlEnv;
+            }
+
+            // 2. Detectar desde variables de entorno del servidor
+            var renderUrl = Environment.GetEnvironmentVariable("RENDER_EXTERNAL_URL");
+            if (!string.IsNullOrEmpty(renderUrl))
+            {
+                var url = $"{renderUrl}/admin/citas";
+                System.Diagnostics.Debug.WriteLine($"📍 URL detectada en Render: {url}");
+                return url;
+            }
+
+            // 3. Otras plataformas comunes
+            var herokuUrl = Environment.GetEnvironmentVariable("HEROKU_APP_NAME");
+            if (!string.IsNullOrEmpty(herokuUrl))
+            {
+                var url = $"https://{herokuUrl}.herokuapp.com/admin/citas";
+                System.Diagnostics.Debug.WriteLine($"📍 URL detectada en Heroku: {url}");
+                return url;
+            }
+
+            var azureUrl = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
+            if (!string.IsNullOrEmpty(azureUrl))
+            {
+                var url = $"https://{azureUrl}/admin/citas";
+                System.Diagnostics.Debug.WriteLine($"📍 URL detectada en Azure: {url}");
+                return url;
+            }
+
+            // 4. Detectar desde ASPNETCORE_URLS
+            var aspNetUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+            if (!string.IsNullOrEmpty(aspNetUrls))
+            {
+                var urls = aspNetUrls.Split(';');
+                var httpUrl = urls.FirstOrDefault(u => u.StartsWith("http"));
+                if (!string.IsNullOrEmpty(httpUrl))
+                {
+                    var url = $"{httpUrl}/admin/citas";
+                    System.Diagnostics.Debug.WriteLine($"📍 URL detectada desde ASPNETCORE_URLS: {url}");
+                    return url;
+                }
+            }
+
+            // 5. Fallback por defecto (desarrollo local o desconocido)
+            var defaultUrl = "http://localhost:5000/admin/citas";
+            System.Diagnostics.Debug.WriteLine($"⚠️ No se detectó URL automática, usando fallback: {defaultUrl}");
+            return defaultUrl;
+        }
+
+        // ============================================
+        // EMAILS CON URLs DINÁMICAS
+        // ============================================
 
         public async Task<bool> EnviarConfirmacionCliente(NotificacionCita datos)
         {
@@ -51,9 +121,6 @@ namespace BIZ
             }
         }
 
-        // ============================================
-        // 2️⃣ EMAIL AL ADMIN: Nueva cita recibida
-        // ============================================
         public async Task<bool> EnviarNotificacionNuevaCitaAdmin(NotificacionCita datos)
         {
             try
@@ -84,9 +151,6 @@ namespace BIZ
             }
         }
 
-        // ============================================
-        // 3️⃣ EMAIL AL ADMIN: Recordatorio de cita pendiente
-        // ============================================
         public async Task<bool> EnviarRecordatorioCitaPendiente(NotificacionCita datos)
         {
             try
@@ -116,6 +180,10 @@ namespace BIZ
                 return false;
             }
         }
+
+        // ============================================
+        // GENERADORES DE HTML CON URLs CONFIGURABLES
+        // ============================================
 
         private string GenerarEmailConfirmacionCliente(NotificacionCita datos)
         {
@@ -284,7 +352,7 @@ namespace BIZ
             <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; text-align: center; color: white; margin: 25px 0;'>
                 <h3 style='margin: 0 0 15px 0;'>⚡ Acciones Rápidas</h3>
                 <p style='margin: 0 0 20px 0;'>Contacta al cliente para confirmar la cita</p>
-                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button' style='color: white;'>
+                <a href='{_urlPanelAdmin}' class='cta-button' style='color: white;'>
                     📅 Ver en Panel Admin
                 </a>
                 <a href='tel:{datos.TelefonoCliente}' class='cta-button' style='color: white;'>
@@ -412,13 +480,13 @@ namespace BIZ
             </div>
             
             <div style='text-align: center; padding: 20px 0;'>
-                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button confirm-btn' style='color: white;'>
+                <a href='{_urlPanelAdmin}' class='cta-button confirm-btn' style='color: white;'>
                     ✅ Confirmar Cita
                 </a>
                 <a href='tel:{datos.TelefonoCliente}' class='cta-button' style='color: white;'>
                     📞 Llamar Cliente
                 </a>
-                <a href='https://lomanconsultoria-web.onrender.com/admin/citas' class='cta-button cancel-btn' style='color: white;'>
+                <a href='{_urlPanelAdmin}' class='cta-button cancel-btn' style='color: white;'>
                     ❌ Cancelar Cita
                 </a>
             </div>

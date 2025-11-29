@@ -11,12 +11,27 @@ namespace WebAPI.Controllers
     {
         private readonly ILogger<CitaController> _logger;
         private readonly CitaEmailService _emailService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CitaController(IDB<Cita> repositorio, ILogger<CitaController> logger)
+        public CitaController(
+            IDB<Cita> repositorio,
+            ILogger<CitaController> logger,
+            IHttpContextAccessor httpContextAccessor)
             : base(repositorio)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _emailService = new CitaEmailService();
+
+            // Configurar URL base desde el request actual
+            var request = _httpContextAccessor.HttpContext?.Request;
+            if (request != null)
+            {
+                var baseUrl = $"{request.Scheme}://{request.Host}";
+                Environment.SetEnvironmentVariable("ADMIN_PANEL_URL", $"{baseUrl}/admin/citas");
+                _logger.LogInformation($"✅ URL base configurada: {baseUrl}/admin/citas");
+            }
+
             _logger.LogInformation("✅ CitaController inicializado con servicio de email");
         }
 
@@ -101,7 +116,7 @@ namespace WebAPI.Controllers
 
                 _logger.LogInformation("📧 === INICIANDO ENVÍO DE NOTIFICACIONES ===");
 
-                // Enviar emails en segundo plano para no bloquear la respuesta
+                // Enviar emails en segundo plano
                 _ = Task.Run(async () =>
                 {
                     try
@@ -118,7 +133,6 @@ namespace WebAPI.Controllers
                             _logger.LogWarning($"⚠️ [1/2] No se pudo enviar confirmación al cliente: {resultado.Email}");
                         }
 
-                        // Pequeña pausa entre emails
                         await Task.Delay(1000);
 
                         _logger.LogInformation("📧 [2/2] Enviando notificación al ADMINISTRADOR...");
@@ -161,7 +175,7 @@ namespace WebAPI.Controllers
         }
 
         // ============================================
-        // 📧 ENDPOINT: Enviar recordatorios de citas pendientes (MANUAL O AUTOMÁTICO)
+        // 📧 ENDPOINT: Enviar recordatorios
         // ============================================
         [HttpPost("enviar-recordatorios")]
         public async Task<ActionResult> EnviarRecordatoriosCitasPendientes()
@@ -179,9 +193,8 @@ namespace WebAPI.Controllers
 
                 var ahora = DateTime.Now;
                 var limiteInferior = ahora;
-                var limiteSuperior = ahora.AddDays(3); // Recordatorios para citas en los próximos 3 días
+                var limiteSuperior = ahora.AddDays(3);
 
-                // Filtrar citas PENDIENTES próximas
                 var citasPendientes = todasCitas
                     .Where(c =>
                         c.Estado == "Pendiente" &&
@@ -226,7 +239,7 @@ namespace WebAPI.Controllers
                         if (enviado)
                         {
                             emailsEnviados++;
-                            _logger.LogInformation($"✅ Recordatorio enviado: {cita.NombreCompleto} - {cita.FechaHora:dd/MM/yyyy HH:mm}");
+                            _logger.LogInformation($"✅ Recordatorio enviado: {cita.NombreCompleto}");
                         }
                         else
                         {
@@ -234,7 +247,6 @@ namespace WebAPI.Controllers
                             _logger.LogWarning($"⚠️ No se pudo enviar recordatorio a: {cita.NombreCompleto}");
                         }
 
-                        // Pausa entre emails para evitar rate limits
                         await Task.Delay(1000);
                     }
                     catch (Exception ex)
@@ -246,34 +258,24 @@ namespace WebAPI.Controllers
 
                 _logger.LogInformation($"✅ === RECORDATORIOS COMPLETADOS ===");
                 _logger.LogInformation($"✅ Exitosos: {emailsEnviados}/{citasPendientes.Count}");
-                _logger.LogInformation($"❌ Fallidos: {emailsFallidos}/{citasPendientes.Count}");
 
                 return Ok(new
                 {
                     message = "Proceso de recordatorios completado",
                     totalCitasPendientes = citasPendientes.Count,
                     emailsEnviados = emailsEnviados,
-                    emailsFallidos = emailsFallidos,
-                    citas = citasPendientes.Select(c => new
-                    {
-                        id = c.Id,
-                        nombreCompleto = c.NombreCompleto,
-                        email = c.Email,
-                        fechaHora = c.FechaHora,
-                        estado = c.Estado
-                    })
+                    emailsFallidos = emailsFallidos
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Error en EnviarRecordatoriosCitasPendientes: {ex.Message}");
-                _logger.LogError($"Stack: {ex.StackTrace}");
+                _logger.LogError($"❌ Error: {ex.Message}");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
 
         // ============================================
-        // 🔄 PUT: Actualizar estado de cita + NOTIFICACIÓN AL CLIENTE
+        // 🔄 PUT: Actualizar estado
         // ============================================
         [HttpPut("{id}/estado")]
         public async Task<ActionResult> UpdateEstado(int id, [FromBody] EstadoCitaDto dto)
@@ -281,11 +283,8 @@ namespace WebAPI.Controllers
             try
             {
                 _logger.LogInformation($"📝 === PUT /api/Cita/{id}/estado ===");
-                _logger.LogInformation($"📝 Nuevo estado: '{dto.Estado}'");
-                _logger.LogInformation($"📝 Notas admin: '{dto.NotasAdmin}'");
 
                 var cita = ObtenerCitaPorId(id);
-
                 if (cita == null)
                 {
                     _logger.LogWarning($"❌ Cita {id} no encontrada");
@@ -293,9 +292,6 @@ namespace WebAPI.Controllers
                 }
 
                 var estadoAnterior = cita.Estado;
-                _logger.LogInformation($"📊 Estado anterior: '{estadoAnterior}' → Nuevo: '{dto.Estado}'");
-
-                // Actualizar cita
                 cita.Estado = dto.Estado;
                 cita.NotasAdmin = dto.NotasAdmin ?? "";
                 cita.UsuarioMod = "Admin";
@@ -306,25 +302,22 @@ namespace WebAPI.Controllers
                 if (!resultado)
                 {
                     var errorMsg = _repositorio.Error ?? "Error desconocido al actualizar";
-                    _logger.LogError($"❌ Error actualizando en BD: {errorMsg}");
+                    _logger.LogError($"❌ Error actualizando: {errorMsg}");
                     return StatusCode(500, new { error = errorMsg });
                 }
 
-                _logger.LogInformation("✅ Cita actualizada exitosamente en BD");
+                _logger.LogInformation("✅ Cita actualizada exitosamente");
 
-                // ============================================
-                // 🔔 ENVIAR EMAIL DE NOTIFICACIÓN AL CLIENTE
-                // ============================================
+                // Enviar notificación al cliente
                 bool emailEnviado = false;
                 if (estadoAnterior != dto.Estado && !string.IsNullOrWhiteSpace(cita.Email))
                 {
-                    _logger.LogInformation($"📧 Enviando notificación de cambio de estado a: {cita.Email}");
+                    _logger.LogInformation($"📧 Enviando notificación a: {cita.Email}");
 
                     string enlaceMeet = "";
                     if (cita.Modalidad?.ToLower().Contains("virtual") == true)
                     {
                         enlaceMeet = MeetLinkGenerator.GenerarEnlaceMeet(cita.Id);
-                        _logger.LogInformation($"🎥 Enlace Meet generado: {enlaceMeet}");
                     }
 
                     var notificacion = new NotificacionCita
@@ -340,7 +333,6 @@ namespace WebAPI.Controllers
                         EnlaceMeet = enlaceMeet
                     };
 
-                    // Enviar en segundo plano
                     _ = Task.Run(async () =>
                     {
                         try
@@ -348,11 +340,7 @@ namespace WebAPI.Controllers
                             var enviado = await _emailService.EnviarNotificacionCita(notificacion);
                             if (enviado)
                             {
-                                _logger.LogInformation($"✅ Email de notificación enviado exitosamente a: {cita.Email}");
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"⚠️ No se pudo enviar email a: {cita.Email}");
+                                _logger.LogInformation($"✅ Email enviado a: {cita.Email}");
                             }
                         }
                         catch (Exception emailEx)
@@ -368,22 +356,12 @@ namespace WebAPI.Controllers
                 {
                     success = true,
                     message = "Estado actualizado correctamente",
-                    cita = new
-                    {
-                        id = cita.Id,
-                        nombreCompleto = cita.NombreCompleto,
-                        fechaHora = cita.FechaHora,
-                        estado = cita.Estado,
-                        modalidad = cita.Modalidad,
-                        notasAdmin = cita.NotasAdmin
-                    },
                     emailEnviado = emailEnviado
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"🔥 ERROR: {ex.Message}");
-                _logger.LogError($"Stack: {ex.StackTrace}");
+                _logger.LogError($"❌ ERROR: {ex.Message}");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -453,10 +431,6 @@ namespace WebAPI.Controllers
                 ?? Environment.GetEnvironmentVariable("DATABASE_URL")
                 ?? throw new InvalidOperationException("No se encontró cadena de conexión");
         }
-
-        // ============================================
-        // OTROS ENDPOINTS (sin cambios)
-        // ============================================
 
         [HttpGet("available-slots-by-day")]
         public ActionResult<Dictionary<string, List<string>>> GetAvailableSlotsByDay(
@@ -553,11 +527,16 @@ namespace WebAPI.Controllers
         [HttpGet("test")]
         public ActionResult TestEndpoint()
         {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            var baseUrl = request != null ? $"{request.Scheme}://{request.Host}" : "unknown";
+
             return Ok(new
             {
-                message = "CitaController funcionando con notificaciones",
+                message = "CitaController con detección automática de URL",
                 timestamp = DateTime.Now,
-                version = "5.0-Notificaciones-Mejoradas",
+                version = "6.0-Auto-URL",
+                detectedBaseUrl = baseUrl,
+                adminPanelUrl = $"{baseUrl}/admin/citas",
                 emailServiceActive = _emailService != null,
                 brevoApiKeyConfigured = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BREVO_API_KEY"))
             });
