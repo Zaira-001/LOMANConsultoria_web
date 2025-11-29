@@ -4,7 +4,7 @@
     {
         private readonly ILogger<RecordatoriosCitasBackgroundService> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly TimeSpan _intervalo = TimeSpan.FromHours(12); // Ejecutar cada 12 horas
+        private readonly TimeSpan _intervalo = TimeSpan.FromHours(1); // Ejecutar cada 12 horas
 
         public RecordatoriosCitasBackgroundService(
             ILogger<RecordatoriosCitasBackgroundService> logger,
