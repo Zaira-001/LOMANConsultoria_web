@@ -52,6 +52,9 @@ namespace WebAPI
 
             builder.Services.AddHttpClient();
 
+            builder.Services.AddHostedService<RecordatoriosCitasBackgroundService>();
+            Console.WriteLine("✅ Servicio de recordatorios automáticos registrado");
+
             // Registrar la fábrica
             builder.Services.AddSingleton<FabricRepository>(_ => Parametros.FabricaRepository);
 
