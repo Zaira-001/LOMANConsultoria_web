@@ -1008,29 +1008,141 @@ namespace BIZ
         {
             return hexColor; // Simplificado
         }
-    }
 
-    public class NotificacionCita
-    {
-        public string NombreCliente { get; set; } = "";
-        public string EmailCliente { get; set; } = "";
-        public string TelefonoCliente { get; set; } = "";
-        public DateTime FechaHora { get; set; }
-        public string ServicioInteres { get; set; } = "";
-        public string Modalidad { get; set; } = "";
-        public string Estado { get; set; } = "";
-        public string NotasAdmin { get; set; } = "";
-        public string ReferenciaCita { get; set; } = "";
-        public string EnlaceMeet { get; set; } = "";
-    }
 
-    public static class MeetLinkGenerator
-    {
-        public const string MEET_LINK_EMPRESA = "https://meet.google.com/fcn-ecqy-ebz";
-
-        public static string GenerarEnlaceMeet(int citaId)
+        public async Task<bool> EnviarRecordatorioClienteCitaConfirmada(NotificacionCita datos)
         {
-            return MEET_LINK_EMPRESA;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 Enviando recordatorio de cita confirmada: {datos.EmailCliente}");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var emailBody = GenerarEmailRecordatorioCliente(datos);
+
+                await EnviarEmailViaBravo(
+                    destinatario: datos.EmailCliente,
+                    asunto: $"⏰ Recordatorio: Tu cita es mañana - {datos.FechaHora:dd/MM/yyyy HH:mm}",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Recordatorio enviado al cliente");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private string GenerarEmailRecordatorioCliente(NotificacionCita datos)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            string modalidadContenido = GenerarContenidoModalidad(datos);
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+        .content {{ padding: 30px; }}
+        .reminder-box {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-box {{ background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .footer {{ background: #343a40; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0; font-size: 28px;'>⏰ Recordatorio de Cita</h1>
+            <p style='margin: 10px 0 0 0;'>Tu consulta es mañana</p>
+        </div>
+        
+        <div class='content'>
+            <div class='reminder-box'>
+                <h3 style='margin: 0 0 10px 0; color: #856404;'>
+                    🔔 ¡Tu cita es mañana!
+                </h3>
+                <p style='margin: 0; font-size: 16px;'>
+                    Hola <strong>{datos.NombreCliente}</strong>, te recordamos que tu consulta está programada para:
+                </p>
+            </div>
+            
+            <div class='info-box'>
+                <p><strong>📅 Fecha y Hora:</strong></p>
+                <p style='font-size: 18px; color: #1976d2; margin: 5px 0;'>
+                    <strong>{fechaFormateada}</strong>
+                </p>
+                
+                <p style='margin-top: 15px;'><strong>💼 Servicio:</strong> {datos.ServicioInteres}</p>
+                <p><strong>📍 Modalidad:</strong> {datos.Modalidad}</p>
+            </div>
+            
+            {modalidadContenido}
+            
+            <div style='background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <h4 style='margin: 0 0 10px 0; color: #2e7d32;'>✅ Recomendaciones:</h4>
+                <ul style='margin: 5px 0; padding-left: 20px;'>
+                    <li>Ten a mano toda la información o documentos necesarios</li>
+                    <li>Prepara tus preguntas con anticipación</li>
+                    <li>Si necesitas reprogramar, contáctanos cuanto antes</li>
+                </ul>
+            </div>
+            
+            <div style='text-align: center; padding: 20px 0;'>
+                <p>¿Necesitas hacer algún cambio?</p>
+                <a href='tel:5659644304' style='display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 5px;'>
+                    📞 Llamar
+                </a>
+                <a href='https://wa.me/5215659644304' style='display: inline-block; background: #25D366; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 5px;'>
+                    💬 WhatsApp
+                </a>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <h4 style='margin: 0;'>Consultoría Integral SC</h4>
+            <p style='margin: 10px 0 0 0; opacity: 0.8;'>
+                📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        public class NotificacionCita
+        {
+            public string NombreCliente { get; set; } = "";
+            public string EmailCliente { get; set; } = "";
+            public string TelefonoCliente { get; set; } = "";
+            public DateTime FechaHora { get; set; }
+            public string ServicioInteres { get; set; } = "";
+            public string Modalidad { get; set; } = "";
+            public string Estado { get; set; } = "";
+            public string NotasAdmin { get; set; } = "";
+            public string ReferenciaCita { get; set; } = "";
+            public string EnlaceMeet { get; set; } = "";
+        }
+
+        public static class MeetLinkGenerator
+        {
+            public const string MEET_LINK_EMPRESA = "https://meet.google.com/fcn-ecqy-ebz";
+
+            public static string GenerarEnlaceMeet(int citaId)
+            {
+                return MEET_LINK_EMPRESA;
+            }
         }
     }
 }
