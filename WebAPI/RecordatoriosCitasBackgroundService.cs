@@ -20,7 +20,7 @@ namespace WebAPI
             _logger = logger;
             _serviceScopeFactory = serviceScopeFactory;
         }
-
+        
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("🚀 === SERVICIO DE RECORDATORIOS INTELIGENTE INICIADO ===");

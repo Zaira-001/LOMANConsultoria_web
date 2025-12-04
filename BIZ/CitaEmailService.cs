@@ -14,9 +14,9 @@ namespace BIZ
         // ============================================
         private readonly string _urlPanelAdmin;
         private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
-        private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromEmail = "consultoriaempresarialsadecv@gmail.com";
         private readonly string _fromName = "Consultoría Integral SC";
-        private readonly string _adminEmail = "zaira7731479269@gmail.com";
+        private readonly string _adminEmail = "consultoriaempresarialsadecv@gmail.com";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
         private readonly string _meetLinkEmpresa = "https://meet.google.com/fcn-ecqy-ebz";
 

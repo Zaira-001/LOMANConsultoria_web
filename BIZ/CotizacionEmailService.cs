@@ -17,7 +17,7 @@ namespace BIZ
         // CONFIGURACIÓN BREVO API CON VARIABLES DE ENTORNO
         // ============================================
         private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
-        private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _fromEmail = "consultoriaempresarialsadecv@gmail.com";
         private readonly string _fromName = "Consultoría Integral SC";
         private readonly CultureInfo _culturaEspañol = new CultureInfo("es-MX");
 

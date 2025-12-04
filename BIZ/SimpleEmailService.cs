@@ -15,8 +15,8 @@ namespace BIZ
         // NO la pongas directamente en el código (GitHub lo bloqueará)
         private readonly string _brevoApiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? "";
         
-        private readonly string _adminEmail = "zaira7731479269@gmail.com";
-        private readonly string _fromEmail = "zaira7731479269@gmail.com";
+        private readonly string _adminEmail = "consultoriaempresarialsadecv@gmail.com";
+        private readonly string _fromEmail = "consultoriaempresarialsadecv@gmail.com";
         private readonly string _fromName = "Consultoría Integral SC";
 
         private static readonly HttpClient _httpClient = new HttpClient();
