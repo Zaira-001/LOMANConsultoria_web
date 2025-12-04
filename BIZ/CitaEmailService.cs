@@ -88,6 +88,87 @@ namespace BIZ
         }
 
         // ============================================
+        // 🆕 NUEVA FUNCIÓN: Notificación para Citas del Día Siguiente
+        // ============================================
+        public async Task<bool> EnviarNotificacionCitaProxima(NotificacionCita datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 === NOTIFICACIÓN URGENTE: CITA MAÑANA ===");
+                System.Diagnostics.Debug.WriteLine($"📧 Cliente: {datos.NombreCliente}");
+                System.Diagnostics.Debug.WriteLine($"📧 Email: {datos.EmailCliente}");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var horasRestantes = (datos.FechaHora - DateTime.Now).TotalHours;
+
+                string tipoUrgencia = horasRestantes switch
+                {
+                    <= 24 => "MAÑANA",
+                    <= 48 => "PASADO MAÑANA",
+                    _ => "PRÓXIMAMENTE"
+                };
+
+                var emailBody = GenerarEmailCitaProxima(datos, tipoUrgencia, horasRestantes);
+
+                await EnviarEmailViaBravo(
+                    destinatario: datos.EmailCliente,
+                    asunto: $"⏰ RECORDATORIO: Tu cita es {tipoUrgencia} - Consultoría Integral SC",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Notificación de cita próxima enviada");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ============================================
+        // 🆕 NUEVA FUNCIÓN: Email Especial para Admin sobre Cita Próxima
+        // ============================================
+        public async Task<bool> EnviarAlertaAdminCitaProxima(NotificacionCita datos)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📧 === ALERTA ADMIN: CITA PRÓXIMA PENDIENTE ===");
+
+                if (string.IsNullOrEmpty(_brevoApiKey))
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
+                    return false;
+                }
+
+                var horasRestantes = (datos.FechaHora - DateTime.Now).TotalHours;
+                var emailBody = GenerarEmailAlertaAdminCitaProxima(datos, horasRestantes);
+
+                string urgencia = horasRestantes <= 24 ? "🚨 URGENTE" : "⚠️ IMPORTANTE";
+
+                await EnviarEmailViaBravo(
+                    destinatario: _adminEmail,
+                    asunto: $"{urgencia}: Cita {datos.Estado} en {(int)horasRestantes}h - {datos.NombreCliente}",
+                    htmlContent: emailBody
+                );
+
+                System.Diagnostics.Debug.WriteLine("✅ Alerta al admin enviada");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error: {ex.Message}");
+                return false;
+            }
+        }
+        
+
+        // ============================================
         // EMAILS CON URLs DINÁMICAS
         // ============================================
 
@@ -184,6 +265,194 @@ namespace BIZ
         // ============================================
         // GENERADORES DE HTML CON URLs CONFIGURABLES
         // ============================================
+
+        private string GenerarEmailCitaProxima(NotificacionCita datos, string tipoUrgencia, double horasRestantes)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            string colorUrgencia = tipoUrgencia == "MAÑANA" ? "#dc3545" : "#ff9800";
+
+            string tiempoRestante = horasRestantes <= 24
+                ? $"⏰ ¡Faltan solo {(int)horasRestantes} horas!"
+                : $"⏰ Faltan {(int)(horasRestantes / 24)} días";
+
+            string modalidadInfo = GenerarInfoModalidadRecordatorio(datos);
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, {colorUrgencia} 0%, {AdjustColor(colorUrgencia, -20)} 100%); color: white; padding: 30px 20px; text-align: center; }}
+        .header h1 {{ margin: 0; font-size: 28px; }}
+        .countdown {{ font-size: 36px; font-weight: bold; margin: 15px 0; animation: pulse 2s infinite; }}
+        @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.7; }} }}
+        .content {{ padding: 30px; }}
+        .urgent-box {{ background: #fff3cd; border: 3px solid {colorUrgencia}; padding: 25px; border-radius: 10px; text-align: center; margin: 20px 0; }}
+        .info-section {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-row {{ padding: 12px 0; border-bottom: 1px solid #e0e0e0; }}
+        .info-label {{ font-weight: 600; color: #555; }}
+        .cta-button {{ display: inline-block; background: {colorUrgencia}; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 10px 5px; }}
+        .footer {{ background: #343a40; color: white; padding: 25px; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>⏰ ¡Tu Cita es {tipoUrgencia}!</h1>
+            <div class='countdown'>{tiempoRestante}</div>
+        </div>
+        
+        <div class='content'>
+            <div class='urgent-box'>
+                <h2 style='margin: 0; color: {colorUrgencia}; font-size: 24px;'>🔔 RECORDATORIO IMPORTANTE</h2>
+                <p style='margin: 15px 0 0 0; font-size: 16px; color: #333;'>
+                    <strong>{datos.NombreCliente}</strong>, tu consulta está próxima. Por favor, asegúrate de estar preparado/a.
+                </p>
+            </div>
+            
+            <div class='info-section'>
+                <h3 style='margin-top: 0; color: #1E3A5F;'>📋 Detalles de tu Cita</h3>
+                
+                <div class='info-row'>
+                    <span class='info-label'>📅 Fecha y Hora:</span><br>
+                    <strong style='font-size: 18px; color: {colorUrgencia};'>{fechaFormateada}</strong>
+                </div>
+                
+                <div class='info-row'>
+                    <span class='info-label'>💼 Servicio:</span><br>
+                    <strong>{datos.ServicioInteres}</strong>
+                </div>
+                
+                <div class='info-row' style='border-bottom: none;'>
+                    <span class='info-label'>📍 Modalidad:</span><br>
+                    <strong>{datos.Modalidad}</strong>
+                </div>
+            </div>
+            
+            {modalidadInfo}
+            
+            <div style='background: #e3f2fd; border-left: 5px solid #2196F3; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <h4 style='margin: 0 0 10px 0; color: #1976d2;'>✅ Checklist de Preparación:</h4>
+                <ul style='margin: 10px 0; padding-left: 20px;'>
+                    <li>Revisa la hora exacta de tu cita</li>
+                    <li>Prepara documentos o información relevante</li>
+                    <li>Verifica tu conexión/transporte según modalidad</li>
+                    <li>Ten a mano tus dudas o preguntas</li>
+                </ul>
+            </div>
+            
+            <div style='text-align: center; padding: 20px 0;'>
+                <p style='margin-bottom: 15px;'>¿Necesitas hacer cambios?</p>
+                <a href='tel:5659644304' class='cta-button' style='color: white;'>📞 Llamar Ahora</a>
+                <a href='https://wa.me/5215659644304' class='cta-button' style='background: #25D366; color: white;'>💬 WhatsApp</a>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <h4>Consultoría Integral SC</h4>
+            <p>📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com</p>
+            <p style='font-size: 11px; opacity: 0.7; margin-top: 15px;'>
+                Recordatorio enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        private string GenerarEmailAlertaAdminCitaProxima(NotificacionCita datos, double horasRestantes)
+        {
+            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
+            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
+
+            string nivelUrgencia = horasRestantes <= 12 ? "🚨 CRÍTICO" : horasRestantes <= 24 ? "⚠️ URGENTE" : "⏰ IMPORTANTE";
+            string colorUrgencia = horasRestantes <= 12 ? "#c82333" : horasRestantes <= 24 ? "#dc3545" : "#ff9800";
+
+            return $@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, {colorUrgencia} 0%, #c82333 100%); color: white; padding: 30px 20px; text-align: center; }}
+        .alert-level {{ font-size: 32px; font-weight: bold; animation: blink 1.5s infinite; }}
+        @keyframes blink {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
+        .content {{ padding: 30px; }}
+        .critical-box {{ background: #fff3cd; border: 4px solid {colorUrgencia}; padding: 25px; border-radius: 10px; margin: 20px 0; }}
+        .client-info {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .info-row {{ padding: 10px 0; border-bottom: 1px solid #e0e0e0; }}
+        .cta-button {{ display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 10px 5px; }}
+        .urgent-btn {{ background: {colorUrgencia}; animation: shake 0.5s infinite; }}
+        @keyframes shake {{ 0%, 100% {{ transform: translateX(0); }} 25% {{ transform: translateX(-5px); }} 75% {{ transform: translateX(5px); }} }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div class='alert-level'>{nivelUrgencia}</div>
+            <h1>Cita Próxima Pendiente de Confirmar</h1>
+            <p style='font-size: 20px; margin: 10px 0;'>⏰ {(int)horasRestantes} horas restantes</p>
+        </div>
+        
+        <div class='content'>
+            <div class='critical-box'>
+                <h2 style='margin: 0 0 15px 0; color: {colorUrgencia};'>
+                    🚨 ACCIÓN INMEDIATA REQUERIDA
+                </h2>
+                <p style='margin: 0; font-size: 16px; color: #333;'>
+                    Esta cita está programada para <strong>{fechaFormateada}</strong> y aún está en estado <strong>{datos.Estado}</strong>.
+                    Se requiere confirmación urgente con el cliente.
+                </p>
+            </div>
+            
+            <div class='client-info'>
+                <h3 style='margin-top: 0; color: #1E3A5F;'>👤 Información del Cliente</h3>
+                
+                <div class='info-row'>
+                    <strong>Nombre:</strong> {datos.NombreCliente}
+                </div>
+                <div class='info-row'>
+                    <strong>Email:</strong> <a href='mailto:{datos.EmailCliente}'>{datos.EmailCliente}</a>
+                </div>
+                <div class='info-row'>
+                    <strong>Teléfono:</strong> <a href='tel:{datos.TelefonoCliente}'>{datos.TelefonoCliente}</a>
+                </div>
+                <div class='info-row'>
+                    <strong>Servicio:</strong> {datos.ServicioInteres}
+                </div>
+                <div class='info-row' style='border-bottom: none;'>
+                    <strong>Modalidad:</strong> {datos.Modalidad}
+                </div>
+            </div>
+            
+            <div style='text-align: center; padding: 25px 0;'>
+                <h3>⚡ Acciones Urgentes</h3>
+                <a href='{_urlPanelAdmin}' class='cta-button urgent-btn' style='color: white;'>
+                    ✅ Confirmar Cita Ahora
+                </a>
+                <a href='tel:{datos.TelefonoCliente}' class='cta-button' style='color: white;'>
+                    📞 Llamar Cliente
+                </a>
+                <a href='https://wa.me/52{datos.TelefonoCliente.Replace(" ", "").Replace("-", "")}' class='cta-button' style='background: #25D366; color: white;'>
+                    💬 WhatsApp
+                </a>
+            </div>
+        </div>
+        
+        <div style='background: #343a40; color: white; padding: 20px; text-align: center;'>
+            <p style='margin: 0; font-size: 13px;'>
+                Alerta generada automáticamente el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
 
         private string GenerarEmailConfirmacionCliente(NotificacionCita datos)
         {
@@ -501,6 +770,59 @@ namespace BIZ
     </div>
 </body>
 </html>";
+        }
+
+        private string GenerarInfoModalidadRecordatorio(NotificacionCita datos)
+        {
+            var modalidadLower = datos.Modalidad?.ToLower() ?? "";
+
+            if (modalidadLower.Contains("virtual"))
+            {
+                string enlaceMeet = !string.IsNullOrWhiteSpace(datos.EnlaceMeet)
+                    ? datos.EnlaceMeet
+                    : _meetLinkEmpresa;
+
+                return $@"
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; margin: 25px 0;'>
+                <h3 style='margin: 0 0 15px 0;'>💻 Acceso a tu Videollamada</h3>
+                <div style='text-align: center; margin: 20px 0;'>
+                    <a href='{enlaceMeet}' style='display: inline-block; background: white; color: #667eea; padding: 15px 40px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 16px;'>
+                        🎥 Unirse a la Reunión
+                    </a>
+                </div>
+                <p style='margin: 15px 0 0 0; font-size: 13px; opacity: 0.9; text-align: center;'>
+                    Recomendamos conectarte 5 minutos antes
+                </p>
+            </div>";
+            }
+            else if (modalidadLower.Contains("telefon"))
+            {
+                return $@"
+            <div style='background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 25px; border-radius: 12px; color: white; margin: 25px 0;'>
+                <h3 style='margin: 0 0 15px 0;'>📞 Llamada Telefónica</h3>
+                <p style='margin: 0; text-align: center; font-size: 16px;'>
+                    Te llamaremos al: <strong>{datos.TelefonoCliente}</strong><br>
+                    <span style='font-size: 14px; opacity: 0.9;'>Mantén tu teléfono disponible</span>
+                </p>
+            </div>";
+            }
+            else if (modalidadLower.Contains("presencial"))
+            {
+                return $@"
+            <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 25px; border-radius: 12px; color: white; margin: 25px 0;'>
+                <h3 style='margin: 0 0 15px 0;'>🏢 Cita Presencial</h3>
+                <p style='margin: 0 0 15px 0; text-align: center;'>
+                    <strong>Rio Sena #94, 3er. Piso<br>Col. Rio Lerma Cuauhtémoc<br>Ciudad de México C.P.06500</strong>
+                </p>
+                <div style='text-align: center;'>
+                    <a href='https://maps.app.goo.gl/KdAYdZXMLxiqqK2v9' style='display: inline-block; background: white; color: #f5576c; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;'>
+                        📍 Ver en Maps
+                    </a>
+                </div>
+            </div>";
+            }
+
+            return "";
         }
 
         public async Task<bool> EnviarNotificacionCita(NotificacionCita datos)
@@ -1008,141 +1330,29 @@ namespace BIZ
         {
             return hexColor; // Simplificado
         }
+    }
 
+    public class NotificacionCita
+    {
+        public string NombreCliente { get; set; } = "";
+        public string EmailCliente { get; set; } = "";
+        public string TelefonoCliente { get; set; } = "";
+        public DateTime FechaHora { get; set; }
+        public string ServicioInteres { get; set; } = "";
+        public string Modalidad { get; set; } = "";
+        public string Estado { get; set; } = "";
+        public string NotasAdmin { get; set; } = "";
+        public string ReferenciaCita { get; set; } = "";
+        public string EnlaceMeet { get; set; } = "";
+    }
 
-        public async Task<bool> EnviarRecordatorioClienteCitaConfirmada(NotificacionCita datos)
+    public static class MeetLinkGenerator
+    {
+        public const string MEET_LINK_EMPRESA = "https://meet.google.com/fcn-ecqy-ebz";
+
+        public static string GenerarEnlaceMeet(int citaId)
         {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"📧 Enviando recordatorio de cita confirmada: {datos.EmailCliente}");
-
-                if (string.IsNullOrEmpty(_brevoApiKey))
-                {
-                    System.Diagnostics.Debug.WriteLine("❌ ERROR: BREVO_API_KEY no configurada");
-                    return false;
-                }
-
-                var emailBody = GenerarEmailRecordatorioCliente(datos);
-
-                await EnviarEmailViaBravo(
-                    destinatario: datos.EmailCliente,
-                    asunto: $"⏰ Recordatorio: Tu cita es mañana - {datos.FechaHora:dd/MM/yyyy HH:mm}",
-                    htmlContent: emailBody
-                );
-
-                System.Diagnostics.Debug.WriteLine("✅ Recordatorio enviado al cliente");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        private string GenerarEmailRecordatorioCliente(NotificacionCita datos)
-        {
-            string fechaFormateada = datos.FechaHora.ToString("dddd, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", _culturaEspañol);
-            fechaFormateada = char.ToUpper(fechaFormateada[0]) + fechaFormateada.Substring(1);
-
-            string modalidadContenido = GenerarContenidoModalidad(datos);
-
-            return $@"
-<html>
-<head>
-    <meta charset='UTF-8'>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0; }}
-        .content {{ padding: 30px; }}
-        .reminder-box {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-        .info-box {{ background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }}
-        .footer {{ background: #343a40; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='header'>
-            <h1 style='margin: 0; font-size: 28px;'>⏰ Recordatorio de Cita</h1>
-            <p style='margin: 10px 0 0 0;'>Tu consulta es mañana</p>
-        </div>
-        
-        <div class='content'>
-            <div class='reminder-box'>
-                <h3 style='margin: 0 0 10px 0; color: #856404;'>
-                    🔔 ¡Tu cita es mañana!
-                </h3>
-                <p style='margin: 0; font-size: 16px;'>
-                    Hola <strong>{datos.NombreCliente}</strong>, te recordamos que tu consulta está programada para:
-                </p>
-            </div>
-            
-            <div class='info-box'>
-                <p><strong>📅 Fecha y Hora:</strong></p>
-                <p style='font-size: 18px; color: #1976d2; margin: 5px 0;'>
-                    <strong>{fechaFormateada}</strong>
-                </p>
-                
-                <p style='margin-top: 15px;'><strong>💼 Servicio:</strong> {datos.ServicioInteres}</p>
-                <p><strong>📍 Modalidad:</strong> {datos.Modalidad}</p>
-            </div>
-            
-            {modalidadContenido}
-            
-            <div style='background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0;'>
-                <h4 style='margin: 0 0 10px 0; color: #2e7d32;'>✅ Recomendaciones:</h4>
-                <ul style='margin: 5px 0; padding-left: 20px;'>
-                    <li>Ten a mano toda la información o documentos necesarios</li>
-                    <li>Prepara tus preguntas con anticipación</li>
-                    <li>Si necesitas reprogramar, contáctanos cuanto antes</li>
-                </ul>
-            </div>
-            
-            <div style='text-align: center; padding: 20px 0;'>
-                <p>¿Necesitas hacer algún cambio?</p>
-                <a href='tel:5659644304' style='display: inline-block; background: #1E3A5F; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 5px;'>
-                    📞 Llamar
-                </a>
-                <a href='https://wa.me/5215659644304' style='display: inline-block; background: #25D366; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; margin: 5px;'>
-                    💬 WhatsApp
-                </a>
-            </div>
-        </div>
-        
-        <div class='footer'>
-            <h4 style='margin: 0;'>Consultoría Integral SC</h4>
-            <p style='margin: 10px 0 0 0; opacity: 0.8;'>
-                📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com
-            </p>
-        </div>
-    </div>
-</body>
-</html>";
-        }
-
-        public class NotificacionCita
-        {
-            public string NombreCliente { get; set; } = "";
-            public string EmailCliente { get; set; } = "";
-            public string TelefonoCliente { get; set; } = "";
-            public DateTime FechaHora { get; set; }
-            public string ServicioInteres { get; set; } = "";
-            public string Modalidad { get; set; } = "";
-            public string Estado { get; set; } = "";
-            public string NotasAdmin { get; set; } = "";
-            public string ReferenciaCita { get; set; } = "";
-            public string EnlaceMeet { get; set; } = "";
-        }
-
-        public static class MeetLinkGenerator
-        {
-            public const string MEET_LINK_EMPRESA = "https://meet.google.com/fcn-ecqy-ebz";
-
-            public static string GenerarEnlaceMeet(int citaId)
-            {
-                return MEET_LINK_EMPRESA;
-            }
+            return MEET_LINK_EMPRESA;
         }
     }
 }
