@@ -1,0 +1,38 @@
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copiar archivos de proyecto (todos los que necesita ProyectoWeb)
+COPY ["ProyectoWeb/ProyectoWeb.csproj", "ProyectoWeb/"]
+COPY ["BIZ/BIZ.csproj", "BIZ/"]
+COPY ["COMMON/COMMON.csproj", "COMMON/"]
+COPY ["DAL/DAL.csproj", "DAL/"]
+
+# Restaurar dependencias
+RUN dotnet restore "ProyectoWeb/ProyectoWeb.csproj"
+
+# Copiar todo el código
+COPY . .
+
+# Build
+WORKDIR "/src/ProyectoWeb"
+RUN dotnet build "ProyectoWeb.csproj" -c Release -o /app/build
+
+# Publish
+FROM build AS publish
+RUN dotnet publish "ProyectoWeb.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+WORKDIR /app
+EXPOSE 10000
+
+# Copiar archivos publicados
+COPY --from=publish /app/publish .
+
+# Variables de entorno
+ENV ASPNETCORE_URLS=http://0.0.0.0:10000
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Comando de inicio
+ENTRYPOINT ["dotnet", "ProyectoWeb.dll"]
