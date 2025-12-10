@@ -14,11 +14,15 @@ namespace ProyectoWeb
                 .AddInteractiveServerComponents();
 
             // ✅ CONFIGURAR HttpClient CON BaseAddress para Blazor Server
+            var apiBaseUrl = builder.Configuration["API_BASE_URL"]
+                 ?? "https://lomanconsultoria-web.onrender.com/";
+
             builder.Services.AddScoped(sp => new HttpClient
             {
-                BaseAddress = new Uri("https://lomanconsultoria-web.onrender.com/"),
+                BaseAddress = new Uri(apiBaseUrl),
                 Timeout = TimeSpan.FromSeconds(30)
             });
+
 
             // ✅ También registrar IHttpClientFactory por si acaso
             builder.Services.AddHttpClient();
@@ -31,7 +35,11 @@ namespace ProyectoWeb
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
+                app.UseHsts(); // ✅ Agregar HSTS para seguridad en producción
             }
+
+            // ✅ Importante para archivos estáticos (CSS, JS, imágenes)
+            app.UseStaticFiles();
 
             app.UseAntiforgery();
 
