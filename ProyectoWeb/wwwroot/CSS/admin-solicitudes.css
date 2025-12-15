@@ -2172,6 +2172,17 @@ body.modal-active {
         right: 10px;
         max-width: none;
     }
+    .admin-actions-header {
+    
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+    }
+    .admin-info {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
 
     .notification {
         min-width: 0;
@@ -2199,4 +2210,50 @@ body.modal-active {
         width: 100%;
         justify-content: center;
     }
+    .admin-info {
+        flex-wrap: wrap;
+    }
+
+    .admin-actions-header {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+    }
 }
+
+@media (max-width: 480px) {
+    .admin-info {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        
+    }
+
+    .admin-actions-header {
+        display: flex;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        font-size: 1rem;
+
+    }
+
+        .admin-actions-header button {
+            flex: 1 1 45%; /* dos botones ocupan la primera fila */
+        }
+
+            .admin-actions-header button:last-child {
+                flex: 1 1 100%; /* el último ocupa toda la segunda fila */
+            }
+
+    .nav-btn, .view-btn {
+        min-width: 100px;
+        padding: 9px 16px;
+        font-size: 12px;
+    }
+    .header-title{
+        text-align: center;
+    }
+
+}
+

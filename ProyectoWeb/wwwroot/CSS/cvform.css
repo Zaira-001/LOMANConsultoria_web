@@ -586,7 +586,6 @@ body {
     }
 
     .cv-modal-content {
-        margin: 10px;
         max-height: 95vh;
         border-radius: 20px;
     }

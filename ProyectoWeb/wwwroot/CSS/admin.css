@@ -2510,3 +2510,846 @@
         transform: translateY(-2px);
         box-shadow: 0 5px 20px rgba(240, 147, 251, 0.4);
     }
+
+/* ========================================= */
+/* SISTEMA DE BREAKPOINTS MEJORADO */
+/* ========================================= */
+
+/* 
+  Breakpoints:
+  - Mobile: 320px - 480px
+  - Mobile Large: 481px - 767px
+  - Tablet: 768px - 1024px
+  - Desktop: 1025px - 1440px
+  - Desktop Large: 1441px+
+*/
+
+/* ========================================= */
+/* BASE RESPONSIVE */
+/* ========================================= */
+
+/* Asegurar que todo se ajuste correctamente */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ========================================= */
+/* CONTAINER RESPONSIVO */
+/* ========================================= */
+
+.admin-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: clamp(15px, 3vw, 24px);
+    transform: translateY(-100px);
+    background: var(--bg);
+}
+
+@media (max-width: 480px) {
+    .admin-container {
+        padding: 10px;
+        transform: translateY(-50px);
+    }
+}
+
+/* ========================================= */
+/* HEADER RESPONSIVO */
+/* ========================================= */
+
+.admin-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: clamp(20px, 5vw, 40px);
+    margin-bottom: clamp(16px, 3vw, 32px);
+    border-radius: clamp(12px, 2vw, 20px);
+}
+
+    .admin-header h1 {
+        font-size: clamp(20px, 5vw, 32px);
+        margin: 0;
+    }
+
+    .admin-header p {
+        font-size: clamp(13px, 2vw, 15px);
+        margin: 8px 0 0 0;
+    }
+
+@media (min-width: 768px) {
+    .admin-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+}
+
+/* ========================================= */
+/* USER INFO RESPONSIVO */
+/* ========================================= */
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+@media (min-width: 481px) {
+    .user-info {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+
+@media (min-width: 481px) {
+    .user-details {
+        align-items: flex-start;
+        text-align: left;
+        width: auto;
+    }
+}
+
+.user-name {
+    font-size: clamp(14px, 2.5vw, 16px);
+}
+
+.user-role {
+    font-size: clamp(11px, 2vw, 12px);
+}
+
+/* Botones de header */
+.btn-logout,
+.btn-cotizacion,
+.btn-cita,
+.btn-administradores,
+.btn-solicitudes {
+    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2.5vw, 16px);
+    font-size: clamp(12px, 2vw, 14px);
+    width: 100%;
+}
+
+@media (min-width: 481px) {
+    .btn-logout,
+    .btn-cotizacion,
+    .btn-cita,
+    .btn-administradores,
+    .btn-solicitudes {
+        width: auto;
+    }
+}
+
+/* ========================================= */
+/* ACTIONS RESPONSIVO - DISEÑO INTELIGENTE */
+/* ========================================= */
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: clamp(20px, 4vw, 30px);
+    justify-content: center;
+}
+
+/* Mobile: Botones ajustados al contenido */
+@media (max-width: 480px) {
+    .admin-actions {
+        justify-content: stretch;
+    }
+
+    .btn-add-job,
+    .btn-refresh,
+    .btn-stats {
+        flex: 1 1 calc(50% - 6px); /* 2 botones por fila */
+        min-width: 140px;
+    }
+}
+
+/* Mobile Large: 2 botones por fila con mejor distribución */
+@media (min-width: 481px) and (max-width: 767px) {
+    .admin-actions {
+        justify-content: space-between;
+    }
+
+    .btn-add-job,
+    .btn-refresh,
+    .btn-stats {
+        flex: 1 1 calc(50% - 6px);
+        min-width: 160px;
+    }
+}
+
+/* Tablet: 3 botones en línea */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .admin-actions {
+        justify-content: flex-start;
+    }
+
+    .btn-add-job,
+    .btn-refresh,
+    .btn-stats {
+        flex: 0 1 auto;
+        min-width: 180px;
+    }
+}
+
+/* Desktop: Botones con espaciado natural */
+@media (min-width: 1025px) {
+    .admin-actions {
+        justify-content: flex-start;
+    }
+
+    .btn-add-job,
+    .btn-refresh,
+    .btn-stats {
+        flex: 0 1 auto;
+        min-width: auto;
+    }
+}
+
+.btn-add-job,
+.btn-refresh,
+.btn-stats {
+    padding: clamp(12px, 2vw, 15px) clamp(18px, 3vw, 25px);
+    font-size: clamp(14px, 2vw, 16px);
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* ========================================= */
+/* FILTERS RESPONSIVO */
+/* ========================================= */
+
+.filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: clamp(20px, 4vw, 30px);
+}
+
+@media (min-width: 481px) {
+    .filters {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .filters {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+        .filters select {
+            flex: 1;
+            min-width: 150px;
+        }
+}
+
+.filters select {
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 15px);
+    font-size: clamp(13px, 2vw, 14px);
+}
+
+/* ========================================= */
+/* STATS GRID RESPONSIVO */
+/* ========================================= */
+
+.stats-panel {
+    padding: clamp(20px, 4vw, 28px);
+    margin-bottom: clamp(20px, 4vw, 32px);
+    border-radius: clamp(12px, 2vw, 20px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(15px, 3vw, 20px);
+}
+
+@media (min-width: 481px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1441px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+.stat-item {
+    padding: clamp(20px, 4vw, 28px);
+    border-radius: clamp(12px, 2vw, 20px);
+}
+
+.stat-number {
+    font-size: clamp(28px, 6vw, 42px);
+}
+
+.stat-label {
+    font-size: clamp(11px, 2vw, 13px);
+}
+
+/* ========================================= */
+/* JOBS GRID RESPONSIVO */
+/* ========================================= */
+
+.jobs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(15px, 3vw, 25px);
+    margin-bottom: clamp(20px, 4vw, 30px);
+}
+
+@media (min-width: 481px) {
+    .jobs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (min-width: 768px) {
+    .jobs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+
+@media (min-width: 1025px) {
+    .jobs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+/* ========================================= */
+/* JOB CARD RESPONSIVO */
+/* ========================================= */
+
+.job-card {
+    padding: clamp(18px, 3vw, 25px);
+    border-radius: clamp(12px, 2vw, 20px);
+}
+
+.job-card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
+}
+
+@media (min-width: 481px) {
+    .job-card-header {
+        flex-direction: row;
+        align-items: flex-start;
+        text-align: left;
+        gap: 20px;
+    }
+}
+
+.job-icon {
+    width: clamp(50px, 10vw, 70px);
+    height: clamp(50px, 10vw, 70px);
+    font-size: clamp(24px, 5vw, 36px);
+    border-radius: clamp(10px, 2vw, 15px);
+}
+
+.job-info h3 {
+    font-size: clamp(16px, 3vw, 20px);
+}
+
+.job-level {
+    font-size: clamp(12px, 2vw, 14px);
+    padding: clamp(4px, 1vw, 6px) clamp(10px, 2vw, 15px);
+}
+
+.job-area {
+    font-size: clamp(12px, 2vw, 14px);
+}
+
+.job-description {
+    font-size: clamp(13px, 2vw, 15px);
+}
+
+.job-meta {
+    flex-wrap: wrap;
+    gap: clamp(8px, 1.5vw, 15px);
+    font-size: clamp(11px, 2vw, 13px);
+}
+
+/* ========================================= */
+/* JOB ACTIONS RESPONSIVO */
+/* ========================================= */
+
+.job-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 481px) {
+    .job-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .job-actions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.btn-edit,
+.btn-delete,
+.btn-toggle {
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 15px);
+    font-size: clamp(12px, 2vw, 14px);
+    width: 100%;
+}
+
+/* ========================================= */
+/* MODALES RESPONSIVOS */
+/* ========================================= */
+
+.modal-overlay {
+    padding: clamp(10px, 3vw, 20px);
+}
+
+    .modal-overlay .modal,
+    #jobModal .modal,
+    #adminModal .modal,
+    #confirmModal .modal {
+        width: 100% !important;
+        max-width: min(95vw, 600px) !important;
+        padding: clamp(20px, 4vw, 40px) !important;
+        max-height: 90vh !important;
+        border-radius: clamp(12px, 2vw, 20px) !important;
+    }
+
+.modal h2 {
+    font-size: clamp(18px, 4vw, 24px) !important;
+}
+
+.form-group {
+    margin-bottom: clamp(15px, 3vw, 25px);
+}
+
+    .form-group label {
+        font-size: clamp(12px, 2vw, 14px);
+        margin-bottom: clamp(6px, 1.5vw, 8px);
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        padding: clamp(10px, 2vw, 15px);
+        font-size: clamp(13px, 2vw, 15px);
+        border-radius: clamp(6px, 1.5vw, 10px);
+    }
+
+    .form-group textarea {
+        min-height: clamp(80px, 15vw, 100px);
+    }
+
+/* ========================================= */
+/* MODAL ACTIONS RESPONSIVO */
+/* ========================================= */
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: clamp(20px, 4vw, 40px);
+    padding-top: clamp(15px, 3vw, 30px);
+}
+
+@media (min-width: 481px) {
+    .modal-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+.btn-cancel,
+.btn-save,
+.btn-confirm {
+    padding: clamp(12px, 2vw, 15px) clamp(20px, 3vw, 30px);
+    font-size: clamp(14px, 2vw, 16px);
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .btn-cancel,
+    .btn-save,
+    .btn-confirm {
+        width: auto;
+        min-width: 120px;
+    }
+}
+
+/* ========================================= */
+/* REQUIREMENTS INPUT RESPONSIVO */
+/* ========================================= */
+
+.requirements-input {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-add-requirement,
+.btn-remove-requirement {
+    width: clamp(40px, 8vw, 50px);
+    height: clamp(40px, 8vw, 50px);
+    padding: 0;
+    font-size: clamp(14px, 2.5vw, 16px);
+}
+
+/* ========================================= */
+/* CONFIRM MODAL RESPONSIVO */
+/* ========================================= */
+
+.confirm-modal-enhanced {
+    max-width: min(90vw, 450px);
+    width: 90%;
+}
+
+.confirm-modal-header {
+    padding: clamp(18px, 3vw, 24px) clamp(20px, 4vw, 30px) clamp(16px, 2vw, 20px);
+}
+
+.confirm-warning-icon {
+    font-size: clamp(36px, 8vw, 48px);
+}
+
+.confirm-modal-enhanced h3 {
+    font-size: clamp(18px, 4vw, 24px);
+}
+
+.confirm-modal-content {
+    padding: clamp(20px, 4vw, 30px);
+}
+
+.confirm-modal-enhanced p {
+    font-size: clamp(14px, 2.5vw, 16px);
+}
+
+.confirm-modal-actions {
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (min-width: 481px) {
+    .confirm-modal-actions {
+        flex-direction: row;
+        gap: 12px;
+    }
+}
+
+.confirm-modal-btn {
+    padding: clamp(12px, 2vw, 14px) clamp(20px, 3vw, 28px);
+    font-size: clamp(14px, 2vw, 16px);
+    min-width: 100%;
+}
+
+@media (min-width: 481px) {
+    .confirm-modal-btn {
+        min-width: 120px;
+    }
+}
+
+/* ========================================= */
+/* EMOJI PICKER RESPONSIVO */
+/* ========================================= */
+
+.emoji-picker-popup {
+    min-width: min(280px, 90vw);
+    width: 100%;
+    max-width: min(400px, 95vw);
+}
+
+@media (max-width: 480px) {
+    .emoji-picker-popup {
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+        .emoji-picker-popup.show {
+            transform: translateX(-50%) translateY(0);
+        }
+}
+
+.emoji-picker-header {
+    padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
+}
+
+    .emoji-picker-header span {
+        font-size: clamp(12px, 2vw, 14px);
+    }
+
+.emoji-search {
+    padding: clamp(10px, 2vw, 12px) clamp(12px, 2vw, 15px);
+    font-size: clamp(12px, 2vw, 14px);
+}
+
+.emoji-categories {
+    padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 15px);
+    gap: clamp(3px, 1vw, 5px);
+}
+
+.emoji-category-tab {
+    padding: clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px);
+    font-size: clamp(14px, 3vw, 16px);
+    min-width: clamp(32px, 6vw, 40px);
+    height: clamp(32px, 6vw, 40px);
+}
+
+.emoji-grid-container {
+    max-height: clamp(200px, 40vh, 250px);
+    padding: clamp(12px, 2vw, 15px);
+}
+
+.emoji-grid {
+    grid-template-columns: repeat(auto-fill, minmax(clamp(32px, 6vw, 40px), 1fr));
+    gap: clamp(6px, 1vw, 8px);
+}
+
+.emoji-item {
+    padding: clamp(6px, 1vw, 8px);
+    font-size: clamp(16px, 3.5vw, 20px);
+    min-height: clamp(32px, 6vw, 40px);
+    min-width: clamp(32px, 6vw, 40px);
+}
+
+/* ========================================= */
+/* LOADING OVERLAY RESPONSIVO */
+/* ========================================= */
+
+.loading-overlay {
+    padding: 20px;
+}
+
+.spinner {
+    width: clamp(40px, 8vw, 56px);
+    height: clamp(40px, 8vw, 56px);
+    border-width: clamp(3px, 0.5vw, 4px);
+}
+
+/* ========================================= */
+/* MESSAGES RESPONSIVO */
+/* ========================================= */
+
+.error-message,
+.success-message {
+    padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
+    font-size: clamp(13px, 2vw, 14px);
+    border-radius: clamp(6px, 1vw, 8px);
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (min-width: 481px) {
+    .error-message,
+    .success-message {
+        flex-direction: row;
+    }
+}
+
+/* ========================================= */
+/* INSTRUCTIONS CARD RESPONSIVO */
+/* ========================================= */
+
+.instructions-card {
+    padding: clamp(20px, 4vw, 30px);
+    border-radius: clamp(10px, 2vw, 15px);
+}
+
+    .instructions-card h3 {
+        font-size: clamp(16px, 3vw, 20px);
+    }
+
+    .instructions-card li {
+        font-size: clamp(13px, 2vw, 15px);
+        padding-left: clamp(25px, 4vw, 30px);
+    }
+
+/* ========================================= */
+/* SECURITY COMPONENTS RESPONSIVO */
+/* ========================================= */
+
+.security-confirmation {
+    padding: clamp(12px, 2vw, 15px);
+    border-radius: clamp(6px, 1vw, 8px);
+}
+
+    .security-confirmation h4 {
+        font-size: clamp(12px, 2vw, 14px);
+    }
+
+    .security-confirmation p {
+        font-size: clamp(11px, 2vw, 13px);
+    }
+
+/* ========================================= */
+/* ORIENTACIÓN LANDSCAPE MOBILE */
+/* ========================================= */
+
+@media (max-width: 767px) and (orientation: landscape) {
+    .admin-container {
+        transform: translateY(-30px);
+    }
+
+    .admin-header {
+        padding: 15px 20px;
+    }
+
+    .modal-overlay .modal {
+        max-height: 85vh !important;
+    }
+
+    .emoji-grid-container {
+        max-height: 150px;
+    }
+}
+
+/* ========================================= */
+/* TOUCH DEVICES */
+/* ========================================= */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Aumentar áreas táctiles */
+    button,
+    .btn-edit,
+    .btn-delete,
+    .btn-toggle,
+    .emoji-item,
+    .emoji-category-tab {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Eliminar efectos hover en dispositivos táctiles */
+    .job-card:hover,
+    .stat-item:hover,
+    .stats-panel:hover {
+        transform: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+}
+
+/* ========================================= */
+/* ACCESIBILIDAD MEJORADA */
+/* ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ========================================= */
+/* MODO OSCURO (OPCIONAL) */
+/* ========================================= */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --text: #f1f5f9;
+        --text-light: #cbd5e1;
+        --border: #334155;
+    }
+}
+
+/* ========================================= */
+/* ULTRA WIDE SCREENS */
+/* ========================================= */
+
+@media (min-width: 1921px) {
+    .admin-container {
+        max-width: 1800px;
+    }
+
+    .jobs-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+/* ========================================= */
+/* PRINT STYLES */
+/* ========================================= */
+
+@media print {
+    .admin-header,
+    .admin-actions,
+    .filters,
+    .btn-edit,
+    .btn-delete,
+    .btn-toggle,
+    .modal-overlay {
+        display: none !important;
+    }
+
+    .admin-container {
+        transform: none;
+    }
+
+    .job-card {
+        page-break-inside: avoid;
+    }
+}

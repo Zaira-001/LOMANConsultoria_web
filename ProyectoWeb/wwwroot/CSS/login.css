@@ -148,11 +148,21 @@ body {
 
 @media (max-width: 480px) {
     .logo-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
-        margin-bottom: 12px;
+        display: inline-block;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #1E3A5F);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        animation: bounce 2s ease-in-out infinite;
+        margin-left: 90px;
     }
+
 
     .login-header h1 {
         font-size: 22px;
@@ -501,7 +511,7 @@ body {
 @media (max-width: 480px) {
     .login-card {
         padding: 25px 20px;
-        margin: 10px;
+        margin: 0px;
     }
 
     .login-header h1 {

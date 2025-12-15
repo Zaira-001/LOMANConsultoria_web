@@ -1498,9 +1498,9 @@
         overflow-y: auto;
     }
 
-    .modal-title {
-        font-size: 1.3rem;
-    }
+    .modal-header-uno .modal-title {
+    font-size: 1rem;
+}
 
     .modal-text {
         font-size: 0.9rem;

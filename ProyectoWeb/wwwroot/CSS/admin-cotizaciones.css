@@ -32,7 +32,7 @@
     margin: 0 auto;
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    transform: translateY(-100px);
+    transform: translateY(-80px);
     background: var(--bg);
 }
 
@@ -1195,3 +1195,970 @@
     color: #2e7d32;
 }
 
+/* ============================================
+   RESPONSIVE DESIGN MEJORADO - MOBILE FIRST
+   ============================================ */
+
+/* Tablets y pantallas medianas (768px - 1024px) */
+@media (max-width: 1024px) {
+    .admin-cotizaciones-container {
+        padding: 20px;
+        transform: translateY(-80px);
+    }
+
+    .header-section {
+        padding: 32px 24px;
+    }
+
+        .header-section h1 {
+            font-size: 28px;
+        }
+
+        .header-section p {
+            font-size: 14px;
+        }
+
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .stat-card {
+        padding: 18px !important;
+    }
+
+        .stat-card > div:first-child {
+            font-size: 13px !important;
+        }
+
+        .stat-card > div:last-child {
+            font-size: 28px !important;
+        }
+
+    .filters-section {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .filter-group label {
+        font-size: 13px;
+    }
+
+    .filter-select,
+    .search-input {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .cotizacion-card {
+        padding: 18px;
+        border-radius: 10px;
+    }
+
+    .cotizacion-header {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+
+    .cotizacion-info h3 {
+        font-size: 18px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .modal-content {
+        max-width: 90%;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tablets pequeñas y móviles grandes (481px - 768px) */
+@media (max-width: 768px) {
+    .admin-cotizaciones-container {
+        padding: 16px;
+        transform: translateY(-60px);
+    }
+
+    /* Header */
+    .header-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+        padding: 28px 20px;
+    }
+
+        .header-section::before,
+        .header-section::after {
+            display: none;
+        }
+
+        .header-section h1 {
+            font-size: 24px;
+        }
+
+        .header-section p {
+            font-size: 13px;
+        }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .nav-btn, .view-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+
+    /* Estadísticas */
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .stat-card {
+        padding: 16px !important;
+        border-radius: 10px !important;
+    }
+
+        .stat-card > div:first-child {
+            font-size: 12px !important;
+            margin-bottom: 4px !important;
+        }
+
+        .stat-card > div:last-child {
+            font-size: 26px !important;
+        }
+
+    /* Filtros */
+    .filters-section {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .filter-group {
+        gap: 6px;
+    }
+
+        .filter-group label {
+            font-size: 12px;
+        }
+
+    .filter-select,
+    .search-input {
+        padding: 10px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    .filter-group small {
+        font-size: 11px;
+    }
+
+    /* Grupos de estado */
+    .grupo-header {
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+    }
+
+        .grupo-header h2 {
+            font-size: 16px;
+        }
+
+    /* Tarjetas de cotización */
+    .cotizaciones-list {
+        gap: 16px;
+    }
+
+    .cotizacion-card {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .cotizacion-header {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+
+    .cotizacion-badges {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .cotizacion-info h3 {
+        font-size: 17px;
+        margin-bottom: 8px;
+    }
+
+    .folio-badge {
+        padding: 5px 12px;
+        font-size: 13px;
+        border-radius: 16px;
+    }
+
+    .empresa-badge,
+    .size-badge {
+        padding: 3px 10px;
+        font-size: 12px;
+        border-radius: 10px;
+        margin-right: 6px;
+    }
+
+    .status-badge,
+    .priority-badge {
+        padding: 5px 12px;
+        font-size: 12px;
+        border-radius: 16px;
+    }
+
+    /* Cuerpo de cotización */
+    .cotizacion-body {
+        margin-bottom: 12px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .info-item {
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+    .info-icon {
+        font-size: 18px;
+    }
+
+    .mensaje-section,
+    .notas-section {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 6px;
+    }
+
+        .mensaje-section h4,
+        .notas-section h4 {
+            font-size: 14px;
+        }
+
+        .mensaje-section p,
+        .notas-section p {
+            font-size: 13px;
+        }
+
+    /* Acciones */
+    .cotizacion-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    /* Modal */
+    .modal-content {
+        max-width: 95%;
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0;
+    }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+    .close-modal {
+        width: 36px;
+        height: 36px;
+        font-size: 24px;
+    }
+
+    .modal-body {
+        padding: 20px;
+        max-height: 65vh;
+    }
+
+    .detail-section {
+        margin-bottom: 20px;
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+        .detail-section h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .detail-item {
+        gap: 4px;
+    }
+
+        .detail-item strong {
+            font-size: 12px;
+        }
+
+        .detail-item span,
+        .detail-item a {
+            font-size: 14px;
+        }
+
+    .message-box {
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .notes-textarea,
+    .respuesta-textarea {
+        padding: 12px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    .monto-input {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+
+    .file-upload-area {
+        padding: 20px;
+        border-radius: 6px;
+    }
+
+    .estado-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .estado-btn {
+        padding: 10px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    .btn-enviar-cotizacion {
+        padding: 12px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        gap: 8px;
+        flex-direction: column;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .btn-save,
+    .btn-close {
+        width: 100%;
+        padding: 10px 16px;
+        border-radius: 6px;
+    }
+}
+
+/* Móviles pequeños (320px - 480px) */
+@media (max-width: 480px) {
+    .admin-cotizaciones-container {
+        padding: 12px;
+        transform: translateY(-60px);
+    }
+
+    /* Header */
+    .header-section {
+        padding: 24px 16px;
+        border-radius: 16px;
+    }
+
+        .header-section h1 {
+            font-size: 20px;
+        }
+
+        .header-section p {
+            font-size: 12px;
+        }
+
+    .nav-btn, .view-btn {
+        min-width: 100px;
+        padding: 9px 16px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+
+    /* Estadísticas */
+    .stats-section {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .stat-card {
+        padding: 16px !important;
+        border-radius: 12px !important;
+    }
+
+        .stat-card > div:first-child {
+            font-size: 11px !important;
+            margin-bottom: 4px !important;
+        }
+
+        .stat-card > div:last-child {
+            font-size: 24px !important;
+        }
+
+    /* Filtros */
+    .filters-section {
+        padding: 14px;
+        border-radius: 8px;
+        gap: 10px;
+    }
+
+    .filter-group label {
+        font-size: 11px;
+    }
+
+    .filter-select,
+    .search-input {
+        padding: 9px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .filter-group small {
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    /* Grupos */
+    .grupo-header {
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+
+        .grupo-header h2 {
+            font-size: 14px;
+        }
+
+    /* Tarjetas de cotización */
+    .cotizaciones-list {
+        gap: 12px;
+    }
+
+    .cotizacion-card {
+        padding: 14px;
+        border-radius: 8px;
+    }
+
+    .cotizacion-header {
+        gap: 10px;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+    }
+
+    .cotizacion-info h3 {
+        font-size: 16px;
+        margin-bottom: 6px;
+    }
+
+    .folio-badge {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 14px;
+    }
+
+    .empresa-badge,
+    .size-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+        border-radius: 8px;
+        margin-right: 4px;
+    }
+
+    .status-badge,
+    .priority-badge {
+        padding: 4px 10px;
+        font-size: 11px;
+        border-radius: 14px;
+    }
+
+    /* Indicador NUEVO */
+    .cotizacion-card.nuevo::after {
+        top: 8px;
+        right: 8px;
+        padding: 3px 10px;
+        font-size: 10px;
+        border-radius: 10px;
+    }
+
+    /* Cuerpo */
+    .info-grid {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .info-item {
+        padding: 9px;
+        border-radius: 6px;
+        font-size: 12px;
+        gap: 8px;
+    }
+
+    .info-icon {
+        font-size: 16px;
+    }
+
+    .mensaje-section,
+    .notas-section {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 6px;
+        border-left-width: 3px;
+    }
+
+        .mensaje-section h4,
+        .notas-section h4 {
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .mensaje-section p,
+        .notas-section p {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+    /* Acciones */
+    .cotizacion-actions {
+        gap: 6px;
+    }
+
+    .action-btn {
+        padding: 9px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        gap: 4px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        padding: 12px;
+    }
+
+    .modal-content {
+        max-width: 98%;
+        width: 98%;
+        max-height: 95vh;
+        border-radius: 14px;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+        border-radius: 14px 14px 0 0;
+    }
+
+        .modal-header h2 {
+            font-size: 18px;
+        }
+
+    .close-modal {
+        width: 32px;
+        height: 32px;
+        font-size: 22px;
+        border-radius: 8px;
+    }
+
+    .modal-body {
+        padding: 16px;
+        max-height: 60vh;
+    }
+
+    .detail-section {
+        margin-bottom: 16px;
+        padding: 14px;
+        border-radius: 8px;
+        border-left-width: 3px;
+    }
+
+        .detail-section h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+    .detail-grid {
+        gap: 10px;
+    }
+
+    .detail-item strong {
+        font-size: 11px;
+    }
+
+    .detail-item span,
+    .detail-item a {
+        font-size: 13px;
+    }
+
+    .message-box {
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.5;
+        border-left-width: 3px;
+    }
+
+    .notes-textarea,
+    .respuesta-textarea {
+        padding: 10px;
+        font-size: 12px;
+        border-radius: 6px;
+        min-height: 90px;
+    }
+
+    .monto-input {
+        padding: 9px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    .file-upload-area {
+        padding: 16px;
+        border-radius: 6px;
+    }
+
+    .estado-buttons {
+        gap: 6px;
+    }
+
+    .estado-btn {
+        padding: 9px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .btn-enviar-cotizacion {
+        padding: 11px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    .modal-footer {
+        padding: 14px 16px;
+        gap: 6px;
+        border-radius: 0 0 14px 14px;
+    }
+
+    .btn-save,
+    .btn-close {
+        padding: 9px 14px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+
+    /* Loading */
+    .spinner {
+        width: 44px;
+        height: 44px;
+        border-width: 3px;
+        margin-bottom: 16px;
+    }
+
+    .loading p {
+        font-size: 13px;
+    }
+}
+
+/* Móviles muy pequeños (menos de 360px) */
+@media (max-width: 360px) {
+    .admin-cotizaciones-container {
+        padding: 10px;
+        transform: translateY(-30px);
+    }
+
+    .header-section {
+        padding: 20px 12px;
+    }
+
+        .header-section h1 {
+            font-size: 18px;
+        }
+
+        .header-section p {
+            font-size: 11px;
+        }
+
+    .nav-btn, .view-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+        min-width: 90px;
+    }
+
+    .stats-section {
+        gap: 6px !important;
+    }
+
+    .stat-card {
+        padding: 14px !important;
+    }
+
+        .stat-card > div:last-child {
+            font-size: 22px !important;
+        }
+
+    .filters-section {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .filter-select,
+    .search-input {
+        padding: 8px;
+        font-size: 11px;
+    }
+
+    .cotizacion-card {
+        padding: 12px;
+    }
+
+    .cotizacion-info h3 {
+        font-size: 15px;
+    }
+
+    .info-item {
+        padding: 8px;
+        font-size: 11px;
+    }
+
+    .action-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        padding: 14px 16px;
+    }
+
+        .modal-header h2 {
+            font-size: 16px;
+        }
+
+    .close-modal {
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
+    }
+
+    .modal-body {
+        padding: 14px;
+    }
+
+    .detail-section {
+        padding: 12px;
+    }
+
+    .notes-textarea,
+    .respuesta-textarea {
+        padding: 9px;
+        font-size: 11px;
+        min-height: 80px;
+    }
+}
+
+/* Pantallas muy grandes (más de 1440px) */
+@media (min-width: 1440px) {
+    .admin-cotizaciones-container {
+        max-width: 1800px;
+        padding: 32px;
+        transform: translateY(-120px);
+    }
+
+    .header-section {
+        padding: 48px;
+        margin-bottom: 40px;
+    }
+
+        .header-section h1 {
+            font-size: 36px;
+        }
+
+        .header-section p {
+            font-size: 16px;
+        }
+
+    .stats-section {
+        gap: 20px !important;
+        margin-bottom: 24px !important;
+    }
+
+    .stat-card {
+        padding: 32px !important;
+    }
+
+        .stat-card > div:last-child {
+            font-size: 48px !important;
+        }
+
+    .filters-section {
+        padding: 24px;
+        gap: 20px;
+    }
+
+    .cotizacion-card {
+        padding: 24px;
+    }
+
+    .cotizacion-info h3 {
+        font-size: 22px;
+    }
+
+    .modal-content {
+        max-width: 1000px;
+    }
+
+    .detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Orientación horizontal en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+    .admin-cotizaciones-container {
+        transform: translateY(-20px);
+    }
+
+    .header-section {
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+
+        .header-section h1 {
+            font-size: 20px;
+        }
+
+    .stats-section {
+        grid-template-columns: repeat(4, 1fr) !important;
+        margin-bottom: 16px !important;
+    }
+
+    .stat-card {
+        padding: 16px !important;
+    }
+
+        .stat-card > div:last-child {
+            font-size: 24px !important;
+        }
+
+    .filters-section {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 12px;
+    }
+
+    .modal-content {
+        max-height: 85vh;
+    }
+
+    .modal-body {
+        max-height: 60vh;
+    }
+
+    .cotizacion-card {
+        padding: 14px;
+    }
+}
+
+/* Mejoras adicionales para accesibilidad en móviles */
+@media (max-width: 768px) {
+    /* Aumentar áreas táctiles */
+    button,
+    .action-btn,
+    .nav-btn,
+    .view-btn,
+    .estado-btn {
+        min-height: 44px;
+    }
+
+    /* Mejorar contraste en fondos */
+    .cotizacion-card {
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Espaciado mejorado para lectura */
+    p, span, label {
+        line-height: 1.6;
+    }
+}
+
+/* Print styles responsivos */
+@media print {
+    .admin-cotizaciones-container {
+        transform: none;
+        padding: 10px;
+    }
+
+    .header-actions,
+    .filters-section,
+    .cotizacion-actions,
+    .modal-overlay,
+    .nav-btn,
+    .action-btn {
+        display: none !important;
+    }
+
+    .header-section {
+        background: #f5f5f5;
+        color: #333;
+        padding: 20px;
+    }
+
+    .cotizacion-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    .stats-section {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}

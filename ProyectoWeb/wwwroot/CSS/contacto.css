@@ -627,7 +627,7 @@
     padding: 60px 0;
     margin-top: 80px;
     position: relative;
-    overflow: hidden;
+   
 
 }
 
@@ -1074,8 +1074,6 @@
         font-size: 1rem;
     }
 
-
-
     .cta-section {
         padding: 2rem 1rem;
         margin: 0 10px;
@@ -1141,7 +1139,8 @@
     }
 
     .contact-section {
-        padding: 30px 0;
+        padding: 50px 0;
+ 
     }
 
     .contact-title {
@@ -1183,6 +1182,14 @@
     }
 
     .form-column {
-        padding: 15px;
+        padding: 20px;
+    }
+
+    .contact-container { 
+        padding: 0 0px;
+    }
+
+    .cta-section {
+        margin: 3rem 0;
     }
 }
