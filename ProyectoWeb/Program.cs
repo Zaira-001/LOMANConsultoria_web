@@ -38,6 +38,17 @@ namespace ProyectoWeb
                 app.UseHsts(); // ✅ Agregar HSTS para seguridad en producción
             }
 
+            // ✅ Middleware para manejar peticiones HEAD (UptimeRobot)
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Method == "HEAD")
+                {
+                    context.Response.StatusCode = 200;
+                    return;
+                }
+                await next();
+            });
+
             // ✅ Importante para archivos estáticos (CSS, JS, imágenes)
             app.UseStaticFiles();
 
