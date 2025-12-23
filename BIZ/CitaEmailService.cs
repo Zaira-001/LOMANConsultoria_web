@@ -354,7 +354,7 @@ namespace BIZ
         
         <div class='footer'>
             <h4>Consultoría Integral SC</h4>
-            <p>📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com</p>
+            <p>📞 56-5964-4304 | 📧 consultoriaempresarialsadecv@gmail.com</p>
             <p style='font-size: 11px; opacity: 0.7; margin-top: 15px;'>
                 Recordatorio enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
             </p>
@@ -527,7 +527,7 @@ namespace BIZ
         
         <div class='footer'>
             <h4>Consultoría Integral SC</h4>
-            <p>📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com</p>
+            <p>📞 56-5964-4304 | 📧 consultoriaempresarialsadecv@gmail.com</p>
             <p style='font-size: 11px; opacity: 0.7; margin-top: 15px;'>
                 Enviado el {DateTime.Now.ToString("dd/MM/yyyy 'a las' HH:mm:ss", _culturaEspañol)}
             </p>
@@ -1194,7 +1194,7 @@ namespace BIZ
                     
                     <div class='contact-info'>
                         <p>📞 Teléfono: 56-5964-4304</p>
-                        <p>📧 Email: lomanconsultoria2025@gmail.com</p>
+                        <p>📧 Email: consultoriaempresarialsadecv@gmail.com</p>
                     </div>
                     
                     <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>

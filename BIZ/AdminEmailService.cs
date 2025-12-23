@@ -367,7 +367,7 @@ namespace BIZ
                             <h4>Consultoría Integral SC</h4>
                             <p>Panel de Administración del Sistema</p>
                             <p style='margin-top: 15px;'>
-                                📞 56-5964-4304 | 📧 lomanconsultoria2025@gmail.com
+                                📞 56-5964-4304 | 📧 consultoriaempresarialsadecv@gmail.com
                             </p>
                             <p style='margin-top: 20px; font-size: 11px; opacity: 0.6;'>
                                 Este correo fue enviado el {DateTime.Now:dd/MM/yyyy 'a las' HH:mm:ss}<br>
