@@ -1,0 +1,11 @@
+[build.environment]
+  DOTNET_VERSION = "9.0"
+
+[build]
+  command = "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0 && export PATH=$PATH:$HOME/.dotnet && dotnet publish -c Release -o output"
+  publish = "output/wwwroot"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
