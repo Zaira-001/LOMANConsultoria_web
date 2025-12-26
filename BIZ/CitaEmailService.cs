@@ -82,7 +82,7 @@ namespace BIZ
             }
 
             // 5. Fallback por defecto (desarrollo local o desconocido)
-            var defaultUrl = "http://localhost:5000/admin/citas";
+            var defaultUrl = "https://localhost:5000/admin/citas";
             System.Diagnostics.Debug.WriteLine($"⚠️ No se detectó URL automática, usando fallback: {defaultUrl}");
             return defaultUrl;
         }
